@@ -36,3 +36,18 @@
 
 - **Mức độ gắn kết:** Điều gì sẽ khiến bạn cảm thấy phần mềm này là một phần không thể thiếu trong công việc hàng ngày?
 - **Chỉ số đo lường (KPI):** Thước đo quan trọng nhất để bạn đánh giá phần mềm hoạt động hiệu quả là gì (độ chính xác khi phân loại, độ súc tích của bản tóm tắt, hay tốc độ xử lý)?
+
+### 1. Identity & Role (Họ là ai?)
+* **Vị trí/chức danh công việc/chuyên ngành:** Sinh viên Khoa Khoa học Dữ liệu và Trí tuệ Nhân tạo (Data Science and Artificial Intelligence) tại Đại học Kinh tế Quốc dân (NEU), Hà Nội. Từng có kinh nghiệm làm nhân viên sản xuất nội dung (content production) tại Radiant Vietnam.
+* **Nhiệm vụ hàng ngày liên quan đến tài liệu:** Đọc hiểu tài liệu chuyên ngành về khoa học dữ liệu, nghiên cứu tài liệu lập trình (Python, Java, SQL, MongoDB) và xử lý các cấu trúc dữ liệu. Ngoài ra, công việc đòi hỏi biên soạn, tổng hợp và căn chỉnh layout cho các báo cáo học thuật, đồ án (như báo cáo môn Cơ sở dữ liệu nâng cao) hoặc các hợp đồng bằng LaTeX.
+* **Khối lượng văn bản trung bình:** Xử lý khối lượng tương đối lớn hàng tuần, bao gồm các bài báo/tài liệu nghiên cứu chuyên ngành, source code, tài liệu hướng dẫn (documentations), và các file text cần định dạng chi tiết.
+
+### 2. Technical Context & Devices (Môi trường & Công nghệ)
+* **Thiết bị chủ yếu:** Laptop/Máy tính cá nhân (đáp ứng tốt nhu cầu lập trình, chạy các công cụ như Tkinter/MoviePy, biên dịch LaTeX và thuận tiện khi di chuyển).
+* **Hệ điều hành thường xuyên nhất:** Windows (kết hợp sử dụng các phần mềm tùy biến giao diện đồ họa như MyDockFinder).
+* **Định dạng tài liệu tương tác:** Văn bản dưới dạng text thô/mã nguồn (.tex, .py, .java, .sql), tài liệu học thuật (PDF), và các định dạng báo cáo.
+* **Công cụ/phần mềm hỗ trợ:** Các trình soạn thảo và biên dịch LaTeX, các IDE/Text Editor phục vụ lập trình và quản lý database, hệ thống quản lý repository (Git), và trình duyệt web. 
+
+### 3. Workflow Context (Bối cảnh không gian & thời gian)
+* **Không gian xử lý văn bản:** Đa dạng và linh hoạt. Có thể làm việc tại không gian cố định ở nhà, trường học (NEU), tại quán cà phê (Highlands Coffee), hoặc ngay cả khi đang di chuyển trên các chuyến tàu đêm/xe limousine tuyến Hà Nội - Vinh.
+* **Mục đích của kết quả tóm tắt/phân loại:** Trích xuất thông tin để phục vụ trực tiếp cho việc viết và hoàn thiện đồ án/báo cáo (ví dụ: *Creative Project Portfolio*), làm cơ sở để thiết kế database schema, hoặc ứng dụng vào quá trình debug và phát triển các phần mềm tự xây dựng.
