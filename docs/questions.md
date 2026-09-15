@@ -4,7 +4,6 @@
 
 - Bạn mất bao nhiêu thời gian mỗi ngày chỉ để đọc lướt qua tài liệu nhằm xác định xem nó có đáng đọc kỹ hay không?
 - Khi phải đọc một tài liệu dài hoặc phức tạp, cảm giác mệt mỏi hay mất tập trung thường xuất hiện ở đoạn nào?
-- Đã bao giờ bạn cảm thấy choáng ngợp vì có quá nhiều bài báo/tài liệu cần xử lý cùng lúc mà không biết bắt đầu từ đâu chưa?
 
 ### 2. Khó khăn khi chắt lọc và tóm tắt (Summarization Struggles)
 
@@ -19,45 +18,48 @@
 ### 4. Sai sót và hậu quả thực tế (Negative Impacts)
 
 - Việc đọc sót một thông tin quan trọng hoặc xếp nhầm danh mục tài liệu đã từng gây ra sự cố, chậm tiến độ hay ảnh hưởng trực tiếp đến kết quả công việc/học tập của bạn như thế nào?
-- Trong toàn bộ quy trình từ lúc mở file văn bản đến lúc lưu trữ kết quả, đâu là bước khiến bạn muốn "bỏ cuộc" nhất?
 
 # User Goals
 
 ### 1. Mục tiêu năng suất và thời gian (Efficiency & Time Savings)
 
-- **Tối ưu hóa thời gian:** Mục tiêu lý tưởng của bạn là rút ngắn thời gian đọc và phân loại một tài liệu xuống còn bao lâu so với hiện tại?
-- **Phân bổ giá trị:** Nếu tiết kiệm được 1–2 giờ mỗi ngày nhờ việc tự động hóa tóm tắt và phân loại, bạn sẽ dành khoảng thời gian đó cho công việc gì?
+- _Tối ưu hóa thời gian:_ Mục tiêu lý tưởng của bạn là rút ngắn thời gian đọc và phân loại một tài liệu xuống còn bao lâu so với hiện tại?
+- _Phân bổ giá trị:_ Nếu tiết kiệm được 1–2 giờ mỗi ngày nhờ việc tự động hóa tóm tắt và phân loại, bạn sẽ dành khoảng thời gian đó cho công việc gì?
 
 ### 2. Mục tiêu về chất lượng tóm tắt (Output Quality & Accuracy)
 
-- **Định dạng đầu ra:** Một bản tóm tắt "hoàn hảo" đối với bạn trông như thế nào (dạng gạch đầu dòng ngắn gọn, đoạn văn trích xuất ý chính, hay bảng tổng hợp số liệu)?
-- **Độ sâu thông tin:** Mức độ chi tiết nào là đủ để bạn tự tin đưa ra quyết định mà không cần đọc lại toàn bộ tài liệu gốc?
+- _Định dạng đầu ra:_ Một bản tóm tắt "hoàn hảo" đối với bạn trông như thế nào (dạng gạch đầu dòng ngắn gọn, đoạn văn trích xuất ý chính, hay bảng tổng hợp số liệu)?
+- _Độ sâu thông tin:_ Mức độ chi tiết nào là đủ để bạn tự tin đưa ra quyết định mà không cần đọc lại toàn bộ tài liệu gốc?
 
 ### 3. Mục tiêu tổ chức và truy xuất (Organization & Retrieval)
 
-- **Tiêu chí phân loại:** Bạn kỳ vọng hệ thống tự động phân loại tài liệu theo những tiêu chí cụ thể nào (theo chủ đề, độ khẩn cấp, dự án, hay loại tệp)?
-- **Phương thức tìm kiếm:** Khi cần tìm lại tài liệu cũ, bạn mong muốn công cụ hỗ trợ tìm kiếm theo cách nào (theo từ khóa chính xác, theo ngữ cảnh tóm tắt, hay theo thẻ danh mục)?
+- _Tiêu chí phân loại:_ Bạn kỳ vọng hệ thống tự động phân loại tài liệu theo những tiêu chí cụ thể nào (theo chủ đề, độ khẩn cấp, dự án, hay loại tệp)?
+- _Phương thức tìm kiếm:_ Khi cần tìm lại tài liệu cũ, bạn mong muốn công cụ hỗ trợ tìm kiếm theo cách nào (theo từ khóa chính xác, theo ngữ cảnh tóm tắt, hay theo thẻ danh mục)?
 
 ### 4. Định nghĩa thành công (Success Metrics & Value)
 
-- **Mức độ gắn kết:** Điều gì sẽ khiến bạn cảm thấy phần mềm này là một phần không thể thiếu trong công việc hàng ngày?
-- **Chỉ số đo lường (KPI):** Thước đo quan trọng nhất để bạn đánh giá phần mềm hoạt động hiệu quả là gì (độ chính xác khi phân loại, độ súc tích của bản tóm tắt, hay tốc độ xử lý)?
+- _Mức độ gắn kết:_ Điều gì sẽ khiến bạn cảm thấy phần mềm này là một phần không thể thiếu trong công việc hàng ngày?
+- _Chỉ số đo lường (KPI):_ Thước đo quan trọng nhất để bạn đánh giá phần mềm hoạt động hiệu quả là gì (độ chính xác khi phân loại, độ súc tích của bản tóm tắt, hay tốc độ xử lý)?
 
-### 1. Identity & Role (Họ là ai?)
+# Identity & Role
 
-- **Vị trí/chức danh công việc/chuyên ngành:** Sinh viên Khoa Khoa học Dữ liệu và Trí tuệ Nhân tạo (Data Science and Artificial Intelligence) tại Đại học Kinh tế Quốc dân (NEU), Hà Nội. Từng có kinh nghiệm làm nhân viên sản xuất nội dung (content production) tại Radiant Vietnam.
-- **Nhiệm vụ hàng ngày liên quan đến tài liệu:** Đọc hiểu tài liệu chuyên ngành về khoa học dữ liệu, nghiên cứu tài liệu lập trình (Python, Java, SQL, MongoDB) và xử lý các cấu trúc dữ liệu. Ngoài ra, công việc đòi hỏi biên soạn, tổng hợp và căn chỉnh layout cho các báo cáo học thuật, đồ án (như báo cáo môn Cơ sở dữ liệu nâng cao) hoặc các hợp đồng bằng LaTeX.
-- **Khối lượng văn bản trung bình:** Xử lý khối lượng tương đối lớn hàng tuần, bao gồm các bài báo/tài liệu nghiên cứu chuyên ngành, source code, tài liệu hướng dẫn (documentations), và các file text cần định dạng chi tiết.
+### 1. Vai trò & Chuyên môn (Role & Expertise)
 
-### 2. Technical Context & Devices (Môi trường & Công nghệ)
+- Vị trí công việc, ngành học hoặc lĩnh vực chuyên môn chính hiện tại của bạn là gì?
+- Mức độ quen thuộc của bạn với các công cụ công nghệ và trí tuệ nhân tạo (AI) đang ở mức nào (cơ bản, trung bình hay thành thạo)?
 
-- **Thiết bị chủ yếu:** Laptop/Máy tính cá nhân (đáp ứng tốt nhu cầu lập trình, chạy các công cụ như Tkinter/MoviePy, biên dịch LaTeX và thuận tiện khi di chuyển).
-- **Hệ điều hành thường xuyên nhất:** Windows (kết hợp sử dụng các phần mềm tùy biến giao diện đồ họa như MyDockFinder).
-- **Định dạng tài liệu tương tác:** Văn bản dưới dạng text thô/mã nguồn (.tex, .py, .java, .sql), tài liệu học thuật (PDF), và các định dạng báo cáo.
-- **Công cụ/phần mềm hỗ trợ:** Các trình soạn thảo và biên dịch LaTeX, các IDE/Text Editor phục vụ lập trình và quản lý database, hệ thống quản lý repository (Git), và trình duyệt web.
+### 2. Đặc thù tài liệu & Tần suất xử lý (Document Characteristics)
 
-### 3. Workflow Context (Bối cảnh không gian & thời gian)
+- Bạn thường xuyên phải tiếp nhận và xử lý những loại tài liệu nào nhất (tin tức thời sự, bài báo nghiên cứu, tài liệu kỹ thuật, báo cáo kinh tế hay hợp đồng/văn bản hành chính)?
+- Khối lượng văn bản bạn cần tiếp nhận trung bình mỗi ngày/tuần là bao nhiêu (số lượng bài viết, độ dài từng bài)?
+- Định dạng văn bản bạn thường làm việc cùng là gì (văn bản trực tiếp trên web/báo chí, file .txt, .docx hay PDF)?
 
-- **Không gian xử lý văn bản:** Đa dạng và linh hoạt. Có thể làm việc tại không gian cố định ở nhà, trường học (NEU), tại quán cà phê (Highlands Coffee), hoặc ngay cả khi đang di chuyển trên các chuyến tàu đêm/xe limousine tuyến Hà Nội - Vinh.
+### 3. Mục đích sử dụng thông tin (Information Objective)
 
-- **Mục đích của kết quả tóm tắt/phân loại:** Trích xuất thông tin để phục vụ trực tiếp cho việc viết và hoàn thiện đồ án/báo cáo (ví dụ: _Creative Project Portfolio_), làm cơ sở để thiết kế database schema, hoặc ứng dụng vào quá trình debug và phát triển các phần mềm tự xây dựng.
+- Sau khi đọc xong một văn bản, bạn dùng nội dung đó để phục vụ cho mục tiêu cụ thể nào (nắm bắt tin tức nhanh, viết báo cáo tổng hợp, trích xuất dữ liệu hay lưu trữ làm tư liệu nghiên cứu)?
+- Mức độ chi tiết của thông tin bạn cần giữ lại là gì (chỉ cần biết sự kiện chính, hay cần số liệu và ngữ cảnh cụ thể)?
+
+### 4. Môi trường kỹ thuật & Công cụ hiện tại (Technical Context & Tools)
+
+- Bạn thường đọc và xử lý văn bản trên thiết bị nào là chủ yếu (máy tính cá nhân, laptop hay điện thoại di động)?
+- Hiện tại bạn đang sử dụng những công cụ hoặc phương pháp nào để đọc lướt, ghi chú hoặc tóm tắt tài liệu (ghi chú thủ công, dùng Notion, Word, bookmark trình duyệt hay sử dụng các công cụ AI như ChatGPT)?
