@@ -60,42 +60,72 @@ Ngọc thường đọc slide, giáo trình và bài báo khoa học để học
 
 # 3. User Scenarios
 
-## Scenario 1 - Lan trích xuất và đối chiếu số liệu từ loạt hợp đồng mới
-* Lúc 9:00 sáng, Lan nhận được 5 hợp đồng kinh tế định dạng PDF dài hàng chục trang từ bộ phận Kinh doanh cần duyệt gấp.
-* Thay vì mở từng file và bị quá tải nhận thức bởi lượng chữ khổng lồ, cô tải cả 5 tệp PDF này lên hệ thống xử lý tài liệu.
-* Hệ thống tự động nhận diện nội dung, gán nhãn (tag) "Hợp đồng kinh tế" và phân loại các tệp này vào đúng thư mục dự án tương ứng mà Lan không cần sắp xếp thủ công.
-* Nắm được nhu cầu chỉ cần kiểm tra nhanh các điều khoản trọng yếu, Lan chọn định dạng đầu ra là "Tóm tắt dạng bảng" (Table View).
-* Hệ thống lập tức tạo ra một bảng tổng hợp đối chiếu với các cột được trích xuất tự động: Tên đối tác, Giá trị hợp đồng, Thời hạn thanh toán và Điều khoản phạt vi phạm.
-* Khi lướt qua bảng, Lan phát hiện một hợp đồng có tỷ lệ phạt vi phạm trễ hạn cao bất thường.
-* Để tránh tình trạng ảo giác thông tin (hallucination) của AI, cô click thẳng vào con số trên bảng. Hệ thống tự động nhảy đến đúng trang và bôi vàng đoạn văn bản gốc chứa điều khoản đó trong file PDF để cô đối chiếu ngữ cảnh chính xác.
-* Sau khi xác nhận thông tin, Lan xuất bảng tóm tắt ra file Excel để đính kèm vào báo cáo tài chính tuần.
-* Toàn bộ quá trình hoàn tất trong 15 phút, giúp Lan tiết kiệm hàng giờ đồng hồ đọc rà soát và loại bỏ hoàn toàn rủi ro đọc sót thông tin quan trọng.
+## Scenario 1 - Lan đối chiếu nhanh số liệu hợp đồng trước giờ làm báo cáo
+* Sáng thứ Hai, Lan cần hoàn thiện báo cáo tài chính tuần nhưng lại nhận được 5 bản hợp đồng PDF mới cần rà soát khẩn cấp.
+* Thay vì tự đọc từng trang, cô mở hệ thống trên máy tính và tải cùng lúc cả 5 tệp lên.
+* Hệ thống tự động nhận diện đây là hợp đồng và phân loại chúng vào đúng không gian làm việc của dự án.
+* Để lấy số liệu nhanh, Lan yêu cầu hệ thống tóm tắt các điều khoản tài chính quan trọng.
+* Hệ thống trả về một bảng thông tin tổng hợp liệt kê rõ các con số phạt vi phạm từ cả 5 hợp đồng.
+* Nhìn vào bảng, Lan phát hiện ngay một tỷ lệ phạt bất thường, ghi chú lại vào báo cáo tài chính của mình và hoàn thành công việc đúng hạn mà không cần mở từng tài liệu gốc ra dò tìm.
 
-## Scenario 2 - Minh lọc tin tức nóng từ hàng chục nguồn dữ liệu đầu ngày
-* Lúc 7:30 sáng, Minh bắt đầu ngày làm việc và đối mặt với khối lượng tài liệu lớn gồm hơn 40 thông cáo báo chí và báo cáo thị trường từ các nguồn cấp tin.
-* Để giải quyết bài toán lãng phí thời gian khi đọc lướt, Minh truy cập vào không gian làm việc của hệ thống.
-* Anh sử dụng thanh tìm kiếm theo ngữ cảnh và gõ: "Biến động giá vàng và chính sách xuất nhập khẩu".
-* Hệ thống quét toàn bộ tài liệu được đổ về trong ngày, loại bỏ các tin tức không đúng trọng tâm và tự động lọc ra 4 bài viết mang giá trị cao nhất.
-* Minh đọc đoạn văn trích xuất ý chính (Executive Summary) ở trên cùng của mỗi bài. Bản tóm tắt đi thẳng vào trọng tâm, nêu bật các số liệu và sự kiện chính vừa diễn ra trong đêm mà không bị diễn đạt lủng củng.
-* Khi cần đưa số liệu vào bản tin gốc, Minh rê chuột vào các chỉ số phần trăm trong đoạn tóm tắt để xem trực tiếp thẻ trích dẫn (citation) nhằm đảm bảo độ chính xác tuyệt đối.
-* Anh gắn thẻ "Tin nóng sáng nay" cho 2 tài liệu quan trọng nhất. Nhờ cấu trúc phân loại thông minh, anh biết mình có thể dễ dàng truy xuất lại chúng vào cuối tháng khi cần viết báo cáo tổng hợp.
-* Có sẵn ý chính và nguồn trích dẫn chuẩn xác, Minh lập tức bắt tay vào viết bản tin, cắt giảm được hơn 70% thời gian chắt lọc thông tin dư thừa.
+## Scenario 2 - Minh bóc tách thông tin và truy xuất nguồn tin báo chí
+* Đang trong ca làm việc, nhà báo Minh nhận được hơn 20 tài liệu và báo cáo khác nhau về một sự kiện kinh tế vừa diễn ra.
+* Anh đưa toàn bộ tài liệu này vào hệ thống và nhập một câu hỏi tìm kiếm để lọc ra các diễn biến đáng chú ý nhất.
+* Thay vì đưa ra một đoạn tóm tắt chung chung, hệ thống hiển thị ngay các sự kiện trọng tâm kèm theo số liệu cụ thể.
+* Dưới mỗi thông tin, Minh nhìn thấy ngay chú thích nguồn rõ ràng (ví dụ: nằm ở tài liệu nào, trang số mấy).
+* Anh bấm vào chú thích để đối chiếu nhanh với bản gốc, xác nhận thông tin chuẩn xác và đưa ngay dữ kiện đó vào bài viết đang chuẩn bị lên trang.
 
-## Scenario 3 - Huy nắm bắt trọng tâm tài liệu khách hàng trên di động
-* Lúc 14:00, Huy đang ngồi quán cà phê chờ gặp khách hàng và nhận được một báo cáo phân tích thị trường dài 15 trang (.docx) qua email.
-* Do giới hạn về môi trường kỹ thuật, anh mở hệ thống trực tiếp trên trình duyệt điện thoại di động và tải tệp báo cáo lên.
-* Vì cần thông tin nhanh gọn để chuẩn bị cho cuộc họp sắp diễn ra, Huy chọn chế độ tóm tắt "Gạch đầu dòng" (Bullet points).
-* Hệ thống bỏ qua các phần giới thiệu dài dòng, lập tức hiển thị 5 ý chính ngắn gọn về các xu hướng giá mới nhất trong quý. Mức độ chi tiết của các gạch đầu dòng vừa đủ để Huy nắm bắt bối cảnh.
-* Để lưu trữ phục vụ việc truy xuất sau này, Huy nhanh chóng chọn các thẻ danh mục gợi ý sẵn như "Báo cáo Q3", "Khách hàng VIP" để hệ thống tự động đưa vào kho lưu trữ có tổ chức.
-* Huy sao chép nhanh các gạch đầu dòng tóm tắt này vào ứng dụng ghi chú trên điện thoại để làm dàn ý thảo luận.
-* Toàn bộ thao tác diễn ra trong 3 phút, giúp Huy tự tin bước vào cuộc họp với đầy đủ thông tin chiến lược mà không cần căng mắt cuộn đọc toàn bộ tài liệu trên màn hình nhỏ.
+## Scenario 3 - Huy nắm bắt trọng tâm báo cáo trên điện thoại trước cuộc họp khẩn
+* Chỉ còn 10 phút nữa là bắt đầu cuộc họp với khách hàng, Huy đang đi trên hành lang thì nhận được một bản báo cáo thị trường dài 15 trang.
+* Không có sẵn máy tính, anh mở trình duyệt trên điện thoại và tải nhanh file báo cáo lên hệ thống.
+* Huy chọn chế độ tóm tắt ngắn gọn.
+* Hệ thống hiển thị ngay các xu hướng giá chính dưới dạng danh sách, được tối ưu hóa giao diện nên rất dễ đọc trên màn hình nhỏ.
+* Cuộn xuống cuối bản tóm tắt, Huy đọc được các đề xuất hành động cụ thể từ báo cáo.
+* Anh nhanh chóng chọn ra được một phương án khả thi và tự tin bước vào phòng thảo luận để chốt vấn đề.
 
-## Scenario 4 - Ngọc học tập và tương tác với tài liệu học thuật
-* Lúc 20:00, Ngọc bắt đầu ôn thi môn Kinh tế vĩ mô. Cô cần xử lý khối lượng văn bản lớn gồm 3 bài báo khoa học PDF dài và 2 tập slide bài giảng tiếng Anh.
-* Cô tải toàn bộ tài liệu lên hệ thống. Hệ thống nhận diện nội dung học thuật và tự động đề xuất phân loại vào nhóm "Nghiên cứu kinh tế", giúp Ngọc không bị rối rắm bởi cấu trúc thư mục thủ công.
-* Ngọc yêu cầu hệ thống tóm tắt các khái niệm cốt lõi trong 3 bài báo dưới dạng danh sách gạch đầu dòng để tránh bỏ sót ý chính.
-* Hệ thống trích xuất các định nghĩa và lập luận quan trọng nhất, giúp Ngọc nắm được bức tranh tổng thể của các bài báo trong vài phút.
-* Khi gặp một phần lập luận phức tạp về nguyên nhân lạm phát, Ngọc không đọc toàn bộ văn bản. Cô sử dụng công cụ "Tìm kiếm nội bộ" của hệ thống và gõ cụm từ khóa "nguyên nhân lạm phát".
-* Thay vì sinh ra văn bản tự do, hệ thống ngay lập tức lọc ra và hiển thị chính xác các đoạn văn bản gốc có chứa lập luận này từ cả 3 bài báo, đi kèm link trỏ về đúng trang chứa đoạn văn đó (ví dụ: Trang 12, Bài báo 2).
-* Ngọc bấm vào link để đọc nguyên văn đoạn gốc nhằm hiểu sâu ngữ cảnh, sau đó bôi đậm (highlight) và lưu ghi chú cá nhân.
-* Sau 45 phút, Ngọc đã hệ thống hóa xong kiến thức trọng tâm thay vì mất hàng giờ đồng hồ chật vật tìm kiếm thông tin và loay hoay sắp xếp tài liệu như trước đây.
+## Scenario 4 - Ngọc tổ chức tài liệu và tra cứu kiến thức khó hiểu khi ôn thi
+* Buổi tối bắt đầu kỳ ôn thi, Ngọc có một loạt bài báo học thuật dài cần xử lý.
+* Cô tải tài liệu lên, hệ thống tự động phân tích nội dung và gắn nhãn "Kinh tế vĩ mô" để đưa vào đúng thư mục môn học.
+* Ngọc mở một bài báo và yêu cầu hệ thống liệt kê các khái niệm cốt lõi nhất để nắm bắt tổng quan.
+* Trong lúc đọc, cô gặp một thuật ngữ lý thuyết khá mơ hồ.
+* Thay vì phải đọc dò từng dòng, Ngọc gõ từ khóa đó vào thanh tìm kiếm nội bộ ngay trên màn hình đọc tài liệu.
+* Hệ thống lập tức tự động cuộn trang đến đúng vị trí và tô sáng (highlight) đoạn văn bản gốc giải thích chi tiết cho thuật ngữ đó.
+* Ngọc đọc lướt qua đoạn highlight, hiểu rõ vấn đề, ghi chú lại vào sổ tay cá nhân và tiếp tục mạch học tập của mình một cách liền mạch.
+
+# User Stories & Acceptance Criteria
+
+## US01 - Trích xuất bảng số liệu từ nhiều hợp đồng cùng lúc 
+Là Lan, tôi muốn tải lên nhiều hợp đồng PDF cùng lúc và nhận kết quả trích xuất dưới dạng bảng tổng hợp số liệu để tôi có thể nhanh chóng đối chiếu các khoản phạt vi phạm mà không cần mở từng tài liệu.
+
+### Acceptance criteria
+*  Tôi tải lên một cụm 5 tệp PDF thành công, khi hệ thống quét nội dung, 100% các tệp này tự động được gắn nhãn loại tệp "Hợp đồng" và đưa vào đúng thư mục dự án mà không cần thao tác thủ công.
+*  Tôi chọn tính năng tóm tắt điều khoản tài chính, khi kết quả hiển thị, dữ liệu bắt buộc phải được trình bày dưới định dạng bảng lưới, trong đó trích xuất chính xác các con số phạt vi phạm (ví dụ: %, VNĐ) từ từng hợp đồng.
+* Tôi tải lên tối đa 5 hợp đồng (dung lượng dưới 50MB/tệp), khi tôi nhấn "Xử lý", tổng thời gian hệ thống hoàn thành phân loại và xuất bảng tóm tắt không được vượt quá 5 phút.
+
+
+## US02 - Tìm kiếm ngữ cảnh và trích xuất thông tin có trích dẫn nguồn 
+Là Minh, tôi muốn tìm kiếm thông tin trên một tập hợp hơn 20 tài liệu cùng lúc để nhanh chóng bóc tách các sự kiện, số liệu quan trọng kèm theo nguồn gốc rõ ràng nhằm phục vụ việc viết bài chính xác.
+
+### Acceptance criteria
+*  Tôi đang ở trong không gian làm việc chứa 20 tệp tài liệu, khi tôi nhập từ khóa tìm kiếm sự kiện, hệ thống trả về danh sách các sự kiện và số liệu trọng tâm, không hiển thị các câu văn dẫn dắt thừa thãi.
+*  Hệ thống trả về kết quả tóm tắt, khi tôi xem chi tiết, dưới mỗi số liệu/sự kiện bắt buộc phải có một dòng chú thích nguồn cụ thể (định dạng: "Tên tài liệu - Trang số X").
+*  Một thông tin có đính kèm trích dẫn nguồn, khi tôi nhấn vào chú thích đó, hệ thống phải mở popup hoặc chuyển hướng đến đúng trang tài liệu gốc chứa đoạn văn bản đó để tôi đối chiếu.
+
+
+## US03 - Tóm tắt báo cáo dạng gạch đầu dòng tối ưu trên mobile 
+Là Huy, tôi muốn tải một báo cáo dài lên hệ thống qua trình duyệt điện thoại và nhận bản tóm tắt dạng gạch đầu dòng kèm đề xuất hành động để tôi có thể chốt phương án trước giờ họp khẩn.
+
+### Acceptance criteria
+*  Tôi truy cập hệ thống bằng trình duyệt điện thoại (iOS/Android), khi tôi xem bản tóm tắt, giao diện hiển thị dạng danh sách gạch đầu dòng tương thích 100% với chiều rộng màn hình, không bị tràn viền hay che khuất chữ.
+*  Hệ thống hoàn tất việc tạo bản tóm tắt, khi tôi cuộn xuống cuối màn hình, bắt buộc phải có một phần tiêu đề "Đề xuất hành động" chứa tối thiểu 2 phương án thực thi được tổng hợp từ tài liệu gốc.
+*  Tôi tải lên tệp báo cáo PDF dài 15 trang, khi tôi yêu cầu hệ thống tóm tắt, toàn bộ quá trình đọc hiểu và trả kết quả phải hoàn thành trong thời gian tối đa là 3 phút.
+
+
+## US04 - Tự động gắn nhãn và tra cứu khái niệm qua thanh tìm kiếm 
+Là Ngọc, tôi muốn hệ thống tự động gắn nhãn chủ đề cho tài liệu và cho phép tôi tra cứu nhanh các khái niệm khó qua thanh tìm kiếm nội bộ, giúp tôi dễ dàng tổ chức lưu trữ và tiết kiệm thời gian ôn thi.
+
+### Acceptance criteria
+*  Tôi tải lên một tệp bài báo học thuật mới, khi quá trình tải hoàn tất, hệ thống tự động phân tích và gán đúng nhãn chủ đề (ví dụ: "Kinh tế vĩ mô") vào metadata của tệp.
+*  Tôi yêu cầu tóm tắt tổng quan bài báo, khi hệ thống trả kết quả, t bản tóm tắt bắt buộc phải theo định dạng gạch đầu dòng và giới hạn hiển thị từ 3 đến 5 khái niệm cốt lõi nhất.
+*  Tôi có thắc mắc về một khái niệm trong lúc đọc tài liệu, khi tôi nhập từ khóa vào thanh tìm kiếm nội bộ của tài liệu đó, hệ thống phải tìm thấy, tự động cuộn đến và đánh dấu chính xác đoạn văn bản chứa giải thích cho khái niệm đó.
+
