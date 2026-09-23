@@ -259,7 +259,7 @@ Acceptance criteria:
 
 Tasks:
 
-- Generate an XLSX export from the same structured data used by the table.
+- Generate an export from the same structured data used by the table.
 - Test row count, units and source references in the downloaded file.
 
 #### US12 – Surface uncertainty · P1 · 5 points · Screens: /workspace, /results/:jobId
