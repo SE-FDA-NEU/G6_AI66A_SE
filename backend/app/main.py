@@ -22,15 +22,9 @@ async def lifespan(app: FastAPI):
 # Khởi tạo app với lifespan
 app = FastAPI(title="DocuMind API", lifespan=lifespan)
 
-
+from app.api.auth import router as auth_router
+app.include_router(auth_router)
 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to DocuMind API"}
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
