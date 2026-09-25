@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
@@ -10,8 +9,8 @@ from app.db.database import Base
 class Job(Base):
     __tablename__ = "jobs"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    owner_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     mode = Column(String(20), nullable=False)  # bullet | contract_table | concept
     status = Column(String(20), nullable=False, default="pending")
     file_count = Column(Integer, nullable=False)

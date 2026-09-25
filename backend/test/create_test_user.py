@@ -1,6 +1,5 @@
 import sys
 import os
-import uuid
 
 # Thêm thư mục backend vào sys.path để Python nhận diện được module "app"
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,7 +26,6 @@ def create_test_user():
             continue
 
         new_user = User(
-            id=str(uuid.uuid4()),
             username=u["username"],
             email=u["email"],
             password_hash=hashed_password

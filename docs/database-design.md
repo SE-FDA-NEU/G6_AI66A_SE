@@ -44,7 +44,7 @@
                               ┌───────────▼─────────────────────────────┐
                               │                 jobs                     │
                               ├─────────────────────────────────────────┤
-                              │ id (PK, UUID)                            │
+                              │ id (PK)                            │
                               │ owner_id (FK → users.id)                 │
                               │ mode  -- bullet|table|concept   │
                               │ status                                   │
@@ -81,12 +81,13 @@
 
 ### `users`
 
-| Column          | Type         | Constraint             | Ghi chú           |
-| --------------- | ------------ | ---------------------- | ----------------- |
-| `id`            | UUID         | PK                     | Auto-generated    |
-| `email`         | VARCHAR(255) | UNIQUE NOT NULL        | Dùng làm username |
-| `password_hash` | VARCHAR(255) | NOT NULL               | bcrypt            |
-| `created_at`    | TIMESTAMP    | NOT NULL DEFAULT now() |                   |
+| Column          | Type         | Constraint             | Ghi chú        |
+| --------------- | ------------ | ---------------------- | -------------- |
+| `id`            | INT          | PK                     | Auto Increment |
+| `username`      | VARCHAR(100) | UNIQUE NOT NULL        |                |
+| `email`         | VARCHAR(255) | UNIQUE NOT NULL        |                |
+| `password_hash` | VARCHAR(255) | NOT NULL               | bcrypt         |
+| `created_at`    | TIMESTAMP    | NOT NULL DEFAULT now() |                |
 
 ---
 
@@ -94,8 +95,8 @@
 
 | Column       | Type         | Constraint             | Ghi chú                |
 | ------------ | ------------ | ---------------------- | ---------------------- |
-| `id`         | UUID         | PK                     |                        |
-| `owner_id`   | UUID         | FK → users.id NOT NULL |                        |
+| `id`         | INT          | PK                     |                        |
+| `owner_id`   | INT          | FK → users.id NOT NULL |                        |
 | `name`       | VARCHAR(100) | NOT NULL               | Ví dụ: "Economics 101" |
 | `created_at` | TIMESTAMP    | NOT NULL DEFAULT now() |                        |
 
@@ -107,9 +108,9 @@
 
 | Column              | Type         | Constraint                   | Ghi chú                               |
 | ------------------- | ------------ | ---------------------------- | ------------------------------------- |
-| `id`                | UUID         | PK                           |                                       |
-| `owner_id`          | UUID         | FK → users.id NOT NULL       | Ownership check (BR07)                |
-| `folder_id`         | UUID         | FK → folders.id **NULLABLE** | NULL = chưa xếp folder                |
+| `id`                | INT          | PK                           |                                       |
+| `owner_id`          | INT          | FK → users.id NOT NULL       | Ownership check (BR07)                |
+| `folder_id`         | INT          | FK → folders.id **NULLABLE** | NULL = chưa xếp folder                |
 | `original_filename` | VARCHAR(255) | NOT NULL                     |                                       |
 | `storage_path`      | TEXT         | NOT NULL                     | Path trên disk/S3                     |
 | `file_format`       | VARCHAR(10)  | NOT NULL                     | `PDF`, `DOCX`, `PPTX` (BR01)          |
@@ -138,8 +139,8 @@ CREATE INDEX idx_documents_label ON documents(ai_label);       -- cho label filt
 
 | Column            | Type        | Constraint                 | Ghi chú                               |
 | ----------------- | ----------- | -------------------------- | ------------------------------------- |
-| `id`              | UUID        | PK                         | Trả về client ngay sau POST /upload   |
-| `owner_id`        | UUID        | FK → users.id NOT NULL     | Ownership check                       |
+| `id`              | INT         | PK                         | Trả về client ngay sau POST /upload   |
+| `owner_id`        | INT         | FK → users.id NOT NULL     | Ownership check                       |
 | `mode`            | VARCHAR(20) | NOT NULL                   | `bullet`, `contract_table`, `concept` |
 | `status`          | VARCHAR(20) | NOT NULL DEFAULT `pending` | Xem enum bên dưới                     |
 | `file_count`      | INT         | NOT NULL                   | Tổng số file trong batch              |
@@ -157,9 +158,9 @@ Mỗi row = 1 file trong 1 job (batch 5 file → 5 rows).
 
 | Column            | Type        | Constraint                 | Ghi chú                               |
 | ----------------- | ----------- | -------------------------- | ------------------------------------- |
-| `id`              | UUID        | PK                         |                                       |
-| `job_id`          | UUID        | FK → jobs.id NOT NULL      |                                       |
-| `document_id`     | UUID        | FK → documents.id NOT NULL |                                       |
+| `id`              | INT         | PK                         |                                       |
+| `job_id`          | INT         | FK → jobs.id NOT NULL      |                                       |
+| `document_id`     | INT         | FK → documents.id NOT NULL |                                       |
 | `status`          | VARCHAR(20) | NOT NULL DEFAULT `pending` | Giống jobs.status enum                |
 | `attempt_count`   | INT         | NOT NULL DEFAULT 0         | Tối đa 3 lần (BR02)                   |
 | `timeout_seconds` | INT         | NULLABLE                   | `30 + 3 × page_count`, max 300 (BR02) |
@@ -172,9 +173,9 @@ Mỗi row = 1 file trong 1 job (batch 5 file → 5 rows).
 
 | Column        | Type         | Constraint                 | Ghi chú                                |
 | ------------- | ------------ | -------------------------- | -------------------------------------- |
-| `id`          | UUID         | PK                         |                                        |
-| `job_id`      | UUID         | FK → jobs.id NOT NULL      |                                        |
-| `document_id` | UUID         | FK → documents.id NOT NULL |                                        |
+| `id`          | INT          | PK                         |                                        |
+| `job_id`      | INT          | FK → jobs.id NOT NULL      |                                        |
+| `document_id` | INT          | FK → documents.id NOT NULL |                                        |
 | `claim_text`  | TEXT         | NOT NULL                   | Đoạn text trích dẫn                    |
 | `doc_name`    | VARCHAR(255) | NOT NULL                   | Tên hiển thị (BR05)                    |
 | `page`        | INT          | NULLABLE                   | NULL nếu không xác định được           |
@@ -207,26 +208,29 @@ CREATE INDEX idx_citations_job ON citations(job_id);
 ## SQL — Create Tables (MySQL 8.x)
 
 ```sql
-CREATE TABLE users (
-    id          VARCHAR(36)  PRIMARY KEY,
+CREATE DATABASE IF NOT EXISTS documind_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE documind_db;
+
+CREATE TABLE IF NOT EXISTS users (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
     username    VARCHAR(100) NOT NULL UNIQUE,
     email       VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE folders (
-    id          VARCHAR(36)  PRIMARY KEY,
-    owner_id    VARCHAR(36)  NOT NULL,
+CREATE TABLE IF NOT EXISTS folders (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id    INT  NOT NULL,
     name        VARCHAR(100) NOT NULL,
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner_id) REFERENCES users(id)
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE documents (
-    id                VARCHAR(36)  PRIMARY KEY,
-    owner_id          VARCHAR(36)  NOT NULL,
-    folder_id         VARCHAR(36)  DEFAULT NULL,
+CREATE TABLE IF NOT EXISTS documents (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id    INT  NOT NULL,
+    folder_id   INT  DEFAULT NULL,
     original_filename VARCHAR(255) NOT NULL,
     storage_path      TEXT         NOT NULL,
     file_format       VARCHAR(10)  NOT NULL,          -- PDF | DOCX | PPTX
@@ -240,52 +244,53 @@ CREATE TABLE documents (
     last_accessed_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at        DATETIME     NOT NULL,
     created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner_id)  REFERENCES users(id),
-    FOREIGN KEY (folder_id) REFERENCES folders(id)
+    FOREIGN KEY (owner_id)  REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX idx_documents_owner   ON documents(owner_id);
 CREATE INDEX idx_documents_expires ON documents(expires_at);
 CREATE INDEX idx_documents_label   ON documents(ai_label);
 
-CREATE TABLE jobs (
-    id               VARCHAR(36) PRIMARY KEY,
-    owner_id         VARCHAR(36) NOT NULL,
-    mode             VARCHAR(20) NOT NULL,          -- bullet|table|concept
+CREATE TABLE IF NOT EXISTS jobs (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id    INT NOT NULL,
+    mode             VARCHAR(20) NOT NULL,          -- bullet|contract_table|concept
     status           VARCHAR(20) NOT NULL DEFAULT 'pending',
     file_count       INT         NOT NULL,
     completed_count  INT         NOT NULL DEFAULT 0,
     created_at       DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     finished_at      DATETIME    DEFAULT NULL,
-    FOREIGN KEY (owner_id) REFERENCES users(id)
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE job_files (
-    id               VARCHAR(36) PRIMARY KEY,
-    job_id           VARCHAR(36) NOT NULL,
-    document_id      VARCHAR(36) NOT NULL,
+CREATE TABLE IF NOT EXISTS job_files (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    job_id      INT NOT NULL,
+    document_id INT NOT NULL,
     status           VARCHAR(20) NOT NULL DEFAULT 'pending',
     attempt_count    INT         NOT NULL DEFAULT 0,
     timeout_seconds  INT         DEFAULT NULL,
     error_message    TEXT        DEFAULT NULL,
     created_at       DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (job_id)      REFERENCES jobs(id),
-    FOREIGN KEY (document_id) REFERENCES documents(id)
+    FOREIGN KEY (job_id)      REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE citations (
-    id          VARCHAR(36)  PRIMARY KEY,
-    job_id      VARCHAR(36)  NOT NULL,
-    document_id VARCHAR(36)  NOT NULL,
+CREATE TABLE IF NOT EXISTS citations (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    job_id      INT  NOT NULL,
+    document_id INT  NOT NULL,
     claim_text  TEXT         NOT NULL,
     doc_name    VARCHAR(255) NOT NULL,
     page        INT          DEFAULT NULL,
     text_span   TEXT         DEFAULT NULL,
     unverified  TINYINT(1)   NOT NULL DEFAULT 0,
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (job_id)      REFERENCES jobs(id),
-    FOREIGN KEY (document_id) REFERENCES documents(id)
+    FOREIGN KEY (job_id)      REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX idx_citations_job ON citations(job_id);
+
 ```

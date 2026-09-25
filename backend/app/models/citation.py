@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
@@ -10,9 +9,9 @@ from app.db.database import Base
 class Citation(Base):
     __tablename__ = "citations"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    job_id = Column(String(36), ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
-    document_id = Column(String(36), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
     claim_text = Column(Text, nullable=False)
     doc_name = Column(String(255), nullable=False)
     page = Column(Integer, nullable=True)
