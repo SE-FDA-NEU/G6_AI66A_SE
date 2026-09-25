@@ -5,7 +5,7 @@ CREATE DATABASE IF NOT EXISTS documind_db CHARACTER SET utf8mb4 COLLATE utf8mb4_
 USE documind_db;
 
 CREATE TABLE IF NOT EXISTS users (
-    id          VARCHAR(36)  PRIMARY KEY,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
     username    VARCHAR(100) NOT NULL UNIQUE,
     email       VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -13,17 +13,17 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS folders (
-    id          VARCHAR(36)  PRIMARY KEY,
-    owner_id    VARCHAR(36)  NOT NULL,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id    INT  NOT NULL,
     name        VARCHAR(100) NOT NULL,
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS documents (
-    id                VARCHAR(36)  PRIMARY KEY,
-    owner_id          VARCHAR(36)  NOT NULL,
-    folder_id         VARCHAR(36)  DEFAULT NULL,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id    INT  NOT NULL,
+    folder_id   INT  DEFAULT NULL,
     original_filename VARCHAR(255) NOT NULL,
     storage_path      TEXT         NOT NULL,
     file_format       VARCHAR(10)  NOT NULL,          -- PDF | DOCX | PPTX
@@ -46,8 +46,8 @@ CREATE INDEX idx_documents_expires ON documents(expires_at);
 CREATE INDEX idx_documents_label   ON documents(ai_label);
 
 CREATE TABLE IF NOT EXISTS jobs (
-    id               VARCHAR(36) PRIMARY KEY,
-    owner_id         VARCHAR(36) NOT NULL,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id    INT NOT NULL,
     mode             VARCHAR(20) NOT NULL,          -- bullet|contract_table|concept
     status           VARCHAR(20) NOT NULL DEFAULT 'pending',
     file_count       INT         NOT NULL,
@@ -58,9 +58,9 @@ CREATE TABLE IF NOT EXISTS jobs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS job_files (
-    id               VARCHAR(36) PRIMARY KEY,
-    job_id           VARCHAR(36) NOT NULL,
-    document_id      VARCHAR(36) NOT NULL,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    job_id      INT NOT NULL,
+    document_id INT NOT NULL,
     status           VARCHAR(20) NOT NULL DEFAULT 'pending',
     attempt_count    INT         NOT NULL DEFAULT 0,
     timeout_seconds  INT         DEFAULT NULL,
@@ -71,9 +71,9 @@ CREATE TABLE IF NOT EXISTS job_files (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS citations (
-    id          VARCHAR(36)  PRIMARY KEY,
-    job_id      VARCHAR(36)  NOT NULL,
-    document_id VARCHAR(36)  NOT NULL,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    job_id      INT  NOT NULL,
+    document_id INT  NOT NULL,
     claim_text  TEXT         NOT NULL,
     doc_name    VARCHAR(255) NOT NULL,
     page        INT          DEFAULT NULL,

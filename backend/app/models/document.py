@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Text, BigInteger, Integer, Float, JSON, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
@@ -10,9 +9,9 @@ from app.db.database import Base
 class Document(Base):
     __tablename__ = "documents"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    owner_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    folder_id = Column(String(36), ForeignKey("folders.id", ondelete="SET NULL"), nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    folder_id = Column(Integer, ForeignKey("folders.id", ondelete="SET NULL"), nullable=True, index=True)
     original_filename = Column(String(255), nullable=False)
     storage_path = Column(Text, nullable=False)
     file_format = Column(String(10), nullable=False)  # PDF | DOCX | PPTX
