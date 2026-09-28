@@ -1,12 +1,43 @@
-# DocuMind — Database Design
+# DocuMind — System Design
 
-> Phiên bản: Sprint 2 baseline  
-> Engine: **MySQL 8.x**  
+
+> Phiên bản: Sprint 2 baseline 
+> Engine: **MySQL 8.x** 
 > ORM: SQLAlchemy 2.x + PyMySQL driver
+
 
 ---
 
-## ERD (Entity Relationship Diagram)
+
+## 3.1 Architecture
+
+
+```text
+┌───────────────────┐    HTTP (JSON/JWT)    ┌─────────────────────────┐
+│     Browser       │ ────────────────────► │      FastAPI App        │
+│ (Swagger/React)   │ ◄──────────────────── │      backend/app        │
+└───────────────────┘     JSON response     └───────────┬─────────────┘
+                                                       │ function calls
+                                                       ▼
+                                           ┌─────────────────────────┐
+                                           │      Core Services      │
+                                           │   auth, jobs, upload    │
+                                           │   (enforces BR1–BR7)    │
+                                           └───────────┬─────────────┘
+                                                       │ SQL (SQLAlchemy)
+                                                       ▼
+                                           ┌─────────────────────────┐
+                                           │     MySQL Database      │
+                                           │       documind_db       │
+                                           └─────────────────────────┘
+```
+
+
+## 3.2 Data model
+
+
+### ERD (Entity Relationship Diagram)
+
 
 ```
 ┌──────────────────┐         ┌──────────────────────────┐
