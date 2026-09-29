@@ -19,7 +19,6 @@ class Citation(Base):
     unverified = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now(), default=datetime.utcnow)
 
-    # Relationships
     job = relationship("Job", back_populates="citations")
     document = relationship("Document", back_populates="citations")
 
