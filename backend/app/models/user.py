@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Integer, Column, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -15,7 +15,6 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now(), default=datetime.utcnow)
 
-    # Relationships
     folders = relationship("Folder", back_populates="owner", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
     jobs = relationship("Job", back_populates="owner", cascade="all, delete-orphan")
