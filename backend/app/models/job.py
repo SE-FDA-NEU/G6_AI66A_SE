@@ -13,8 +13,8 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    mode = Column(Enum(JobMode), nullable=False)
-    status = Column(Enum(JobStatus), nullable=False, default=JobStatus.PENDING)
+    mode = Column(Enum(JobMode, values_callable=lambda obj: [e.value for e in obj]), nullable=False)
+    status = Column(Enum(JobStatus, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=JobStatus.PENDING)
     file_count = Column(Integer, nullable=False)
     completed_count = Column(Integer, nullable=False, default=0)
     result_data = Column(JSON, nullable=True)

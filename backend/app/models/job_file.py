@@ -13,7 +13,7 @@ class JobFile(Base):
     id = Column(Integer, primary_key=True, index=True)
     job_id = Column(Integer, ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
     document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
-    status = Column(Enum(JobStatus), nullable=False, default=JobStatus.PENDING)
+    status = Column(Enum(JobStatus, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=JobStatus.PENDING)
     attempt_count = Column(Integer, nullable=False, default=0)
     timeout_seconds = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)

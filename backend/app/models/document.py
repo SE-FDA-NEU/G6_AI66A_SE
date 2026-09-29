@@ -16,12 +16,12 @@ class Document(Base):
     folder_id = Column(Integer, ForeignKey("folders.id", ondelete="SET NULL"), nullable=True, index=True)
     original_filename = Column(String(255), nullable=False)
     storage_path = Column(Text, nullable=False)
-    file_format = Column(Enum(FileFormat), nullable=False)
+    file_format = Column(Enum(FileFormat, values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     file_size_bytes = Column(BigInteger, nullable=False)
     page_count = Column(Integer, nullable=True)
     ai_label = Column(String(100), nullable=True, index=True)
     ai_confidence = Column(Float, nullable=True)  # 0.0–1.0
-    review_state = Column(Enum(ReviewState), nullable=False, default=ReviewState.NEEDS_REVIEW)
+    review_state = Column(Enum(ReviewState, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=ReviewState.NEEDS_REVIEW)
     user_label = Column(String(100), nullable=True)
     extracted_text = Column(JSON, nullable=True)  # [{page, text}]
     last_accessed_at = Column(DateTime, nullable=False, server_default=func.now(), default=datetime.utcnow)
