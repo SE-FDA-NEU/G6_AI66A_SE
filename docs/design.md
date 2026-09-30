@@ -164,3 +164,17 @@ CREATE INDEX idx_citations_job ON citations(job_id);
 | BR07 | User sees only own data                                           | `owner_id` FK on all tables; checked in every API handler                   |
 
 ---
+## 3.3 API design
+
+| Method | Path | Input | Success | Errors |
+| :--- | :--- | :--- | :--- | :--- |
+| **POST** | `/auth/login` | Form:<br>`username`, `password` | `200` &middot; `access_token`, `token_type` | `401` invalid credentials;<br>`422` missing form fields |
+| **POST** | `/upload` | Multipart: `files` (1–5 PDF/DOCX/PPTX files), `mode` (`bullet`, `table`, `concept`) | `202` &middot; `job_id`, `status: pending`, accepted document IDs | `401` no valid token (**BR07**);<br>`413` file > 5 MB or batch > 50 MB (**BR01**);<br>`422` invalid format, count or mode (**BR01**) |
+| **GET** | `/documents` | Query:<br>`folder_id?`, `label?`, `review_state?` | `200` &middot; current user's document list with suggested labels, folder and processing status | `401` unauthenticated (**BR07**);<br>`422` invalid filter |
+| **GET** | `/documents/{document_id}` | Path:<br>`document_id` | `200` &middot; document metadata, AI label/confidence, user label, folder, page count, expiry | `401` unauthenticated;<br>`404` absent or not owned (**BR07**) |
+| **GET** | `/documents/{document_id}/file` | Path: `document_id`;<br>query: `page?` | `200` &middot; original file for the reader; `page` selects the initial view | `401` unauthenticated;<br>`404` absent or not owned (**BR07**);<br>`422` page outside document |
+| **PATCH** | `/documents/{document_id}/label` | JSON:<br>`user_label`, `review_state` | `200` &middot; saved user label; original AI suggestion retained | `401` unauthenticated;<br>`404` absent or not owned (**BR07**);<br>`422` invalid label (**BR03**) |
+| **PATCH** | `/documents/{document_id}/folder` | JSON:<br>`folder_id` or `null` to leave unfiled | `200` &middot; updated folder; AI label unchanged | `401` unauthenticated;<br>`404` document or folder absent/not owned (**BR07**);<br>`422` invalid folder ID (**BR03**) |
+| **GET** | `/folders` | — | `200` &middot; folders owned by the current user | `401` unauthenticated (**BR07**) |
+| **POST** | `/folders` | JSON: `name` | `201` &middot; `folder_id`, `name` | `401` unauthenticated (**BR07**);<br>`422` blank or invalid name |
+| **GET** | `/search` | Query:<br>`q`, `folder_id?`, `label?` | `200` &middot; relevance-ranked search results | `401` unauthenticated (**BR07**);<br>`422` missing query `q` |
