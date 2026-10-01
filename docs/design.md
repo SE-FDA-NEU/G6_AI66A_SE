@@ -178,3 +178,19 @@ CREATE INDEX idx_citations_job ON citations(job_id);
 | **GET** | `/folders` | — | `200` &middot; folders owned by the current user | `401` unauthenticated (**BR07**) |
 | **POST** | `/folders` | JSON: `name` | `201` &middot; `folder_id`, `name` | `401` unauthenticated (**BR07**);<br>`422` blank or invalid name |
 | **GET** | `/search` | Query:<br>`q`, `folder_id?`, `label?` | `200` &middot; relevance-ranked search results | `401` unauthenticated (**BR07**);<br>`422` missing query `q` |
+
+## 3.5 Architecture Decision Records
+
+### Decision 1 - MySQL 8.x instead of SQLite or PostgreSQL
+
+* **Options**: SQLite file · PostgreSQL in Docker · MySQL 8.x.
+* **Chose**: MySQL 8.x.
+* **Why**: SQLite's database-level lock would cause errors during concurrent writes from our background AI workers. PostgreSQL adds Docker complexity to the local setup and uses too much RAM for an AWS Free Tier server. MySQL provides the necessary row-level locking natively without the overhead.
+* **What would change our mind**: If our app required complex JSONB analytics or geospatial queries that MySQL couldn't handle efficiently, we would move to PostgreSQL.
+
+### Decision 2 — Tracking status in both ```jobs``` and ```job_files```
+
+* **Options**: Status in ```jobs``` only · Status in ```job_files``` only · Status in both.
+* **Chose**: Status in both.
+* **Why**: Our batch processing allows up to 5 files per job. Tracking status globally in jobs is needed for the overall UI progress bar, but tracking in ```job_files``` is strictly required to identify exactly which specific file failed and why.
+* **What would change our mind**: If we disabled batch processing and restricted users to strictly one file per upload, ```job_files``` would become redundant and we would merge the status into the ```documents``` table.
