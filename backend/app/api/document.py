@@ -12,20 +12,20 @@ from app.core.security import get_current_user_id
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
 
-@router.get("", response_model=List[DocumentResponse], summary="Lấy danh sách documents của người dùng")
+@router.get("", response_model=List[DocumentResponse], summary="Get list of documents for current user")
 def get_documents(
-    folder_id: Optional[int] = Query(None, description="Lọc theo folder ID"),
-    review_state: Optional[ReviewState] = Query(None, description="Lọc theo trạng thái kiểm duyệt"),
-    search: Optional[str] = Query(None, description="Tìm kiếm theo tên file hoặc nhãn AI"),
-    skip: int = Query(0, ge=0, description="Số lượng bản ghi bỏ qua (phân trang)"),
-    limit: int = Query(50, ge=1, le=100, description="Số lượng bản ghi tối đa lấy về"),
+    folder_id: Optional[int] = Query(None, description="Filter by folder ID"),
+    review_state: Optional[ReviewState] = Query(None, description="Filter by review state"),
+    search: Optional[str] = Query(None, description="Search by file name or AI label"),
+    skip: int = Query(0, ge=0, description="Number of records to skip (pagination)"),
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of records to return"),
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
-    Lấy danh sách các tài liệu thuộc sở hữu của người dùng hiện tại (BR07).
-    Bỏ trường extracted_text để tối ưu tốc độ và dung lượng truyền tải.
-    Hỗ trợ lọc theo folder, trạng thái review, tìm kiếm và phân trang.
+    Retrieve documents owned by the current user (BR07).
+    Defers the extracted_text field to optimize latency and payload size.
+    Supports filtering by folder, review state, search, and pagination.
     """
     query = (
         db.query(Document)
@@ -51,15 +51,15 @@ def get_documents(
     return documents
 
 
-@router.get("/{document_id}", response_model=DocumentResponse, summary="Lấy thông tin chi tiết một document")
+@router.get("/{document_id}", response_model=DocumentResponse, summary="Get document details by ID")
 def get_document_by_id(
     document_id: int,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
-    Lấy thông tin chi tiết 1 document của người dùng (BR07), bỏ trường extracted_text.
-    Đồng thời cập nhật last_accessed_at và làm mới hạn sử dụng expires_at thêm 30 ngày (BR06).
+    Retrieve details of a single document owned by the current user (BR07), excluding extracted_text.
+    Updates last_accessed_at and renews expiration by 30 days (BR06).
     """
     document = (
         db.query(Document)
@@ -71,10 +71,10 @@ def get_document_by_id(
     if not document:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy document với ID {document_id}",
+            detail=f"Document with ID {document_id} not found",
         )
 
-    # Cập nhật thời điểm truy cập gần nhất và gia hạn expires_at (BR06)
+    # Update last accessed time and extend expires_at (BR06)
     document.last_accessed_at = datetime.utcnow()
     document.expires_at = datetime.utcnow() + timedelta(days=30)
     db.commit()

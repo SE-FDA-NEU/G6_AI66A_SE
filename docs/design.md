@@ -247,6 +247,11 @@ _(Or quickly test using a single cURL command)_:
 curl -X GET "http://localhost:8000/documents?skip=0&limit=50" -H "Authorization: Bearer <TOKEN_FROM_LOGIN>"
 ```
 
+### Screenshot of the Running Page:
+The screenshot below demonstrates the running API endpoint on Swagger UI (`http://127.0.0.1:8000/documents?skip=0&limit=50`) returning HTTP `200 OK` with the seeded documents:
+
+![Screenshot of the Running Page - Swagger UI Response](images/response_body.png)
+
 ---
 
 ### 6. The Query Behind the Page (Query in `design.md`)
@@ -275,6 +280,11 @@ WHERE documents.owner_id = 1
 ORDER BY documents.created_at DESC
 LIMIT 50 OFFSET 0;
 ```
+
+### Screenshot of SQL Query and Fetched Data:
+The screenshot below shows the executed query in the database client and the resulting records returned from the `documents` table:
+
+![Screenshot of SQL Query and Fetched Data](images/sql_query.png)
 
 ---
 

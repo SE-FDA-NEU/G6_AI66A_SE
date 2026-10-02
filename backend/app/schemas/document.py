@@ -38,7 +38,6 @@ class DocumentResponse(BaseModel):
     ai_confidence: Optional[float] = None
     review_state: ReviewState
     user_label: Optional[str] = None
-    extracted_text: Optional[Any] = None
     last_accessed_at: datetime
     expires_at: datetime
     created_at: datetime

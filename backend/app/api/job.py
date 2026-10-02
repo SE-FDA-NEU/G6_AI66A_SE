@@ -12,18 +12,18 @@ from app.core.security import get_current_user_id
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
-@router.get("", response_model=List[JobResponse], summary="Lấy danh sách các jobs của người dùng")
+@router.get("", response_model=List[JobResponse], summary="Get list of jobs for current user")
 def get_jobs(
-    status_filter: Optional[JobStatus] = Query(None, alias="status", description="Lọc theo trạng thái xử lý job"),
-    mode_filter: Optional[JobMode] = Query(None, alias="mode", description="Lọc theo chế độ tóm tắt (bullet, table, concept)"),
-    skip: int = Query(0, ge=0, description="Số lượng bản ghi bỏ qua (phân trang)"),
-    limit: int = Query(50, ge=1, le=100, description="Số lượng bản ghi tối đa lấy về"),
+    status_filter: Optional[JobStatus] = Query(None, alias="status", description="Filter by job processing status"),
+    mode_filter: Optional[JobMode] = Query(None, alias="mode", description="Filter by summary mode (bullet, table, concept)"),
+    skip: int = Query(0, ge=0, description="Number of records to skip (pagination)"),
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of records to return"),
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
-    Lấy danh sách các công việc xử lý tài liệu thuộc sở hữu của người dùng hiện tại (BR07).
-    Hỗ trợ lọc theo trạng thái (status), chế độ (mode) và phân trang.
+    Retrieve document processing jobs owned by the current user (BR07).
+    Supports filtering by status, mode, and pagination.
     """
     query = db.query(Job).filter(Job.owner_id == current_user_id)
 
@@ -37,15 +37,15 @@ def get_jobs(
     return jobs
 
 
-@router.get("/{job_id}", response_model=JobDetailResponse, summary="Lấy thông tin chi tiết một job kèm files và citations")
+@router.get("/{job_id}", response_model=JobDetailResponse, summary="Get job details by ID with files and citations")
 def get_job_by_id(
     job_id: int,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
-    Lấy thông tin chi tiết 1 job của người dùng (BR07).
-    Bao gồm kết quả xử lý (result_data), danh sách file xử lý (job_files) và các trích dẫn (citations).
+    Retrieve details of a single job owned by the current user (BR07).
+    Includes processing results (result_data), processed files (job_files), and citations.
     """
     job = (
         db.query(Job)
@@ -57,7 +57,7 @@ def get_job_by_id(
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy job với ID {job_id}",
+            detail=f"Job with ID {job_id} not found",
         )
 
     return job

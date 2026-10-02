@@ -5,8 +5,8 @@ router = APIRouter(prefix="/upload", tags=["Upload"])
 
 @router.post("")
 def upload_file(user_id: str = Depends(get_current_user_id)):
-    # Bất cứ ai gọi API này đều phải có Token hợp lệ, nếu không sẽ bị chặn ngay từ cửa
+    # Any caller must provide a valid Token, otherwise access is denied
     return {
-        "message": "Upload thành công!",
+        "message": "Upload successful!",
         "user_id_from_token": user_id
     }
