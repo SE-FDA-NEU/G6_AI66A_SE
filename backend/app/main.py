@@ -6,27 +6,31 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.db.database import engine, Base
 
-# Import tất cả models để SQLAlchemy nhận diện metadata
+# Import all models for SQLAlchemy metadata recognition
 import app.models  # noqa: F401
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # --- Chạy khi Startup ---
-    print("🚀 Khởi động server (Sử dụng Database-first)...")
+    # --- Startup ---
+    print("🚀 Starting server (Database-first approach)...")
     
-    yield # Chỗ này là lúc app đang chạy
+    yield  # Application is running
     
-    # --- Chạy khi Shutdown (nếu cần dọn dẹp) ---
-    print("Đang tắt server...")
+    # --- Shutdown ---
+    print("Shutting down server...")
 
-# Khởi tạo app với lifespan
+# Initialize app with lifespan
 app = FastAPI(title="DocuMind API", lifespan=lifespan)
 
 from app.api.auth import router as auth_router
 from app.api.upload import router as upload_router
+from app.api.document import router as document_router
+from app.api.job import router as job_router
 
 app.include_router(auth_router)
 app.include_router(upload_router)
+app.include_router(document_router)
+app.include_router(job_router)
 
 @app.get("/")
 def read_root():
