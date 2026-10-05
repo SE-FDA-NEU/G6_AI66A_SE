@@ -1,8 +1,39 @@
 # DocuMind — System Design
 
-> Phiên bản: Sprint 2 baseline  
-> Engine: **MySQL 8.x**  
-> ORM: SQLAlchemy 2.x + PyMySQL driver
+```
+Team:           Team 06 — DocuMind
+Topic:          C2
+Members:        To Hien Hai Dang (11247271), Phan Dang Vu (11247373),
+                Bui Dang Duong (11247274), Nguyen Bao Tai (11247348)
+Product Owner:  @PhanDangVu
+Scrum Master:   @duongbui0811       (Sprint 2 — must differ from Sprint 1)
+
+Repository:     https://github.com/SE-FDA-NEU/G6_AI66A_SE.git
+Project board:  https://github.com/orgs/SE-FDA-NEU/projects/24
+Setup guide:    https://github.com/SE-FDA-NEU/G6_AI66A_SE/blob/main/docs/SETUP.md
+
+Submitted by:   Phan Dang Vu
+```
+
+
+
+## Project board screenshots
+
+### After Sprint Planning (Sep 22)
+
+![Project board after Sprint Planning](images/beforem2.png)
+
+### On submission day (Oct 5)
+
+![Project board on submission day](images/afterm2.png)
+
+
+
+## Walking skeleton running
+
+![Walking skeleton running with browser address bar visible](images/walking-skeleton.png)
+
+
 
 ---
 
@@ -18,7 +49,7 @@
                                             ┌─────────────────────────┐
                                             │      Core Services      │
                                             │   auth, jobs, upload    │
-                                            │   (enforces BR1–BR7)    │
+                                            │   (enforces BR1–BR7)    │markdown
                                             └───────────┬─────────────┘
                                                         │ SQL (SQLAlchemy)
                                                         ▼
@@ -35,6 +66,8 @@
 ![ERD Diagram](images/ERD.drawio.png)
 
 ---
+
+
 
 ## Table definitions
 
@@ -173,6 +206,8 @@ python src/init_db.py
 
 Once the database has been successfully initialized and seeded, start the FastAPI development server:
 
+
+
 ```bash
 uvicorn app.main:app --reload
 ```
@@ -248,6 +283,7 @@ curl -X GET "http://localhost:8000/documents?skip=0&limit=50" -H "Authorization:
 ```
 
 ### Screenshot of the Running Page:
+
 The screenshot below demonstrates the running API endpoint on Swagger UI (`http://127.0.0.1:8000/documents?skip=0&limit=50`) returning HTTP `200 OK` with the seeded documents:
 
 ![Screenshot of the Running Page - Swagger UI Response](images/response_body.png)
@@ -282,6 +318,7 @@ LIMIT 50 OFFSET 0;
 ```
 
 ### Screenshot of SQL Query and Fetched Data:
+
 The screenshot below shows the executed query in the database client and the resulting records returned from the `documents` table:
 
 ![Screenshot of SQL Query and Fetched Data](images/sql_query.png)
