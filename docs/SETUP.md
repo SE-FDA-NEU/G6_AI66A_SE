@@ -296,6 +296,24 @@ The test backend uses the real authentication endpoints with a disposable in-mem
 
 The seven tests cover invalid credentials and retry, HttpOnly cookies, session persistence, logout, guest/forged-session redirects, network errors, email validation, mobile layout and legacy username API clients. They verify task #62 authentication behavior; MySQL integration and the full document workspace require separate validation.
 
+### Next.js route guard
+
+`frontend/proxy.js` runs before requests to `/workspace`, `/upload`, `/results/*` and `/documents/*` (including their root paths). Next.js 16 renamed the `middleware.js` convention to `proxy.js`; this file implements the route guard middleware for the installed version.
+
+The guard redirects missing or invalid sessions to `/` with HTTP 307. It validates the HttpOnly cookie through FastAPI `/auth/me`, which checks the JWT signature, expiration and account existence. If validation cannot reach the backend, access is denied. The existing workspace server-side validation remains in place. The landing page, authentication endpoints and frontend assets are outside the guard matcher.
+
+Run the guard tests from `frontend`:
+
+```powershell
+npx playwright test tests/route-guard.spec.js
+# Run both authentication and route-guard tests:
+npx playwright test
+```
+
+The tests cover a fresh browser session, missing tokens, signed expired tokens whose cookies are still present, forged signatures, valid sessions and public routes. The upload/results/document pages are not implemented yet; valid sessions pass the guard and receive their current 404 response.
+
+For manual verification, start both servers as above, open a private/incognito browser window, and visit `http://127.0.0.1:8000/workspace`. It should return to `/` and display the sign-in form. Repeat with `/upload`, `/results/1` and `/documents/1`.
+
 On Linux CI, install browser system dependencies with `npx playwright install --with-deps chromium`.
 
 ### Check the production build
