@@ -12,6 +12,9 @@ No pre-installed software is assumed. A fresh machine requires the following too
 - **Git:** version `2.40+` ([Download Git](https://git-scm.com/))
 - **Python:** version `3.11+` or `3.12+` (with `pip` and `venv`) ([Download Python](https://www.python.org/))
 - **MySQL Server:** version `8.0+` (running on default port `3306`) ([Download MySQL](https://dev.mysql.com/downloads/installer/))
+- **Node.js:** version `20.9+` with npm, required for the Next.js frontend and Playwright tests.
+
+Sections 2–7 describe the standalone backend. To run the Next.js landing page with FastAPI, follow [Section 8](#8-nextjs-landing-page-and-sign-in-task-62): Next.js uses port **8000**, and FastAPI uses port **8001**.
 
 ---
 
@@ -227,7 +230,96 @@ LIMIT 50 OFFSET 0;
 
 ---
 
-## 8. Tested By (Independent Verification Log)
+## 8. Next.js Landing Page and Sign-in (Task #62)
+
+The `/` page shows the DocuMind introduction and an email/password sign-in form. It calls `POST /auth/login`; FastAPI validates the account and sets a JWT in the `documind_session` HttpOnly cookie. A successful sign-in redirects to `/workspace`. Failed sign-in shows an inline error. The workspace currently provides a minimal sign-in destination and logout; document management belongs to #63.
+
+Next.js serves the UI on **8000** and forwards `/auth/*` to FastAPI on **8001** using `frontend/next.config.mjs`. Both servers must be running to sign in manually. `BACKEND_ORIGIN` can override the backend address.
+
+### Install dependencies (Windows PowerShell)
+
+From the repository root, create the Python environment if it does not already exist:
+
+```powershell
+python -m venv backend/.venv
+& backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+cd frontend
+npm ci
+cd ..
+```
+
+For manual sign-in, configure `backend/.env` following Section 3, including your MySQL password and a private `SECRET_KEY`. MySQL must be running. If this is a fresh database, initialize it following Section 4. Existing accounts can sign in using the email stored in `users.email`; API clients can still use their username.
+
+### Terminal 1 — start FastAPI
+
+From the repository root:
+
+```powershell
+cd backend
+& .venv/Scripts/python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+```
+
+If you need a development account, run the following from `backend` before starting the server:
+
+```powershell
+& .venv/Scripts/python.exe test/create_test_user.py
+```
+
+This script adds missing development users without dropping tables. You can then sign in with `test@gmail.com` and password `123456`. These credentials are for local development only.
+
+### Terminal 2 — start Next.js
+
+From the repository root:
+
+```powershell
+cd frontend
+npm run dev
+```
+
+Open **http://127.0.0.1:8000**. FastAPI Swagger is at **http://127.0.0.1:8001/docs**. If the standalone backend from Section 4 is still using port 8000, stop it and restart it on 8001 before starting Next.js.
+
+On macOS/Linux, use `.venv/bin/python` instead of `.venv/Scripts/python.exe`; omit PowerShell's `&` prefix.
+
+### Run Playwright tests
+
+After installing the Python and frontend dependencies above, run from the repository root:
+
+```powershell
+cd frontend
+npx playwright install chromium
+npx playwright test tests/auth.spec.js
+```
+
+No manual `npm run dev` or Uvicorn command is needed for tests. Playwright automatically starts Next.js on **18000** and FastAPI on **18001**, then stops them after the tests. Those two ports must be free.
+
+The test backend uses the real authentication endpoints with a disposable in-memory SQLite database and a test signing key. It does not connect to or modify your MySQL database, and does not require your local MySQL credentials. The launcher uses `backend/.venv` when available, otherwise `python` from PATH. Set `E2E_PYTHON` if you need a different Python executable.
+
+The seven tests cover invalid credentials and retry, HttpOnly cookies, session persistence, logout, guest/forged-session redirects, network errors, email validation, mobile layout and legacy username API clients. They verify task #62 authentication behavior; MySQL integration and the full document workspace require separate validation.
+
+On Linux CI, install browser system dependencies with `npx playwright install --with-deps chromium`.
+
+### Check the production build
+
+From `frontend`:
+
+```powershell
+npm run build
+npm start
+```
+
+Keep FastAPI running on 8001 when using `npm start`. Stop `npm run dev` first because both frontend commands use port 8000.
+
+### Troubleshooting task #62
+
+- **`Cannot find package '@playwright/test'`:** run `npm ci` inside `frontend`.
+- **`Invalid URL` in Playwright:** run the test inside `frontend` so it loads `playwright.config.js` and its `baseURL`.
+- **`Executable doesn't exist`:** run `npx playwright install chromium` inside `frontend`.
+- **Connection or server error during manual sign-in:** check that FastAPI is running on 8001, MySQL is running, and `backend/.env` is configured correctly.
+- **`Address already in use`:** stop the process using the relevant port; tests use 18000/18001 and manual development uses 8000/8001.
+
+---
+
+## 9. Tested By (Independent Verification Log)
 
 - **Tester:** `@hoang3003` (Team 3)
 - **Environment:** Fresh Windows 11 Laptop (fresh clone)

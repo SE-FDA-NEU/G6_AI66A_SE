@@ -12,7 +12,7 @@ import app.models  # noqa: F401
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- Startup ---
-    print("🚀 Starting server (Database-first approach)...")
+    print("Starting server (Database-first approach)...")
     
     yield  # Application is running
     
