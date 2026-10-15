@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+SESSION_COOKIE = "documind_session"
 
 # Cấu hình thư viện băm mật khẩu
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -25,12 +26,15 @@ def create_access_token(data: dict) -> str:
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
+def get_current_user_id(request: Request, token: str | None = Depends(oauth2_scheme)) -> int:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token không hợp lệ hoặc đã hết hạn",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    token = token or request.cookies.get(SESSION_COOKIE)
+    if not token:
+        raise credentials_exception
     try:
         # Giải mã token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -38,5 +42,5 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
         if user_id_str is None:
             raise credentials_exception
         return int(user_id_str)
-    except JWTError:
+    except (JWTError, ValueError, TypeError):
         raise credentials_exception

@@ -7,8 +7,8 @@ update this file should not be approved.
 
 | Route | Purpose | Access | Priority | Feature | Story issue | PR | Status |
 |-------|---------|--------|----------|---------|-------------|-----|--------|
-| `/` | Landing page | G | P0 | F1 | #3 | #14 | Done |
-| | | | | | | | |
+| `/` | Next.js product introduction and email sign-in; HttpOnly session and inline errors | G | P0 | F1 / US05 | #62 | Pending | In progress |
+| `/workspace` | Protected sign-in destination and logout; document UI follows in #63 | U | P0 | F1 / US05 | #62 / #63 | Pending | In progress |
 
 **Access codes:** G = guest (not logged in) · U = authenticated user · A = admin
 
@@ -20,5 +20,6 @@ Numbered, so issues and tests can cite them.
 
 | # | Rule | Enforced where | Tested by |
 |---|------|----------------|-----------|
-| BR1 | | | |
-| BR2 | | | |
+| BR07 | Guests cannot open the workspace; session must be validated on the server | `pages/workspace.js`, `/auth/me`, `get_current_user_id` | `frontend/tests/auth.spec.js` |
+
+Task #62 browser tests run against the real FastAPI authentication endpoints with an isolated in-memory SQLite database. MySQL integration, full document ownership scenarios and the document workspace remain separate tasks. Review, CI results and merge are still required by the Definition of Done.

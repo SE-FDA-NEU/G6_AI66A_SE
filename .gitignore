@@ -18,6 +18,9 @@ yarn-error.log*
 
 # Node / JS
 node_modules/
+.next/
+test-results/
+playwright-report/
 dist/
 build/
 
