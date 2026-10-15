@@ -306,13 +306,25 @@ Run the guard tests from `frontend`:
 
 ```powershell
 npx playwright test tests/route-guard.spec.js
-# Run both authentication and route-guard tests:
+# Run all authentication, route-guard and document-access tests:
 npx playwright test
 ```
 
 The tests cover a fresh browser session, missing tokens, signed expired tokens whose cookies are still present, forged signatures, valid sessions and public routes. The upload/results/document pages are not implemented yet; valid sessions pass the guard and receive their current 404 response.
 
 For manual verification, start both servers as above, open a private/incognito browser window, and visit `http://127.0.0.1:8000/workspace`. It should return to `/` and display the sign-in form. Repeat with `/upload`, `/results/1` and `/documents/1`.
+
+### Guest redirects and cross-account access (task #64)
+
+From `frontend`, run:
+
+```powershell
+npx playwright test tests/route-guard.spec.js tests/document-access.spec.js
+```
+
+The route-guard suite verifies unauthenticated `GET /workspace` returns HTTP 307 to `/` and a fresh browser reaches the sign-in form. The document-access suite calls FastAPI directly on port **18001** using real login-issued Bearer tokens with cookies suppressed. Two test users each own a private document: the owner receives HTTP 200, the other account receives HTTP 403 with only `{"detail":"Access denied"}`, and denied access leaves retention timestamps unchanged. It also verifies list isolation, guest HTTP 401 and missing-document HTTP 404. This updates the document-detail contract from the earlier combined HTTP 404 behavior to the explicit HTTP 403 required by #64.
+
+Fixtures are disposable SQLite data; no real files or MySQL data are used. The `Auth and document access tests` CI job installs both stacks and Chromium, runs the complete Playwright suite and uploads failure traces.
 
 On Linux CI, install browser system dependencies with `npx playwright install --with-deps chromium`.
 

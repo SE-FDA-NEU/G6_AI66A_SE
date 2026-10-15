@@ -64,7 +64,7 @@ def get_document_by_id(
     document = (
         db.query(Document)
         .options(defer(Document.extracted_text))
-        .filter(Document.id == document_id, Document.owner_id == current_user_id)
+        .filter(Document.id == document_id)
         .first()
     )
 
@@ -74,7 +74,13 @@ def get_document_by_id(
             detail=f"Document with ID {document_id} not found",
         )
 
-    # Update last accessed time and extend expires_at (BR06)
+    if document.owner_id != current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+    # Update last accessed time and extend expires_at (BR06) only after ownership check.
     document.last_accessed_at = datetime.utcnow()
     document.expires_at = datetime.utcnow() + timedelta(days=30)
     db.commit()
