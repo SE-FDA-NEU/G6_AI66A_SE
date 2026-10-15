@@ -19,7 +19,7 @@ export default function Workspace({ user }) {
   }
   return <><Head><title>DocuMind · Không gian tài liệu</title></Head>
     <main className="workspace"><header><a href="/workspace" className="brand">DocuMind<span className="brand-dot">.</span></a><button className="btn" onClick={logout} disabled={busy}>Đăng xuất</button></header>
-      <section className="workspace-content"><p className="eyebrow">CHÀO MỪNG, {user.username}</p><h1>Không gian tài liệu</h1><p>Bạn đã đăng nhập với {user.email}.</p><div role="alert">{error && <p className="error-box">{error}</p>}</div></section>
+      <section className="workspace-content"><p className="eyebrow">CHÀO MỪNG, {user.username}</p><h1>Không gian tài liệu</h1><p>Bạn đã đăng nhập với {user.email}.</p><a className="btn upload-link" href="/upload">Tải tài liệu</a><div role="alert">{error && <p className="error-box">{error}</p>}</div></section>
     </main></>;
 }
 export async function getServerSideProps({ req, res }) {
