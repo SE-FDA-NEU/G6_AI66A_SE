@@ -343,3 +343,16 @@ Keep FastAPI running on 8001 when using `npm start`. Stop `npm run dev` first be
 - **Environment:** Fresh Windows 11 Laptop (fresh clone)
 - **Execution Time:** 2026-10-1 — **6 minutes**
 - **Result:** Successfully executed all steps from clone to running the server and testing `GET /documents` on Swagger UI with 100% pass rate, returning exactly 10 documents for user `demouser`.
+
+### Server-side upload validation (task #66)
+
+Install test dependencies and run the isolated API suite from the repository root:
+
+```bash
+backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt
+backend/.venv/bin/python -m pytest backend/tests -v
+```
+
+On Windows use `backend/.venv/Scripts/python.exe`. Tests use a dedicated signing key and do not access MySQL, require running servers, or persist uploaded files.
+
+For manual testing, run FastAPI on port 8001, open `http://127.0.0.1:8001/docs`, authenticate via `/auth/login`, then call `POST /upload` with multipart `files`. Valid batches return HTTP 200 with file names and measured byte sizes. Invalid batches return HTTP 422 with `detail.batch_errors` and `detail.files`, including zero-based indexes and error codes. Limits: five PDF/DOCX/PPTX files, at most 5 MB each and 50 MB combined (1 MB = 1,048,576 bytes). This endpoint validates only; storage and job creation are not implemented yet. See `docs/design.md` for the response contract.

@@ -87,7 +87,7 @@ Submitted by:   Phan Dang Vu
 | Method    | Path                              | Input                                                                               | Success                                                                                         | Errors                                                                                                                               |
 | :-------- | :-------------------------------- | :---------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
 | **POST**  | `/auth/login`                     | Form:<br>`username`, `password`                                                     | `200` &middot; `access_token`, `token_type`                                                     | `401` invalid credentials;<br>`422` missing form fields                                                                              |
-| **POST**  | `/upload`                         | Multipart: `files` (1–5 PDF/DOCX/PPTX files), `mode` (`bullet`, `table`, `concept`) | `202` &middot; `job_id`, `status: pending`, accepted document IDs                               | `401` no valid token (**BR07**);<br>`413` file > 5 MB or batch > 50 MB (**BR01**);<br>`422` invalid format, count or mode (**BR01**) |
+| **POST**  | `/upload`                         | Multipart: `files` (1–5 PDF/DOCX/PPTX files), `mode` (`bullet`, `table`, `concept`) | `202` &middot; `job_id`, `status: pending`, accepted document IDs                               | `401` no valid token (**BR07**);<br>`422` invalid format, count, per-file size, combined size or mode; structured file errors (**BR01**, #66) |
 | **GET**   | `/documents`                      | Query:<br>`folder_id?`, `label?`, `review_state?`                                   | `200` &middot; current user's document list with suggested labels, folder and processing status | `401` unauthenticated (**BR07**);<br>`422` invalid filter                                                                            |
 | **GET**   | `/documents/{document_id}`        | Path:<br>`document_id`                                                              | `200` &middot; document metadata, AI label/confidence, user label, folder, page count, expiry   | `401` unauthenticated;<br>`404` absent or not owned (**BR07**)                                                                       |
 | **GET**   | `/documents/{document_id}/file`   | Path: `document_id`;<br>query: `page?`                                              | `200` &middot; original file for the reader; `page` selects the initial view                    | `401` unauthenticated;<br>`404` absent or not owned (**BR07**);<br>`422` page outside document                                       |
@@ -96,6 +96,35 @@ Submitted by:   Phan Dang Vu
 | **GET**   | `/folders`                        | —                                                                                   | `200` &middot; folders owned by the current user                                                | `401` unauthenticated (**BR07**)                                                                                                     |
 | **POST**  | `/folders`                        | JSON: `name`                                                                        | `201` &middot; `folder_id`, `name`                                                              | `401` unauthenticated (**BR07**);<br>`422` blank or invalid name                                                                     |
 | **GET**   | `/search`                         | Query:<br>`q`, `folder_id?`, `label?`                                               | `200` &middot; relevance-ranked search results                                                  | `401` unauthenticated (**BR07**);<br>`422` missing query `q`                                                                         |
+
+---
+
+### Upload validation implemented in #66
+
+`POST /upload` currently accepts repeated multipart `files` fields and returns **200** with `message: "Files validated"`, `user_id_from_token` and validated `files` (`filename`, `size_bytes`). This is validation only: files are not persisted and no job is created. The 202/job response above is the target for the later processing implementation; mode handling is also separate.
+
+All BR01 file-validation failures return **422**, including size violations (replacing the earlier 413 design). Limits are inclusive: at most five PDF/DOCX/PPTX files, 5 MB per file and 50 MB total, with 1 MB = 1,048,576 bytes. Extensions are case-insensitive; client MIME and size claims are not trusted. Actual bytes are counted in chunks and streams rewound. Authentication still requires a valid Bearer token or session cookie. Invalid batches are rejected as a whole.
+
+Example error response:
+
+```json
+{
+  "detail": {
+    "code": "upload_validation_failed",
+    "batch_errors": [],
+    "files": [
+      {
+        "index": 1,
+        "filename": "malware.exe",
+        "size_bytes": 16,
+        "errors": [{"code": "invalid_format", "message": "Only PDF, DOCX and PPTX files are allowed."}]
+      }
+    ]
+  }
+}
+```
+
+`index` is zero-based, so files with identical names remain distinguishable. Only failed files are listed. Error codes are `files_required`, `too_many_files`, `invalid_format`, `file_too_large` and `batch_too_large`. Missing files, excessive count and excessive combined size also appear in `batch_errors`. File count errors identify entries from index 5 onward; a combined-size error marks every file in the rejected batch. Five valid files can total only 25 MB, so the 50 MB guard is tested independently using requests that also violate the per-file limit.
 
 ---
 
