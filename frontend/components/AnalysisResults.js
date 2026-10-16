@@ -10,10 +10,10 @@ function Claim({ value, pageKind }) {
   return <div className="analysis-claim">
     <p>{value.text}</p>
     {value.unverified && <span className="analysis-unverified">Unverified · Cần kiểm tra</span>}
-    {!value.unverified && value.evidence?.map((source, index) =>
+    {value.evidence?.map((source, index) =>
       <a className="analysis-source" key={index}
-        href={`/documents/${source.document_id}?page=${source.page}`} title={source.quote}>
-        {pageKind === 'slide' ? 'Slide' : 'Trang'} {source.page}
+        href={`/documents/${source.document_id}?page=${source.page}&start=${source.start}&end=${source.end}`} title={source.quote}>
+        {pageKind === 'slide' ? 'Slide' : 'Trang'} {source.page} · #{source.document_id}
       </a>)}
   </div>;
 }

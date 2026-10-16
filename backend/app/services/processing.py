@@ -9,7 +9,7 @@ from app.models import Job, JobStatus
 from app.schemas.result import AnalysisResult, BulletOutput, ConceptOutput, JobResultData, TableOutput
 from app.services.job_extraction import prepare_document
 from app.services.reader_extraction import ReaderConversionError
-from app.services.result_persistence import InvalidAnalysisResult, publish_reader, save_analysis
+from app.services.result_persistence import InvalidAnalysisResult, publish_reader, save_analysis, sync_citations
 from app.core.config import settings
 from app.services.gemini_analysis import GeminiAnalysisError, analyze_document
 from pydantic import ValidationError
@@ -61,6 +61,11 @@ async def _process_job(job_id, session_factory, processor, analyzer):
             if file.status in (JobStatus.COMPLETED, JobStatus.FAILED):
                 continue
             document = file.document
+            if document.owner_id != job.owner_id:
+                file.status = JobStatus.FAILED
+                file.error_message = 'Document is not available to this job.'
+                db.commit()
+                continue
             source = DocumentInput(document.id, document.storage_path, document.page_count,
                                    document.file_format, document.extracted_text, document.owner_id)
             timeout = document_timeout(document.page_count)
@@ -174,6 +179,8 @@ def _save_success(db, job, file, document_id, result, versioned=False):
             results['schema_version'] = 1
             results = JobResultData.model_validate(results).model_dump(mode='json')
         job.result_data = results
+        if versioned:
+            sync_citations(db, job)
     job.completed_count = sum(item.status == JobStatus.COMPLETED for item in job.job_files)
     db.commit()
 

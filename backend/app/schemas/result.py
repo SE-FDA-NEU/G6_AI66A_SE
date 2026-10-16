@@ -15,10 +15,10 @@ class Payload(BaseModel):
 
 
 class Evidence(Payload):
-    document_id: int = Field(gt=0)
-    page: int = Field(gt=0)
-    start: int = Field(ge=0)
-    end: int = Field(gt=0)
+    document_id: int = Field(gt=0, strict=True)
+    page: int = Field(gt=0, strict=True)
+    start: int = Field(ge=0, strict=True)
+    end: int = Field(gt=0, strict=True)
     quote: str = Field(min_length=1)
     reader_version: str = Field(pattern=r'^[0-9a-f]{64}$')
 
@@ -30,9 +30,19 @@ class Evidence(Payload):
 
 
 class Claim(Payload):
+    """Shared by bullets/actions, table cells and concept descriptions.
+
+    kind is descriptive, never a bypass for source/numeric validation. Evidence
+    contains only server-validated passages; rejected references are removed.
+    unverified and verification_issues describe claim-level support, not truth.
+    Multiple passages/documents stay separate, even when their text is equal.
+    """
     text: str | None = Field(default=None, min_length=1)
     evidence: list[Evidence] = Field(default_factory=list)
     unverified: bool = True
+    kind: Literal['general', 'amount', 'date', 'percentage', 'clause'] = 'general'
+    verification_issues: list[Literal['missing_evidence', 'invalid_evidence',
+                                     'unsupported_fact', 'model_uncertain']] = Field(default_factory=list)
 
 
 class BulletOutput(Payload):

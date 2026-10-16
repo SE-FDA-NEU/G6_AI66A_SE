@@ -34,7 +34,8 @@ for (const mode of ['bullet', 'table', 'concept']) {
     await page.goto('/results/77');
     const analysis = page.getByRole('region', { name: 'Kết quả phân tích AI' });
     await expect(analysis.getByText('Phạt 0.05% mỗi ngày.', { exact: true })).toBeVisible();
-    await expect(analysis.getByRole('link', { name: 'Trang 2', exact: true })).toHaveAttribute('href', '/documents/17?page=2');
+    await expect(analysis.getByRole('link', { name: 'Trang 2 · #17', exact: true }))
+      .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10');
     await expect(analysis.getByText(/Nhãn AI:/)).toContainText('Hợp đồng');
     if (mode === 'bullet') {
       await expect(analysis.getByText('Unverified · Cần kiểm tra')).toBeVisible();
@@ -71,6 +72,24 @@ test('missing key is explained instead of displaying invented AI output', async 
   await page.goto('/results/77');
   await expect(page.getByText(/Thêm GEMINI_API_KEY/)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Tóm tắt', exact: true })).toHaveCount(0);
+});
+
+test('same claim keeps separate source links, including passages for Unverified review', async ({ page }) => {
+  const document = result('bullet');
+  const claim = document.output.bullets[0];
+  claim.unverified = true;
+  claim.verification_issues = ['unsupported_fact'];
+  claim.evidence.push({ ...claim.evidence[0], document_id: 18, start: 20, end: 30 });
+  await page.route('**/jobs/77', route => route.fulfill({ json: job(document) }));
+  await page.goto('/results/77');
+  const region = page.getByRole('region', { name: 'Kết quả phân tích AI' });
+  await expect(region.getByRole('link', { name: 'Trang 2 · #17', exact: true }))
+    .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10');
+  await expect(region.getByRole('link', { name: 'Trang 2 · #18', exact: true }))
+    .toHaveAttribute('href', '/documents/18?page=2&start=20&end=30');
+  await expect(region.getByText('Unverified · Cần kiểm tra')).toHaveCount(2);
+  await page.reload();
+  await expect(region.getByRole('link', { name: /Trang 2 · #/ })).toHaveCount(2);
 });
 
 function pdf() {
