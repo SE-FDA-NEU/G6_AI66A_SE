@@ -3,18 +3,8 @@ from io import BytesIO
 
 import pytest
 from fastapi import HTTPException, UploadFile
-from fastapi.testclient import TestClient
-
-from app.main import app
-from app.core.security import create_access_token
 from app.core.upload_validation import MB, validate_uploads
-
-
-@pytest.fixture
-def client():
-    with TestClient(app) as client:
-        client.headers["Authorization"] = f"Bearer {create_access_token({'sub': '123'})}"
-        yield client
+from app.models import Document
 
 
 def part(name="report.pdf", size=16, content_type="application/octet-stream"):
@@ -29,20 +19,23 @@ def detail(response):
 
 
 @pytest.mark.parametrize("name", ["report.PDF", "notes.docx", "slides.PpTx"])
-def test_valid_extensions_with_generic_mime(client, name):
+def test_valid_extensions_with_generic_mime(client, session_factory, name):
     response = client.post("/upload", files=[part(name)])
-    assert response.status_code == 200
-    assert response.json() == {
-        "message": "Files validated", "user_id_from_token": 123,
-        "files": [{"filename": name, "size_bytes": 16}],
-    }
+    assert response.status_code == 202
+    assert response.json()['jobId'].isdigit()
+    with session_factory() as db:
+        document = db.query(Document).one()
+        assert document.original_filename == name
+        assert document.file_size_bytes == 16
 
 
-def test_five_files_at_exact_size_boundary(client):
+def test_five_files_at_exact_size_boundary(client, session_factory):
     response = client.post("/upload", files=[part(f"contract-{i}.pdf", 5 * MB) for i in range(5)])
-    assert response.status_code == 200
-    assert len(response.json()["files"]) == 5
-    assert sum(file["size_bytes"] for file in response.json()["files"]) == 25 * MB
+    assert response.status_code == 202
+    with session_factory() as db:
+        documents = db.query(Document).all()
+        assert len(documents) == 5
+        assert sum(document.file_size_bytes for document in documents) == 25 * MB
 
 
 @pytest.mark.parametrize("name", ["malware.exe", "report.pdf.exe", "README", "notes.txt"])
@@ -98,6 +91,15 @@ def test_missing_files_has_structured_error(client):
     assert result["files"] == []
 
 
+def test_swagger_files_schema_is_binary_array(client):
+    schema = client.get('/openapi.json').json()
+    body = schema['paths']['/upload']['post']['requestBody']['content']['multipart/form-data']['schema']
+    fields = schema['components']['schemas'][body['$ref'].rsplit('/', 1)[-1]]['properties']
+    assert fields['files']['type'] == 'array'
+    assert fields['files']['items'] == {'type': 'string', 'format': 'binary'}
+    assert 'anyOf' not in fields['files']
+
+
 @pytest.mark.parametrize("authorization", [None, "Bearer forged-token"])
 def test_unauthenticated_upload_rejected(client, authorization):
     client.headers.pop("Authorization")
@@ -108,7 +110,7 @@ def test_unauthenticated_upload_rejected(client, authorization):
 def test_cookie_session_is_supported(client):
     token = client.headers.pop("Authorization").split(" ", 1)[1]
     client.cookies.set("documind_session", token)
-    assert client.post("/upload", files=[part()]).status_code == 200
+    assert client.post("/upload", files=[part()]).status_code == 202
 
 
 @pytest.mark.parametrize("actual_size", [16, 5 * MB + 1])
