@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440 # 24 hours
     STORAGE_DIR: Path = Path(__file__).resolve().parents[2] / "data" / "uploads"
+    SOFFICE_BINARY: str = ""
+    OFFICE_CONVERSION_TIMEOUT_SECONDS: int = 120
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

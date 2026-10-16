@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import FileResponse
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session, defer
 
 from app.db.database import get_db
@@ -8,8 +10,61 @@ from app.models.document import Document
 from app.models.reviewstate import ReviewState
 from app.schemas.document import DocumentResponse
 from app.core.security import get_current_user_id
+from app.services.reader_extraction import extract_document_for_reader, reader_representation, ReaderConversionError
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
+
+
+def owned_reader_document(db, document_id, user_id):
+    document = db.get(Document, document_id)
+    if document is None:
+        raise HTTPException(404, 'Document not found')
+    if document.owner_id != user_id:
+        raise HTTPException(403, 'Access denied')
+    return document
+
+
+def reader_error(error, status_code=409):
+    return HTTPException(status_code, detail={'code': error.code, 'message': str(error)})
+
+
+@router.post('/{document_id}/reader')
+def prepare_reader(document_id: int, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    document = owned_reader_document(db, document_id, user_id)
+    owned_id = document.id
+    factory = sessionmaker(bind=db.get_bind())
+    db.rollback()  # Release the auth lookup transaction before conversion.
+    try:
+        result = extract_document_for_reader(owned_id, factory)
+    except ReaderConversionError as error:
+        raise reader_error(error, 503 if error.code == 'converter_unavailable' else 422)
+    return {'page_count': result['page_count']}
+
+
+@router.get('/{document_id}/pages')
+def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    document = owned_reader_document(db, document_id, user_id)
+    try:
+        _, reference = reader_representation(document)
+    except ReaderConversionError as error:
+        raise reader_error(error)
+    return {'page_count': document.page_count, 'pages': document.extracted_text,
+            'page_kind': reference['page_kind'], 'reader_version': reference['sha256'],
+            'reader_url': f"/documents/{document_id}/reader.pdf?version={reference['sha256']}"}
+
+
+@router.get('/{document_id}/reader.pdf')
+def reader_pdf(document_id: int, version: str = Query(...), user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    document = owned_reader_document(db, document_id, user_id)
+    try:
+        path, reference = reader_representation(document)
+    except ReaderConversionError as error:
+        raise reader_error(error)
+    if version != reference['sha256']:
+        raise HTTPException(409, 'Reader version changed. Reload the document before using page references.')
+    return FileResponse(path, media_type='application/pdf', filename='reader.pdf',
+                        content_disposition_type='inline', headers={'Cache-Control': 'no-store',
+                                                                   'X-Reader-Version': version})
 
 
 @router.get("", response_model=List[DocumentResponse], summary="Get list of documents for current user")

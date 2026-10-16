@@ -1,6 +1,8 @@
 """Real auth/document APIs with an in-memory DB; never connects to local MySQL."""
 import os
 import sys
+import atexit
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -15,14 +17,22 @@ from app.main import app
 from app.db.database import Base, get_db
 from app.models import User, Document, FileFormat, Job, JobFile, JobMode, JobStatus
 from app.core.security import get_password_hash
+from app.core.config import settings
+import app.main as main_module
 
 engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
 Base.metadata.create_all(engine)
 TestSession = sessionmaker(bind=engine)
+main_module.SessionLocal = TestSession
+test_storage = tempfile.TemporaryDirectory(prefix='documind-reader-e2e-')
+settings.STORAGE_DIR = Path(test_storage.name)
+atexit.register(test_storage.cleanup)
 with TestSession() as db:
     db.add(User(username='playwright_user', email='playwright@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
     db.add(User(username='playwright_other', email='other@example.com',
+                password_hash=get_password_hash('LocalIssueTest2026!')))
+    db.add(User(username='reader_user', email='reader@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
     db.flush()
     for owner in db.query(User).all():
