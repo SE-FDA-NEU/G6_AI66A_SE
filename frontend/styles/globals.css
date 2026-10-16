@@ -47,5 +47,28 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .upload-errors { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .upload-error-badge { background: #fff0ed; color: #a33524; border: 1px solid #f4d8d2; border-radius: 8px; padding: 6px 10px; font-size: 12px; }
 .upload-ready { color: #176b52; line-height: 1.8; }
+.results-content { max-width: 850px; margin: 60px auto; }
+.job-progress-card { background: #fff; border: 1px solid #dce4de; border-radius: 16px; padding: 28px; margin-top: 30px; }
+.job-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.job-progress-heading h2 { font-size: 21px; margin: 0; }
+.job-badge { display: inline-block; border-radius: 20px; padding: 7px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.job-pending { color: #54685e; background: #edf1ee; }
+.job-processing { color: #245da0; background: #eaf2fc; }
+.job-completed { color: #176b52; background: #e4f2e9; }
+.job-failed { color: #a33526; background: #fff0ed; }
+.job-timed_out { color: #895b09; background: #fff3d8; }
+.job-count { font-size: 18px; font-weight: 600; margin: 26px 0 14px; }
+.job-progress-card progress { display: block; width: 100%; height: 12px; border: none; border-radius: 8px; overflow: hidden; background: #e7eee9; accent-color: #176b52; }
+.job-progress-card progress::-webkit-progress-bar { background: #e7eee9; border-radius: 8px; }
+.job-progress-card progress::-webkit-progress-value { background: #176b52; border-radius: 8px; }
+.job-progress-card progress::-moz-progress-bar { background: #176b52; border-radius: 8px; }
+.job-progress-note { color: #667a6e; font-size: 13px; line-height: 1.8; margin: 16px 0 0; }
+.job-files-heading { font-size: 21px; margin: 32px 0 18px; }
+.job-files { padding: 0; list-style: none; }
+.job-file { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; background: #fff; border: 1px solid #dce4de; padding: 20px; border-radius: 12px; margin-bottom: 12px; }
+.job-file-details { min-width: 0; overflow-wrap: anywhere; }
+.job-file-attempts { font-size: 12px; color: #667a6e; margin: 10px 0 0; }
+.job-file-error { color: #a33526; font-size: 13px; line-height: 1.7; margin-bottom: 0; }
+@media (max-width: 540px) { .results-page { padding: 20px; }.results-page header { flex-wrap: wrap; }.results-content { margin: 40px auto; }.job-progress-card { padding: 20px; }.job-file { padding: 16px; flex-wrap: wrap; }.job-count { font-size: 16px; } }
 @media (max-width: 540px) { .upload-page { padding: 20px; }.upload-page header { flex-wrap: wrap; }.upload-content { margin: 40px auto; }.upload-picker { padding: 18px; }.upload-file { padding: 14px; gap: 10px; } }
 @media (max-width: 760px) { .auth-page { grid-template-columns: 1fr; }.auth-story { padding: 28px 24px; }.story-content { padding: 28px 0 0; }.story-content h1 { font-size: 34px; }.story-description { font-size: 14px; }.preview-card, .story-footer { display: none; }.auth-form-wrap { padding: 36px 24px 50px; }.auth-form { max-width: 440px; } h2 { font-size: 25px; } }
