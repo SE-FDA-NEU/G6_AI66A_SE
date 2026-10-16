@@ -7,3 +7,4 @@ python-jose[cryptography]
 passlib[bcrypt]
 bcrypt<4.0.0
 python-multipart
+pdfplumber==0.11.9
