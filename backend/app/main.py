@@ -4,6 +4,7 @@ from app.models import User
 from app.db.database import SessionLocal
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from app.services.job_queue import JobQueue
 from app.db.database import engine, Base
 
 # Import all models for SQLAlchemy metadata recognition
@@ -13,8 +14,11 @@ import app.models  # noqa: F401
 async def lifespan(app: FastAPI):
     # --- Startup ---
     print("Starting server (Database-first approach)...")
-    
-    yield  # Application is running
+    app.state.job_queue = JobQueue(SessionLocal)
+    try:
+        yield  # Application is running
+    finally:
+        await app.state.job_queue.close()
     
     # --- Shutdown ---
     print("Shutting down server...")

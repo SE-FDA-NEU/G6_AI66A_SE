@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 
 
 def main():
-    python = ROOT / 'backend/.venv/bin/python'
+    python = ROOT / 'backend/.venv/Scripts/python.exe'
     npm = shutil.which('npm')
     if not python.is_file():
         sys.exit('Thiếu backend/.venv. Hãy cài backend theo docs/SETUP.md trước.')

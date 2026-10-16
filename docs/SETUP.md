@@ -376,6 +376,30 @@ backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt
 backend/.venv/bin/python -m pytest backend/tests -v
 ```
 
-On Windows use `backend/.venv/Scripts/python.exe`. Tests use a dedicated signing key and do not access MySQL, require running servers, or persist uploaded files.
+On Windows use `backend/.venv/Scripts/python.exe`. Tests use a dedicated signing key, an isolated in-memory SQLite database and temporary storage. They do not access MySQL or require running servers; temporary uploaded files are removed after each test.
 
-For manual testing, run FastAPI on port 8001, open `http://127.0.0.1:8001/docs`, authenticate via `/auth/login`, then call `POST /upload` with multipart `files`. Valid batches return HTTP 200 with file names and measured byte sizes. Invalid batches return HTTP 422 with `detail.batch_errors` and `detail.files`, including zero-based indexes and error codes. Limits: five PDF/DOCX/PPTX files, at most 5 MB each and 50 MB combined (1 MB = 1,048,576 bytes). This endpoint validates only; storage and job creation are not implemented yet. See `docs/design.md` for the response contract.
+For manual testing, run FastAPI on port 8001, open `http://127.0.0.1:8001/docs`, authenticate via `/auth/login`, then call `POST /upload` with multipart `files` and optional `mode` (`bullet`, `table`, `concept`; default `bullet`). Valid batches now return HTTP **202** with `{"jobId":"123"}` after saving files and committing a pending job. Invalid batches return HTTP 422 with `detail.batch_errors` and `detail.files`, including zero-based indexes and error codes. Limits remain five PDF/DOCX/PPTX files, at most 5 MB each and 50 MB combined (1 MB = 1,048,576 bytes). See `docs/design.md` for the response contract.
+
+### Async upload, storage and job creation
+
+No database migration or additional runtime package is needed: the endpoint uses the existing Document, Job and JobFile models. Files are stored by default under `backend/data/uploads/<owner>/<random-batch>/` using random filenames. Set `STORAGE_DIR` in `backend/.env` to change the upload root. Uploaded data is excluded from Git.
+
+Example from PowerShell after obtaining a token:
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8001/upload" -H "Authorization: Bearer YOUR_TOKEN" -F "files=@C:\path\report.pdf" -F "mode=bullet"
+curl.exe "http://127.0.0.1:8001/jobs/123" -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+The response is sent without waiting for processing. Background work runs through `asyncio.create_task`, with blocking worker work offloaded to a thread and its own database session. Storage or database failure rolls back the new batch and cleans up its files; queue submission failure returns 503 and records a failed job. The queue drains outstanding tasks on graceful shutdown, but tasks are not durable across process crashes.
+
+**Current worker scope:** AI/document processing belongs to the later worker task. The entry point `backend/app/services/processing.py` currently records a clear failed job/file error: `Document processing worker is not integrated yet.` A 202 response means the upload was accepted and enqueued, not that analysis succeeded. Saved source files remain available for the later processing integration. The frontend selection page still does not submit files automatically.
+
+Run the complete backend suite from the repository root:
+
+```powershell
+& backend/.venv/Scripts/python.exe -m pip install -r backend/requirements-dev.txt
+& backend/.venv/Scripts/python.exe -m pytest backend/tests -q
+```
+
+`test_upload_jobs.py` verifies saved bytes, transaction rollback, safe storage paths, job/file ownership, modes, enqueue/worker failures and the response arriving while a real background worker is blocked. Existing #66 validation tests remain included.
