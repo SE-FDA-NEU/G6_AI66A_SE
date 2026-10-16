@@ -47,6 +47,11 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .upload-errors { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .upload-error-badge { background: #fff0ed; color: #a33524; border: 1px solid #f4d8d2; border-radius: 8px; padding: 6px 10px; font-size: 12px; }
 .upload-ready { color: #176b52; line-height: 1.8; }
+.reader-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 24px 0; }
+.reader-controls label { margin: 0; display: flex; align-items: center; gap: 8px; }
+.reader-controls select { padding: 10px; border: 1px solid #dce4de; border-radius: 8px; background: #fff; }
+.reader-pdf { width: 100%; height: 75vh; border: 1px solid #dce4de; border-radius: 12px; background: #fff; }
+@media (max-width: 540px) { .reader-page header { flex-wrap: wrap; }.reader-page { padding: 20px; }.reader-pdf { height: 65vh; } }
 .results-content { max-width: 850px; margin: 60px auto; }
 .job-progress-card { background: #fff; border: 1px solid #dce4de; border-radius: 16px; padding: 28px; margin-top: 30px; }
 .job-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

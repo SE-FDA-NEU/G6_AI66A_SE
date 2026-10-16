@@ -5,6 +5,7 @@ export default {
     return [
       { source: '/auth/:path*', destination: `${backend}/auth/:path*` },
       { source: '/jobs/:path*', destination: `${backend}/jobs/:path*` },
+      { source: '/api/documents/:path*', destination: `${backend}/documents/:path*` },
     ];
   },
 };
