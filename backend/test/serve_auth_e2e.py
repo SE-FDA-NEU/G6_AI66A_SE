@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from app.main import app
 from app.db.database import Base, get_db
-from app.models import User, Document, FileFormat
+from app.models import User, Document, FileFormat, Job, JobFile, JobMode, JobStatus
 from app.core.security import get_password_hash
 
 engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
@@ -36,6 +36,15 @@ with TestSession() as db:
             last_accessed_at=datetime(2026, 1, 1),
             expires_at=datetime(2026, 1, 1) + timedelta(days=30),
         ))
+    db.flush()
+    owner = db.query(User).filter_by(username='playwright_user').one()
+    document = db.query(Document).filter_by(owner_id=owner.id).one()
+    completed_job = Job(id=9001, owner_id=owner.id, mode=JobMode.BULLET,
+                        status=JobStatus.COMPLETED, file_count=1, completed_count=1,
+                        finished_at=datetime(2026, 1, 1))
+    db.add(completed_job)
+    db.add(JobFile(job=completed_job, document=document, status=JobStatus.COMPLETED,
+                   attempt_count=1, timeout_seconds=33))
     db.commit()
 
 
