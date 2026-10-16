@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Any, List, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import AliasPath, BaseModel, ConfigDict, Field
 
 from app.models.jobmode import JobMode
 from app.models.jobstatus import JobStatus
@@ -12,6 +12,7 @@ class JobFileResponse(BaseModel):
     id: int
     job_id: int
     document_id: int
+    original_filename: str = Field(validation_alias=AliasPath('document', 'original_filename'))
     status: JobStatus
     attempt_count: int
     timeout_seconds: Optional[int] = None

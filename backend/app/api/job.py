@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
 from app.models.job import Job
+from app.models.job_file import JobFile
 from app.models.jobmode import JobMode
 from app.models.jobstatus import JobStatus
 from app.schemas.job import JobResponse, JobDetailResponse
@@ -49,7 +50,7 @@ def get_job_by_id(
     """
     job = (
         db.query(Job)
-        .options(joinedload(Job.job_files), joinedload(Job.citations))
+        .options(joinedload(Job.job_files).joinedload(JobFile.document), joinedload(Job.citations))
         .filter(Job.id == job_id, Job.owner_id == current_user_id)
         .first()
     )

@@ -47,7 +47,9 @@ def test_saved_batch_has_pending_job_documents_and_links(client, session_factory
             content = f'contents:{doc.original_filename}'.encode()
             assert doc.file_size_bytes == len(content)
             assert Path(doc.storage_path).read_bytes() == content
-    assert client.get(f'/jobs/{job_id}').json()['status'] == 'pending'
+    polled = client.get(f'/jobs/{job_id}').json()
+    assert polled['status'] == 'pending'
+    assert {file['original_filename'] for file in polled['job_files']} == {'contract.pdf', 'notes.docx', 'slides.pptx'}
     other = f"Bearer {create_access_token({'sub': '124'})}"
     assert client.get(f'/jobs/{job_id}', headers={'Authorization': other}).status_code == 404
 
