@@ -31,4 +31,21 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .primary:hover:not(:disabled) { background: #115840; }.privacy-note { margin-top: 25px; padding-top: 22px; border-top: 1px solid #e7ece8; color: #7e8b82; font-size: 12px; line-height: 1.8; }
 .error-box { background: #fff0ed; color: #a33524; border: 1px solid #f4d8d2; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
 .workspace { max-width: 1100px; margin: auto; padding: 28px; }.workspace header { display: flex; justify-content: space-between; align-items: center; gap: 20px; }.workspace-content { margin-top: 85px; overflow-wrap: anywhere; }
+.upload-link { display: inline-block; margin-top: 20px; }
+.upload-content { max-width: 760px; margin: 64px auto; }
+.upload-picker { border: 2px dashed #b5cec0; background: #eef5f0; border-radius: 16px; padding: 28px; }
+.upload-picker h2 { font-size: 22px; }
+.upload-picker p { color: #5f7167; font-size: 14px; line-height: 1.8; }
+.upload-picker label { margin-top: 24px; }
+.upload-picker input { background: #fff; }
+.upload-summary { margin: 24px 0 16px; line-height: 1.8; font-size: 14px; }
+.upload-files { padding: 0; margin: 0; list-style: none; }
+.upload-file { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; background: #fff; border: 1px solid #dce4de; border-radius: 12px; margin-bottom: 12px; }
+.upload-file-info { min-width: 0; overflow-wrap: anywhere; }
+.upload-file-info strong { display: block; margin-bottom: 8px; }
+.upload-size { font-size: 12px; color: #5f7167; margin-right: 12px; }
+.upload-errors { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.upload-error-badge { background: #fff0ed; color: #a33524; border: 1px solid #f4d8d2; border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+.upload-ready { color: #176b52; line-height: 1.8; }
+@media (max-width: 540px) { .upload-page { padding: 20px; }.upload-page header { flex-wrap: wrap; }.upload-content { margin: 40px auto; }.upload-picker { padding: 18px; }.upload-file { padding: 14px; gap: 10px; } }
 @media (max-width: 760px) { .auth-page { grid-template-columns: 1fr; }.auth-story { padding: 28px 24px; }.story-content { padding: 28px 0 0; }.story-content h1 { font-size: 34px; }.story-description { font-size: 14px; }.preview-card, .story-footer { display: none; }.auth-form-wrap { padding: 36px 24px 50px; }.auth-form { max-width: 440px; } h2 { font-size: 25px; } }

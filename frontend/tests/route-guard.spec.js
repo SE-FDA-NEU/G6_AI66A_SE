@@ -56,8 +56,8 @@ test('valid session passes the guard for all protected routes', async ({ request
   expect(login.status()).toBe(200);
   for (const path of protectedPaths) {
     const response = await request.get(path, { maxRedirects: 0 });
-    // Upload/results/reader pages belong to later tasks and currently return 404.
-    expect(response.status(), path).toBe(path.startsWith('/workspace') ? 200 : 404);
+    // Results/reader pages belong to later tasks and currently return 404.
+    expect(response.status(), path).toBe(path.startsWith('/workspace') || path === '/upload' ? 200 : 404);
     expect(response.headers().location, path).toBeUndefined();
   }
 });

@@ -310,7 +310,7 @@ npx playwright test tests/route-guard.spec.js
 npx playwright test
 ```
 
-The tests cover a fresh browser session, missing tokens, signed expired tokens whose cookies are still present, forged signatures, valid sessions and public routes. The upload/results/document pages are not implemented yet; valid sessions pass the guard and receive their current 404 response.
+The tests cover a fresh browser session, missing tokens, signed expired tokens whose cookies are still present, forged signatures, valid sessions and public routes. The workspace and upload selection page return HTTP 200 for valid sessions. Results/document pages are not implemented yet; valid sessions pass the guard and receive their current 404 response.
 
 For manual verification, start both servers as above, open a private/incognito browser window, and visit `http://127.0.0.1:8000/workspace`. It should return to `/` and display the sign-in form. Repeat with `/upload`, `/results/1` and `/documents/1`.
 
@@ -356,6 +356,17 @@ Keep FastAPI running on 8001 when using `npm start`. Stop `npm run dev` first be
 - **Execution Time:** 2026-10-1 — **6 minutes**
 - **Result:** Successfully executed all steps from clone to running the server and testing `GET /documents` on Swagger UI with 100% pass rate, returning exactly 10 documents for user `demouser`.
 
+### Client-side upload validation (task #65)
+
+Sign in, click **Tải tài liệu** in the workspace, or open `http://127.0.0.1:8000/upload`. Select or drop PDF, DOCX or PPTX files. Limits are inclusive: five files, 5 MB per file and 50 MB total (1 MB = 1,048,576 bytes). Rejected files stay visible with individual error badges but do not count as valid selections. Existing valid files remain selected when more files are added. Remove files with **Xóa**; validation runs again, so a previously rejected sixth file becomes valid when a slot opens. File selection performs no upload requests. Actual transfer and processing are not part of #65.
+
+From `frontend`:
+
+```bash
+npx playwright test tests/upload-validation.spec.js
+```
+
+Tests cover format checks (including misleading MIME types), exact byte limits, the independent 50 MB batch guard, five 5 MB files, a rejected sixth file, retained selections, removal/revalidation, drag/drop and mobile layout. The existing CI Playwright job includes this suite automatically.
 ### Server-side upload validation (task #66)
 
 Install test dependencies and run the isolated API suite from the repository root:
