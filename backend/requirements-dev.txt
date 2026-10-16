@@ -1,5 +1,4 @@
 -r requirements.txt
 pytest
-httpx
 python-docx
 python-pptx

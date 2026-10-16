@@ -6,6 +6,9 @@ import { MB, validateSelection } from '../lib/upload-validation';
 export default function Upload() {
   const [entries, setEntries] = useState([]);
   const [ready, setReady] = useState(false);
+  const [mode, setMode] = useState('bullet');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   useEffect(() => setReady(true), []);
   const nextId = useRef(0);
   const accepted = entries.filter(entry => entry.errors.length === 0);
@@ -13,6 +16,7 @@ export default function Upload() {
   const total = accepted.reduce((sum, entry) => sum + entry.file.size, 0);
 
   function addFiles(files) {
+    if (submitting) return;
     const additions = Array.from(files, file => ({ id: nextId.current++, file }));
     setEntries(previous => {
       // Keep accepted files first so new/rejected files cannot displace them.
@@ -23,6 +27,7 @@ export default function Upload() {
   }
 
   function removeFile(id) {
+    if (submitting) return;
     setEntries(previous => {
       const remaining = previous.filter(entry => entry.id !== id);
       return validateSelection([
@@ -30,6 +35,26 @@ export default function Upload() {
         ...remaining.filter(entry => entry.errors.length > 0),
       ]);
     });
+  }
+
+  async function submit() {
+    if (submitting || !accepted.length || rejected) return;
+    setSubmitting(true);
+    setError('');
+    const body = new FormData();
+    accepted.forEach(entry => body.append('files', entry.file));
+    body.append('mode', mode);
+    try {
+      const response = await fetch('/api/upload', { method: 'POST', credentials: 'same-origin', body });
+      if (response.status === 401) { window.location.assign('/'); return; }
+      if (!response.ok) throw new Error('Upload failed');
+      const result = await response.json();
+      if (!/^[1-9]\d*$/.test(String(result.jobId))) throw new Error('Invalid job');
+      window.location.assign(`/results/${result.jobId}`);
+    } catch {
+      setError('Không thể gửi tài liệu. Kiểm tra kết nối và thử lại.');
+      setSubmitting(false);
+    }
   }
 
   return <>
@@ -48,7 +73,7 @@ export default function Upload() {
           <h2>Chọn hoặc kéo thả tệp vào đây</h2>
           <p id="upload-rules">PDF, DOCX hoặc PPTX · Tối đa 5 tệp · Mỗi tệp ≤ 5 MB · Tổng ≤ 50 MB</p>
           <label htmlFor="upload-files">Chọn tệp tài liệu</label>
-          <input id="upload-files" type="file" multiple accept=".pdf,.docx,.pptx" disabled={!ready}
+          <input id="upload-files" type="file" multiple accept=".pdf,.docx,.pptx" disabled={!ready || submitting}
             aria-describedby="upload-rules" onChange={event => {
               addFiles(event.target.files);
               event.target.value = '';
@@ -68,11 +93,22 @@ export default function Upload() {
                   <span className="upload-error-badge" key={error}>{error}</span>)}</div>
                 : <span className="badge">Hợp lệ</span>}
             </div>
-            <button type="button" className="btn" aria-label={`Xóa ${entry.file.name}`}
+            <button type="button" className="btn" disabled={submitting} aria-label={`Xóa ${entry.file.name}`}
               onClick={() => removeFile(entry.id)}>Xóa</button>
           </li>)}
         </ul>}
         {accepted.length > 0 && rejected === 0 && <p className="upload-ready">Các tệp đã chọn hợp lệ và sẵn sàng tải lên.</p>}
+        <div className="analysis-submit">
+          <label htmlFor="analysis-mode">Kiểu phân tích</label>
+          <select id="analysis-mode" value={mode} disabled={submitting} onChange={event => setMode(event.target.value)}>
+            <option value="bullet">Tóm tắt gạch đầu dòng</option>
+            <option value="table">Bảng điều khoản hợp đồng</option>
+            <option value="concept">Khái niệm chính</option>
+          </select>
+          <button type="button" className="btn primary" disabled={!ready || submitting || !accepted.length || rejected > 0}
+            onClick={submit}>{submitting ? 'Đang gửi…' : 'Tải lên và phân tích'}</button>
+          {error && <p className="error-box" role="alert">{error}</p>}
+        </div>
       </section>
     </main>
   </>;

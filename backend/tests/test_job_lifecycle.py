@@ -10,8 +10,7 @@ from app.services.job_queue import JobQueue, get_job_queue
 
 
 def use_worker(session_factory, monkeypatch, processor):
-    monkeypatch.setattr(processing, 'process_document', processor)
-    queue = JobQueue(session_factory)
+    queue = JobQueue(session_factory, processor=lambda job_id, factory: processing.process_job(job_id, factory, processor))
     app.dependency_overrides[get_job_queue] = lambda: queue
     return queue
 

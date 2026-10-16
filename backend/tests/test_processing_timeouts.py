@@ -168,8 +168,7 @@ def test_finished_files_are_skipped_on_resume(client, session_factory):
 
 def test_queue_uses_timeout_worker_and_job_poll_exposes_attempts(client, session_factory, monkeypatch):
     processor = AsyncMock(side_effect=TimeoutError)
-    monkeypatch.setattr(processing, 'process_document', processor)
-    queue = JobQueue(session_factory)
+    queue = JobQueue(session_factory, processor=lambda job_id, factory: processing.process_job(job_id, factory, processor))
     app.dependency_overrides[get_job_queue] = lambda: queue
     response = client.post('/upload', files=[('files', ('a.pdf', b'sample', 'application/pdf'))])
     assert response.status_code == 202

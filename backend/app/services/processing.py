@@ -1,17 +1,25 @@
 """Per-document processing with bounded, cancellable attempts."""
 import asyncio
 import logging
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 
 from app.models import Job, JobStatus
+from app.schemas.result import AnalysisResult, BulletOutput, ConceptOutput, JobResultData, TableOutput
+from app.services.job_extraction import prepare_document
+from app.services.reader_extraction import ReaderConversionError
+from app.services.result_persistence import InvalidAnalysisResult, publish_reader, save_analysis
+from app.core.config import settings
+from app.services.gemini_analysis import GeminiAnalysisError, analyze_document
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 MAX_ATTEMPTS = 3
 
 
 def document_timeout(page_count):
-    """Unknown page counts use the baseline until extraction is integrated."""
+    """The existing per-document processing budget, capped at five minutes."""
     return min(300, 30 + 3 * max(0, page_count or 0))
 
 
@@ -20,26 +28,27 @@ class DocumentInput:
     id: int
     storage_path: str
     page_count: int | None
-
-
-class ProcessingNotConfigured(Exception):
-    pass
+    file_format: object = None
+    extracted_text: list | None = None
+    owner_id: int | None = None
 
 
 async def process_document(document, mode):
-    """Integration point for cancellable async processing, without DB access.
-
-    Do not block this event loop. CPU work must use a terminable subprocess,
-    not an uncancellable thread. Results are persisted only after success.
-    """
-    raise ProcessingNotConfigured("Document processing worker is not integrated yet.")
+    """Use Gemini when configured; otherwise persist an explicit extraction-only result."""
+    if settings.GEMINI_API_KEY.get_secret_value().strip():
+        return await analyze_document(document, mode)
+    outputs = {'bullet': BulletOutput, 'table': TableOutput, 'concept': ConceptOutput}
+    warnings = ['analysis_not_configured']
+    if not any(page['text'].strip() for page in document.extracted_text):
+        warnings.append('no_text_layer')
+    return AnalysisResult(analysis_status='not_configured', output=outputs[mode.value](), warnings=warnings)
 
 
 def utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-async def _process_job(job_id, session_factory, processor):
+async def _process_job(job_id, session_factory, processor, analyzer):
     with session_factory() as db:
         job = db.get(Job, job_id)
         if job is None or job.status in (JobStatus.COMPLETED, JobStatus.FAILED):
@@ -52,7 +61,8 @@ async def _process_job(job_id, session_factory, processor):
             if file.status in (JobStatus.COMPLETED, JobStatus.FAILED):
                 continue
             document = file.document
-            source = DocumentInput(document.id, document.storage_path, document.page_count)
+            source = DocumentInput(document.id, document.storage_path, document.page_count,
+                                   document.file_format, document.extracted_text, document.owner_id)
             timeout = document_timeout(document.page_count)
             file.timeout_seconds = timeout
 
@@ -64,24 +74,66 @@ async def _process_job(job_id, session_factory, processor):
                 db.commit()
                 logger.info("job=%s document=%s attempt=%s/%s timeout=%ss started",
                             job_id, source.id, attempt, MAX_ATTEMPTS, timeout)
+                prepared = None
                 try:
+                    started = asyncio.get_running_loop().time()
+                    remaining = timeout
+                    if processor is None:
+                        # Until physical pages are known, extraction may use the
+                        # existing maximum budget. Its elapsed time still counts
+                        # towards the actual 30 + 3 * pages deadline below.
+                        def on_page_count(count):
+                            nonlocal timeout, source
+                            source = replace(source, page_count=count)
+                            timeout = document_timeout(count)
+                            file.timeout_seconds = timeout
+                            db.commit()
+                            return timeout
+                        prepared = await asyncio.wait_for(prepare_document(source, on_page_count=on_page_count),
+                                                          timeout=timeout if source.page_count else 300)
+                        source = replace(source, page_count=prepared.data['page_count'],
+                                         extracted_text=deepcopy(prepared.data['extracted_text']))
+                        timeout = document_timeout(source.page_count)
+                        file.timeout_seconds = timeout
+                        db.commit()
+                        logger.info("job=%s document=%s attempt=%s/%s pages=%s timeout=%ss extracted",
+                                    job_id, source.id, attempt, MAX_ATTEMPTS, source.page_count, timeout)
+                        remaining = timeout - (asyncio.get_running_loop().time() - started)
+                        if remaining <= 0:
+                            raise TimeoutError
                     # Cancel and await cleanup before starting the next attempt.
-                    result = await asyncio.wait_for(processor(source, job.mode), timeout=timeout)
+                    result = await asyncio.wait_for((processor or analyzer)(source, job.mode), timeout=remaining)
+                    if prepared is not None:
+                        with publish_reader(document, prepared):
+                            result = save_analysis(db, job, document, prepared, result)
+                            _save_success(db, job, file, source.id, result, versioned=True)
+                    else:
+                        _save_success(db, job, file, source.id, result)
                 except TimeoutError:
+                    db.rollback()
                     file.status = JobStatus.TIMED_OUT
                     file.error_message = f"Processing exceeded {timeout} seconds (attempt {attempt}/{MAX_ATTEMPTS})."
                     db.commit()
                     logger.warning("job=%s document=%s attempt=%s/%s timed_out timeout=%ss",
                                    job_id, source.id, attempt, MAX_ATTEMPTS, timeout)
                     continue
-                except ProcessingNotConfigured as error:
+                except (ReaderConversionError, GeminiAnalysisError) as error:
+                    db.rollback()
                     file.status = JobStatus.FAILED
-                    file.error_message = str(error)
+                    file.error_message = f"{error.code}: {error}"
                     db.commit()
-                    logger.error("job=%s document=%s attempt=%s/%s failed: processor not integrated",
-                                 job_id, source.id, attempt, MAX_ATTEMPTS)
+                    logger.warning("job=%s document=%s attempt=%s/%s failed code=%s",
+                                   job_id, source.id, attempt, MAX_ATTEMPTS, error.code)
+                    break
+                except (InvalidAnalysisResult, ValidationError):
+                    db.rollback()
+                    file.status = JobStatus.FAILED
+                    file.error_message = 'invalid_result: Analysis output or evidence could not be validated.'
+                    db.commit()
+                    logger.exception("job=%s document=%s invalid_result", job_id, source.id)
                     break
                 except Exception:
+                    db.rollback()
                     file.status = JobStatus.FAILED
                     file.error_message = "Document processing failed. Please retry."
                     db.commit()
@@ -89,19 +141,12 @@ async def _process_job(job_id, session_factory, processor):
                                      job_id, source.id, attempt, MAX_ATTEMPTS)
                     break
                 else:
-                    file.status = JobStatus.COMPLETED
-                    file.error_message = None
-                    if result is not None:
-                        results = dict(job.result_data or {})
-                        documents = dict(results.get('documents', {}))
-                        documents[str(source.id)] = result
-                        results['documents'] = documents
-                        job.result_data = results
-                    job.completed_count = sum(item.status == JobStatus.COMPLETED for item in job.job_files)
-                    db.commit()
                     logger.info("job=%s document=%s attempt=%s/%s completed",
                                 job_id, source.id, attempt, MAX_ATTEMPTS)
                     break
+                finally:
+                    if prepared is not None:
+                        prepared.close()
 
             if file.status not in (JobStatus.COMPLETED, JobStatus.FAILED):
                 file.status = JobStatus.FAILED
@@ -117,6 +162,28 @@ async def _process_job(job_id, session_factory, processor):
         db.commit()
 
 
-def process_job(job_id, session_factory, processor=None):
-    """Queue entry point; JobQueue calls this outside the HTTP event loop."""
-    asyncio.run(_process_job(job_id, session_factory, processor or process_document))
+def _save_success(db, job, file, document_id, result, versioned=False):
+    file.status = JobStatus.COMPLETED
+    file.error_message = None
+    if result is not None:
+        results = dict(job.result_data or {})
+        documents = dict(results.get('documents', {}))
+        documents[str(document_id)] = result
+        results['documents'] = documents
+        if versioned:
+            results['schema_version'] = 1
+            results = JobResultData.model_validate(results).model_dump(mode='json')
+        job.result_data = results
+    job.completed_count = sum(item.status == JobStatus.COMPLETED for item in job.job_files)
+    db.commit()
+
+
+def process_job(job_id, session_factory, processor=None, *, analyzer=None):
+    """Queue entry point, outside the HTTP event loop.
+
+    analyzer is an async adapter returning AnalysisResult after native extraction.
+    It must remain cancellable and avoid blocking the async event loop.
+    processor is the existing low-level test/worker override; it owns extraction
+    and its result shape. Normal queue execution always uses the full pipeline.
+    """
+    asyncio.run(_process_job(job_id, session_factory, processor, analyzer or process_document))

@@ -88,6 +88,10 @@ def convert_office(source, file_format, output_dir):
     except subprocess.TimeoutExpired as error:
         _stop_conversion(process)
         raise ReaderConversionError('conversion_timed_out', 'Office to PDF conversion exceeded its time limit.') from error
+    except BaseException:
+        # The async job adapter terminates this worker on cancellation.
+        _stop_conversion(process)
+        raise
     output = output_dir / f'{source.stem}.pdf'
     if process.returncode != 0 or not output.is_file() or output.stat().st_size == 0:
         raise ReaderConversionError('conversion_failed', 'Office to PDF conversion did not produce a readable file.')
@@ -132,6 +136,49 @@ def reader_representation(document):
     return path, reference
 
 
+def prepare_reader(source, file_format, work, converter=None, on_page_count=None):
+    """Prepare bytes and page metadata without touching the database.
+
+    Both the manual reader endpoint and the cancellable job subprocess use
+    this implementation. The caller owns the work directory and publication.
+    """
+    source, work = Path(source), Path(work)
+    if not source.is_file():
+        raise ReaderConversionError('source_missing', 'The original file is missing.')
+    snapshot = work / f'source.{file_format.value.lower()}'
+    shutil.copyfile(source, snapshot)
+    source_hash = sha256(snapshot)
+    rendered = snapshot if file_format == FileFormat.PDF else (converter or convert_office)(snapshot, file_format, work)
+    try:
+        result = extract_pdf(rendered, on_page_count=on_page_count) if on_page_count else extract_pdf(rendered)
+    except PDFExtractionError as error:
+        raise ReaderConversionError('invalid_rendered_pdf', 'The reader PDF could not be extracted.') from error
+    if not result['page_count']:
+        raise ReaderConversionError('empty_rendered_pdf', 'The reader PDF has no pages.')
+    if file_format == FileFormat.PPTX and result['page_count'] != _slide_count(snapshot):
+        raise ReaderConversionError('slide_page_mismatch', 'PDF pages do not match the PPTX slides; source references cannot be trusted.')
+    if sha256(source) != source_hash:
+        raise ReaderConversionError('source_changed', 'The source changed during conversion. Please retry.')
+    reference = {'sha256': sha256(rendered), 'source_sha256': source_hash,
+                 'page_kind': 'slide' if file_format == FileFormat.PPTX else 'page'}
+    for page in result['extracted_text']:
+        page['reader'] = reference.copy()
+    return result, rendered
+
+
+def publish_pdf(rendered, target):
+    """Publish atomically even when the conversion temp directory is on C:
+    and configured document storage is on a different volume.
+    """
+    with tempfile.NamedTemporaryFile(prefix='publish-', suffix='.pdf', dir=target.parent, delete=False) as handle:
+        staged = Path(handle.name)
+    try:
+        shutil.copyfile(rendered, staged)
+        os.replace(staged, target)
+    finally:
+        staged.unlink(missing_ok=True)
+
+
 def extract_document_for_reader(document_id, session_factory, converter=None):
     """Store a PDF snapshot and its extracted pages in the existing JSON column.
 
@@ -158,36 +205,18 @@ def extract_document_for_reader(document_id, session_factory, converter=None):
                 pass
             output_root = source.parent / '.reader' / str(document.id)
             output_root.mkdir(parents=True, exist_ok=True)
-            with tempfile.TemporaryDirectory(prefix='convert-', dir=output_root) as work:
+            # A short OS temp path avoids LibreOffice profile paths exceeding
+            # Windows MAX_PATH inside deeply nested upload directories.
+            with tempfile.TemporaryDirectory(prefix='documind-convert-') as work:
                 work = Path(work)
-                snapshot = work / f'source.{document.file_format.value.lower()}'
-                shutil.copyfile(source, snapshot)
-                source_hash = sha256(snapshot)
-                if document.file_format == FileFormat.PDF:
-                    rendered = snapshot
-                else:
-                    rendered = converter(snapshot, document.file_format, work)
-                try:
-                    result = extract_pdf(rendered)
-                except PDFExtractionError as error:
-                    raise ReaderConversionError('invalid_rendered_pdf', 'The converted reader PDF could not be extracted.') from error
-                if result['page_count'] == 0:
-                    raise ReaderConversionError('empty_rendered_pdf', 'The converted PDF has no pages.')
-                if document.file_format == FileFormat.PPTX and result['page_count'] != _slide_count(snapshot):
-                    raise ReaderConversionError('slide_page_mismatch', 'PDF pages do not match the PPTX slides; source references cannot be trusted.')
-                if sha256(source) != source_hash:
-                    raise ReaderConversionError('source_changed', 'The source changed during conversion. Please retry.')
-                digest = sha256(rendered)
-                reference = {'sha256': digest, 'source_sha256': source_hash,
-                             'page_kind': 'slide' if document.file_format == FileFormat.PPTX else 'page'}
-                for page in result['extracted_text']:
-                    page['reader'] = reference.copy()
+                result, rendered = prepare_reader(source, document.file_format, work, converter)
+                digest = result['extracted_text'][0]['reader']['sha256']
                 target = output_root / f'{digest}.pdf'
                 if target.exists():
                     if sha256(target) != digest:
-                        os.replace(rendered, target)  # Repair only with verified bytes for this exact hash.
+                        publish_pdf(rendered, target)  # Repair only with verified bytes for this exact hash.
                 else:
-                    os.replace(rendered, target)
+                    publish_pdf(rendered, target)
                     created = target
                 document.page_count = result['page_count']
                 document.extracted_text = result['extracted_text']

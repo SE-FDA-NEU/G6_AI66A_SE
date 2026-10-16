@@ -39,9 +39,11 @@ test('reader displays the pinned backend PDF and navigates real source pages', a
     job = await (await page.request.get(`/jobs/${jobId}`)).json();
     return ['completed', 'failed'].includes(job.status);
   }).toBe(true);
+  expect(job.status).toBe('completed');
   const id = job.job_files[0].document_id;
-  const prepared = await page.request.post(`/api/documents/${id}/reader`);
-  expect(prepared.status()).toBe(200);
+  const savedResult = job.result_data.documents[String(id)];
+  expect(savedResult.reader.page_count).toBe(3);
+  expect(savedResult.analysis_status).toBe('not_configured');
   const pages = await (await page.request.get(`/api/documents/${id}/pages`)).json();
   const file = await page.request.get(`/api${pages.reader_url}`);
   expect(file.status()).toBe(200);
@@ -59,6 +61,9 @@ test('reader displays the pinned backend PDF and navigates real source pages', a
   await expect(page).toHaveURL(`/documents/${id}?page=2`);
   await page.reload();
   await expect(page.getByTitle('Bản đọc PDF — Trang 2')).toHaveAttribute('src', `/api${pages.reader_url}#page=2`);
+  const revisited = await (await page.request.get(`/jobs/${jobId}`)).json();
+  expect(revisited.result_data.documents[String(id)]).toEqual(savedResult);
+  expect(revisited.status).toBe('completed');
 });
 
 test('PPTX references are labelled as slides and target the same PDF page', async ({ page }) => {

@@ -187,7 +187,7 @@ def test_worker_exception_is_recorded(client, session_factory):
         assert job.finished_at is not None
 
 
-def test_default_worker_explicitly_reports_missing_processing_integration(client, session_factory):
+def test_default_worker_reports_invalid_pdf_extraction(client, session_factory):
     queue = JobQueue(session_factory)
     app.dependency_overrides[get_job_queue] = lambda: queue
     response = client.post('/upload', files=parts('a.pdf'))
@@ -198,7 +198,7 @@ def test_default_worker_explicitly_reports_missing_processing_integration(client
         assert job.mode == JobMode.BULLET
         assert job.status == JobStatus.FAILED
         assert job.completed_count == 0 and job.result_data is None
-        assert 'not integrated' in job.job_files[0].error_message
+        assert 'invalid_rendered_pdf' in job.job_files[0].error_message
 
 
 def test_closed_queue_rejects_new_work(client, session_factory):
