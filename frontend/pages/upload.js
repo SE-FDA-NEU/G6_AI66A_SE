@@ -2,7 +2,8 @@ import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import { getSession } from '../lib/session';
 import { MB, validateSelection } from '../lib/upload-validation';
-import UploadModeSelector from '../components/UploadModeSelector';
+import UploadModeSelector, { UPLOAD_MODES } from '../components/UploadModeSelector';
+import WorkspaceNavigation from '../components/WorkspaceNavigation';
 
 export default function Upload() {
   const [entries, setEntries] = useState([]);
@@ -11,13 +12,13 @@ export default function Upload() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => {
-    setReady(true);
     try {
       const saved = sessionStorage.getItem('upload_analysis_mode');
-      if (saved && ['bullet', 'table', 'concept'].includes(saved)) {
+      if (UPLOAD_MODES.some(option => option.value === saved)) {
         setMode(saved);
       }
     } catch {}
+    setReady(true);
   }, []);
   const nextId = useRef(0);
 
@@ -54,7 +55,7 @@ export default function Upload() {
   }
 
   async function submit() {
-    if (submitting || !accepted.length || rejected) return;
+    if (!ready || submitting || !accepted.length || rejected) return;
     setSubmitting(true);
     setError('');
     const body = new FormData();
@@ -78,7 +79,7 @@ export default function Upload() {
     <main className="workspace upload-page">
       <header>
         <a href="/workspace" className="brand">DocuMind<span className="brand-dot">.</span></a>
-        <a href="/workspace" className="btn">Về không gian tài liệu</a>
+        <WorkspaceNavigation><a href="/workspace" className="btn">Về không gian tài liệu</a></WorkspaceNavigation>
       </header>
       <section className="upload-content">
         <p className="eyebrow">THÊM TÀI LIỆU</p>
@@ -115,7 +116,7 @@ export default function Upload() {
         </ul>}
         {accepted.length > 0 && rejected === 0 && <p className="upload-ready">Các tệp đã chọn hợp lệ và sẵn sàng tải lên.</p>}
         <div className="analysis-submit">
-          <UploadModeSelector value={mode} disabled={submitting} onChange={handleModeChange} />
+          <UploadModeSelector value={mode} disabled={!ready || submitting} onChange={handleModeChange} />
           <button type="button" className="btn primary" disabled={!ready || submitting || !accepted.length || rejected > 0}
             onClick={submit}>{submitting ? 'Đang gửi…' : 'Tải lên và phân tích'}</button>
           {error && <p className="error-box" role="alert">{error}</p>}

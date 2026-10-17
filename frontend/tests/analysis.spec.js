@@ -107,21 +107,120 @@ function pdf() {
   return Buffer.from(output + `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
 }
 
-test('upload UI sends selected mode through the real proxy and opens its results', async ({ page }) => {
+test('financial clause upload submits five contracts in one job through the real proxy', async ({ page }) => {
   const login = await page.request.post('/auth/login', { form: { username: 'reader@example.com', password: user.password } });
   expect(login.status()).toBe(200);
   await page.goto('/upload');
-  await page.getByLabel('Chọn tệp tài liệu').setInputFiles({ name: 'ai-flow.pdf', mimeType: 'application/pdf', buffer: pdf() });
+  const contracts = Array.from({ length: 5 }, (_, index) => ({
+    name: `contract-${index + 1}.pdf`, mimeType: 'application/pdf', buffer: pdf(),
+  }));
+  const uploads = [];
+  await page.route('**/api/upload', route => {
+    uploads.push(route.request());
+    return route.continue();
+  });
+  await page.getByLabel('Chọn tệp tài liệu').setInputFiles(contracts);
   await page.getByLabel('Kiểu phân tích').selectOption('table');
+  await expect(page.getByRole('status')).toContainText('5/5 tệp hợp lệ');
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).click();
   await expect(page).toHaveURL(/\/results\/\d+$/);
   await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed', { timeout: 15000 });
-  await expect(page.getByText(/Thêm GEMINI_API_KEY/)).toBeVisible(); // isolated backend never uses paid APIs
+  await expect(page.getByText(/Thêm GEMINI_API_KEY/)).toHaveCount(5); // isolated backend never uses paid APIs
   const jobId = new URL(page.url()).pathname.split('/').pop();
   const saved = await (await page.request.get(`/jobs/${jobId}`)).json();
+  expect(uploads).toHaveLength(1);
+  const form = await new Request(uploads[0].url(), {
+    method: 'POST', headers: uploads[0].headers(), body: uploads[0].postDataBuffer(),
+  }).formData();
+  expect(form.getAll('mode')).toEqual(['table']);
+  expect(form.getAll('files').map(file => file.name)).toEqual(contracts.map(file => file.name));
+  for (const file of form.getAll('files')) {
+    expect(Buffer.from(await file.arrayBuffer())).toEqual(pdf());
+  }
+  expect(saved.id).toBe(Number(jobId));
   expect(saved.mode).toBe('table');
-  expect(saved.result_data.documents[String(saved.job_files[0].document_id)].output.type).toBe('table');
+  expect(saved.file_count).toBe(5);
+  expect(saved.completed_count).toBe(5);
+  expect(saved.job_files.map(file => file.original_filename).sort()).toEqual(contracts.map(file => file.name).sort());
+  await expect(page.getByRole('list', { name: 'Trạng thái từng tệp' }).getByRole('listitem')).toHaveCount(5);
+  await expect(page.getByRole('progressbar', { name: 'Tiến độ xử lý', exact: true })).toHaveJSProperty('value', 5);
+  for (const file of saved.job_files) {
+    expect(saved.result_data.documents[String(file.document_id)].output.type).toBe('table');
+  }
 });
+
+for (const failure of ['server', 'network', 'invalid job']) {
+  test(`financial clause batch preserves files and mode during loading and ${failure} failure, then retries`, async ({ page }) => {
+    let releaseUpload;
+    const uploads = [];
+    await page.route('**/api/upload', async route => {
+      uploads.push(route.request());
+      if (uploads.length > 1) return route.continue();
+      await new Promise(resolve => { releaseUpload = resolve; });
+      if (failure === 'network') return route.abort('failed');
+      return route.fulfill(failure === 'server'
+        ? { status: 503, json: { detail: 'Unavailable' } }
+        : { status: 202, json: { jobId: 'invalid' } });
+    });
+    await page.goto('/upload');
+    const selector = page.getByLabel('Kiểu phân tích');
+    await expect(selector).toBeEnabled();
+    await selector.selectOption('table');
+    await page.reload();
+    await expect(selector).toBeEnabled();
+    await expect(selector).toHaveValue('table');
+    const contracts = Array.from({ length: 5 }, (_, index) => ({
+      name: `retry-contract-${index + 1}.pdf`, mimeType: 'application/pdf', buffer: pdf(),
+    }));
+    const picker = page.getByLabel('Chọn tệp tài liệu');
+    await picker.setInputFiles(contracts);
+    await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).click();
+    await expect.poll(() => uploads.length).toBe(1);
+    try {
+      await expect(selector).toBeDisabled();
+      await expect(selector).toHaveValue('table');
+      await expect(picker).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Đang gửi…', exact: true })).toBeDisabled();
+      for (const button of await page.getByRole('button', { name: /^Xóa / }).all()) {
+        await expect(button).toBeDisabled();
+      }
+      const transfer = await page.evaluateHandle(() => {
+        const data = new DataTransfer();
+        data.items.add(new File(['ignored'], 'during-upload.pdf', { type: 'application/pdf' }));
+        return data;
+      });
+      await page.locator('.upload-picker').dispatchEvent('drop', { dataTransfer: transfer });
+      await transfer.dispose();
+      await expect(page.getByRole('listitem')).toHaveCount(5);
+    } finally {
+      releaseUpload();
+    }
+    await expect(page.locator('.upload-page').getByRole('alert')).toHaveText(/Không thể gửi tài liệu/);
+    await expect(page).toHaveURL('/upload');
+    await expect(selector).toBeEnabled();
+    await expect(selector).toHaveValue('table');
+    await expect(picker).toBeEnabled();
+    for (const contract of contracts) {
+      await expect(page.getByText(contract.name, { exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole('status')).toContainText('5/5 tệp hợp lệ');
+    const retry = page.getByRole('button', { name: 'Tải lên và phân tích', exact: true });
+    await expect(retry).toBeEnabled();
+    await retry.click();
+    await expect(page).toHaveURL(/\/results\/\d+$/);
+    expect(uploads).toHaveLength(2);
+    const forms = await Promise.all(uploads.map(request => new Request(request.url(), {
+      method: 'POST', headers: request.headers(), body: request.postDataBuffer(),
+    }).formData()));
+    for (const form of forms) {
+      expect(form.getAll('mode')).toEqual(['table']);
+      expect(form.getAll('files').map(file => file.name)).toEqual(contracts.map(file => file.name));
+      for (const file of form.getAll('files')) {
+        expect(Buffer.from(await file.arrayBuffer())).toEqual(pdf());
+      }
+    }
+  });
+}
 
 test('upload errors keep selection and allow an explicit retry', async ({ page }) => {
   await page.route('**/api/upload', route => route.fulfill({ status: 503, json: { detail: 'Unavailable' } }));

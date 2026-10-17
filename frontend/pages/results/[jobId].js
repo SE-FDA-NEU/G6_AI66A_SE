@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { getSession } from '../../lib/session';
 import AnalysisResults from '../../components/AnalysisResults';
+import WorkspaceNavigation from '../../components/WorkspaceNavigation';
 
 const labels = {
   pending: 'Pending', processing: 'Processing', completed: 'Completed',
@@ -67,7 +68,7 @@ export default function Results({ jobId }) {
     <Head><title>DocuMind · Tiến độ xử lý</title></Head>
     <main className="workspace results-page">
       <header><a href="/workspace" className="brand">DocuMind<span className="brand-dot">.</span></a>
-        <a className="btn" href="/workspace">Về không gian tài liệu</a></header>
+        <WorkspaceNavigation><a className="btn" href="/workspace">Về không gian tài liệu</a></WorkspaceNavigation></header>
       <section className="results-content">
         <p className="eyebrow">TÁC VỤ #{jobId}</p>
         <h1>Tiến độ xử lý</h1>
@@ -95,7 +96,7 @@ export default function Results({ jobId }) {
               <Badge status={file.status} />
             </li>)}
           </ul> : <p className="muted">Chưa có thông tin tệp.</p>}
-          <AnalysisResults data={job.result_data} jobId={jobId} />
+          <AnalysisResults data={job.result_data} jobId={jobId} mode={job.mode} jobFiles={job.job_files} />
         </>}
       </section>
     </main>

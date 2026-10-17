@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getSession } from '../lib/session';
 import WorkspaceSearch from '../components/WorkspaceSearch';
 import DocumentMetadata from '../components/DocumentMetadata';
+import WorkspaceNavigation from '../components/WorkspaceNavigation';
 
 export default function Workspace({ user }) {
   const [error, setError] = useState('');
@@ -49,9 +50,9 @@ export default function Workspace({ user }) {
           <a href="/workspace" className="brand">
             DocuMind<span className="brand-dot">.</span>
           </a>
-          <button className="btn" onClick={logout} disabled={busy}>
+          <WorkspaceNavigation><button className="btn" onClick={logout} disabled={busy}>
             Đăng xuất
-          </button>
+          </button></WorkspaceNavigation>
         </header>
         <section className="workspace-content">
           <p className="eyebrow">CHÀO MỪNG, {user.username}</p>

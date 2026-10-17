@@ -83,7 +83,8 @@ def test_one_compact_request_maps_real_source_offsets_and_metadata(document, api
     assert result.label.ai_confidence == .87
     assert result.analysis_metadata.input_tokens == 200 and result.analysis_metadata.output_tokens == 80
     if mode == JobMode.BULLET:
-        assert result.output.actions[0].unverified and not result.output.actions[0].evidence
+        assert result.output.actions == [] and result.output.limitation
+        assert 'insufficient_actions' in result.warnings
 
 
 def test_cache_reuses_wire_response_after_reupload_but_remaps_citations(document, api):
@@ -213,6 +214,17 @@ def test_http_timeout_remains_compatible_with_existing_retry_logic(document, api
     with pytest.raises(TimeoutError):
         asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
     assert len(calls) == 1
+
+
+def test_oversized_bullet_wire_is_rejected_before_it_can_be_cached(document, api):
+    state, calls = api
+    raw = {'label': None, 'confidence': None,
+           'bullets': [{'t': 'a ' * 399, 's': [0]}] * 3, 'actions': []}
+    state['response'] = {'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': json.dumps(raw)}]}}]}
+    with pytest.raises(gemini.GeminiAnalysisError) as error:
+        asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
+    assert error.value.code == 'gemini_invalid_response' and len(calls) == 1
+    assert not list(settings.STORAGE_DIR.rglob('*.json'))
 
 
 def test_inflight_gemini_request_is_cancelled_before_retry(document, api):

@@ -5,7 +5,7 @@ from copy import deepcopy
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 
-from app.models import Job, JobStatus
+from app.models import FileFormat, Job, JobMode, JobStatus
 from app.schemas.result import AnalysisResult, BulletOutput, ConceptOutput, JobResultData, TableOutput
 from app.services.job_extraction import prepare_document
 from app.services.reader_extraction import ReaderConversionError
@@ -16,6 +16,7 @@ from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 MAX_ATTEMPTS = 3
+BULLET_TARGET_SECONDS = 180
 
 
 def document_timeout(page_count):
@@ -70,6 +71,18 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                                    document.file_format, document.extracted_text, document.owner_id)
             timeout = document_timeout(document.page_count)
             file.timeout_seconds = timeout
+            loop = asyncio.get_running_loop()
+            deadline = None
+            if job.mode == JobMode.BULLET and source.file_format == FileFormat.PDF:
+                queued_for = max(0, (utcnow() - job.created_at).total_seconds())
+                deadline = loop.time() + BULLET_TARGET_SECONDS - queued_for
+
+            def remaining_budget(seconds):
+                return min(seconds, deadline - loop.time()) if deadline is not None else seconds
+
+            def check_target():
+                if deadline is not None and loop.time() >= deadline:
+                    raise TimeoutError
 
             while file.attempt_count < MAX_ATTEMPTS:
                 file.attempt_count += 1
@@ -82,7 +95,8 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                 prepared = None
                 try:
                     started = asyncio.get_running_loop().time()
-                    remaining = timeout
+                    check_target()
+                    remaining = remaining_budget(timeout)
                     if processor is None:
                         # Until physical pages are known, extraction may use the
                         # existing maximum budget. Its elapsed time still counts
@@ -93,9 +107,9 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                             timeout = document_timeout(count)
                             file.timeout_seconds = timeout
                             db.commit()
-                            return timeout
+                            return remaining_budget(timeout)
                         prepared = await asyncio.wait_for(prepare_document(source, on_page_count=on_page_count),
-                                                          timeout=timeout if source.page_count else 300)
+                                                          timeout=remaining_budget(timeout if source.page_count else 300))
                         source = replace(source, page_count=prepared.data['page_count'],
                                          extracted_text=deepcopy(prepared.data['extracted_text']))
                         timeout = document_timeout(source.page_count)
@@ -103,19 +117,26 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                         db.commit()
                         logger.info("job=%s document=%s attempt=%s/%s pages=%s timeout=%ss extracted",
                                     job_id, source.id, attempt, MAX_ATTEMPTS, source.page_count, timeout)
-                        remaining = timeout - (asyncio.get_running_loop().time() - started)
+                        remaining = remaining_budget(timeout - (asyncio.get_running_loop().time() - started))
                         if remaining <= 0:
                             raise TimeoutError
                     # Cancel and await cleanup before starting the next attempt.
                     result = await asyncio.wait_for((processor or analyzer)(source, job.mode), timeout=remaining)
+                    check_target()
                     if prepared is not None:
                         with publish_reader(document, prepared):
                             result = save_analysis(db, job, document, prepared, result)
+                            check_target()
                             _save_success(db, job, file, source.id, result, versioned=True)
                     else:
                         _save_success(db, job, file, source.id, result)
                 except TimeoutError:
                     db.rollback()
+                    if deadline is not None and loop.time() >= deadline:
+                        file.status = JobStatus.FAILED
+                        file.error_message = f'Bullet processing exceeded the {BULLET_TARGET_SECONDS}-second target.'
+                        db.commit()
+                        break
                     file.status = JobStatus.TIMED_OUT
                     file.error_message = f"Processing exceeded {timeout} seconds (attempt {attempt}/{MAX_ATTEMPTS})."
                     db.commit()
