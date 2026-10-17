@@ -188,6 +188,15 @@ input::placeholder { color: #96a29a; font-size: 13px; }
   color: #245da0;
   border-color: #bdd6f4;
 }
+.return-workspace-link {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+.return-workspace-link:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
 
 /* Reader Enhancements (US09) */
 .reader-loading {
