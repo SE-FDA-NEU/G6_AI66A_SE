@@ -1,21 +1,14 @@
 """Validate analyzer output against reader pages and save existing models."""
 from contextlib import contextmanager
 
-from app.models import Citation, ReviewState
-from app.schemas.result import AnalysisResult, DocumentResult, LabelMetadata, ReaderMetadata
+from app.models import Citation, Document, ReviewState
+from app.schemas.result import DocumentResult, LabelMetadata, ReaderMetadata
+from app.services.evidence import EvidenceValidator, claim_contexts, claims, parse_analysis
 from app.services.reader_extraction import ReaderConversionError, publish_pdf, reader_file, sha256
 
 
 class InvalidAnalysisResult(ValueError):
     pass
-
-
-def claims(output):
-    if output.type == 'bullet':
-        return output.bullets + output.actions
-    if output.type == 'table':
-        return [output.value, output.payment_term, output.penalty]
-    return [concept.description for concept in output.concepts]
 
 
 @contextmanager
@@ -41,7 +34,9 @@ def publish_reader(document, prepared):
 
 def save_analysis(db, job, document, prepared, raw_result):
     """Stage JSON, native pages, labels and citations in the caller's transaction."""
-    result = AnalysisResult.model_validate(raw_result).model_copy(deep=True)
+    if document.owner_id != job.owner_id or document.id not in {link.document_id for link in job.job_files}:
+        raise InvalidAnalysisResult('The job does not own this document.')
+    result = parse_analysis(raw_result)
     if result.output.type != job.mode.value:
         raise InvalidAnalysisResult('Analyzer returned a different output mode.')
     pages = prepared.data['extracted_text']
@@ -52,19 +47,11 @@ def save_analysis(db, job, document, prepared, raw_result):
     if result.analysis_status == 'not_configured' and (
             any(claim.text or claim.evidence for claim in all_claims) or result.label.ai_label is not None):
         raise InvalidAnalysisResult('An unconfigured analyzer cannot return generated content.')
-    for claim in all_claims:
-        if claim.text is None and claim.evidence:
-            raise InvalidAnalysisResult('An empty claim cannot have evidence.')
-        for evidence in claim.evidence:
-            if (evidence.document_id != document.id or evidence.page > len(pages) or
-                    evidence.reader_version != reference['sha256']):
-                raise InvalidAnalysisResult('Evidence does not reference this reader.')
-            page = pages[evidence.page - 1]
-            if page['text'][evidence.start:evidence.end] != evidence.quote:
-                raise InvalidAnalysisResult('Evidence does not match the exact source text.')
-        # Absence of a source must never turn an unsupported statement into
-        # a verified result, even if a provider sent unverified=False.
-        claim.unverified = claim.unverified or not claim.evidence
+    validator = EvidenceValidator(db, job, document, prepared)
+    for claim, heading in claim_contexts(result.output):
+        validator.validate(claim, heading)
+    if any(claim.text and claim.unverified for claim in all_claims) and 'unverified_claims' not in result.warnings:
+        result.warnings.append('unverified_claims')
 
     document.page_count = prepared.data['page_count']
     document.extracted_text = pages
@@ -87,14 +74,28 @@ def save_analysis(db, job, document, prepared, raw_result):
                               url=f'/documents/{document.id}/reader.pdf?version={reference["sha256"]}'),
         warnings=result.warnings, analysis_metadata=result.analysis_metadata)
 
-    db.query(Citation).filter_by(job_id=job.id, document_id=document.id).delete(synchronize_session=False)
-    for claim in all_claims:
-        if claim.text is None:
-            continue
-        for evidence in claim.evidence or [None]:
-            db.add(Citation(job_id=job.id, document_id=document.id, claim_text=claim.text,
-                            doc_name=document.original_filename,
-                            page=evidence.page if evidence else None,
-                            text_span=evidence.quote if evidence else None,
-                            unverified=claim.unverified))
     return payload.model_dump(mode='json')
+
+
+def sync_citations(db, job):
+    """Rebuild citations atomically from validated results, preserving each source.
+
+    Deleting only this file's citations loses another claim's cross-document
+    sources when the next file completes. Synchronize the entire saved batch.
+    Never deduplicate by claim_text/quote: page and document identity matter.
+    """
+    with db.no_autoflush:
+        db.query(Citation).filter_by(job_id=job.id).delete(synchronize_session=False)
+        for raw in job.result_data['documents'].values():
+            result = DocumentResult.model_validate(raw)
+            for claim in claims(result.output):
+                if claim.text is None:
+                    continue
+                for evidence in claim.evidence or [None]:
+                    document_id = evidence.document_id if evidence else result.document_id
+                    document = db.query(Document).filter_by(id=document_id, owner_id=job.owner_id).one()
+                    db.add(Citation(job_id=job.id, document_id=document_id, claim_text=claim.text,
+                                    doc_name=document.original_filename,
+                                    page=evidence.page if evidence else None,
+                                    text_span=evidence.quote if evidence else None,
+                                    unverified=claim.unverified))

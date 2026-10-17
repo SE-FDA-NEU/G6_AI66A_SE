@@ -111,7 +111,8 @@ def test_analyzer_payload_evidence_and_label_metadata_persist(client, session_fa
         assert unsupported['page'] is None and unsupported['text_span'] is None
     if mode == 'table':
         for field in ('value', 'payment_term'):
-            assert result['output'][field] == {'text': None, 'evidence': [], 'unverified': True}
+            assert result['output'][field]['text'] is None
+            assert result['output'][field]['evidence'] == [] and result['output'][field]['unverified'] is True
     reader = client.get(result['reader']['url'])
     displayed = tmp_path / 'displayed.pdf'
     displayed.write_bytes(reader.content)
@@ -148,7 +149,7 @@ def test_ai_suggestion_keeps_human_label_review_and_folder(client, session_facto
 
 
 @pytest.mark.parametrize('bad_reference', ['document_id', 'page', 'quote', 'reader_version', 'start'])
-def test_invalid_evidence_fails_file_without_saving_partial_results(client, session_factory, tmp_path, bad_reference):
+def test_invalid_evidence_is_unverified_without_losing_extracted_result(client, session_factory, tmp_path, bad_reference):
     job_id = upload(client, tmp_path)
     def mutate(evidence):
         invalid = {'document_id': 99999, 'page': 2, 'quote': 'x' * len(evidence['quote']),
@@ -158,13 +159,17 @@ def test_invalid_evidence_fails_file_without_saving_partial_results(client, sess
         return analysis(document, mode, mutation=mutate)
     processing.process_job(job_id, session_factory, analyzer=analyzer)
     saved = client.get(f'/jobs/{job_id}').json()
-    assert saved['status'] == saved['job_files'][0]['status'] == 'failed'
-    assert 'invalid_result' in saved['job_files'][0]['error_message']
-    assert saved['completed_count'] == 0 and saved['result_data'] is None and not saved['citations']
+    assert saved['status'] == saved['job_files'][0]['status'] == 'completed'
+    assert saved['completed_count'] == 1
+    doc_id = saved['job_files'][0]['document_id']
+    claim = saved['result_data']['documents'][str(doc_id)]['output']['bullets'][0]
+    assert claim['unverified'] and claim['evidence'] == []
+    assert 'invalid_evidence' in claim['verification_issues']
+    assert all(item['unverified'] and item['page'] is None and item['text_span'] is None for item in saved['citations'])
     with session_factory() as db:
         document = db.get(Job, job_id).job_files[0].document
-        assert document.page_count is None and document.extracted_text is None and document.ai_label is None
-    assert not list(settings.STORAGE_DIR.rglob('.reader/*/*.pdf'))
+        assert document.page_count == 3 and document.extracted_text and document.ai_label == 'Contract'
+    assert client.get(f'/documents/{doc_id}/pages').status_code == 200
 
 
 def test_broken_pdf_fails_only_its_file_and_good_file_still_completes(client, session_factory, tmp_path):

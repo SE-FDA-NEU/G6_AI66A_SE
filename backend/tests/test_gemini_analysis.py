@@ -134,6 +134,32 @@ def test_unknown_source_id_never_gets_a_verified_citation(document, api):
     assert 'unverified_claims' in result.warnings
 
 
+def test_gemini_preserves_multiple_excerpt_ids_and_same_text_on_different_pages(document, api):
+    state, calls = api
+    document.extracted_text[0]['text'] = 'Another source for the same late fee 0.05% per day.'
+    # Repeat a passage on another physical page; send its text only once.
+    extra = {**document.extracted_text[1], 'page': 3}
+    document.extracted_text.append(extra)
+    state['response'] = response(source=[0, 1, 0])
+    result = asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
+    claim = result.output.bullets[0]
+    assert not claim.unverified
+    assert [source.page for source in claim.evidence] == [1, 2, 3]
+    assert len(calls) == 1
+    body = json.loads(calls[0].content)
+    assert len(json.loads(body['contents'][0]['parts'][0]['text'])) == 2
+    schema = body['generationConfig']['responseFormat']['text']['schema']
+    assert schema['$defs']['WireClaim']['properties']['s']['anyOf'][0]['type'] == 'array'
+
+
+def test_unknown_gemini_source_does_not_discard_its_other_valid_sources(document, api):
+    state, _ = api
+    state['response'] = response(source=[0, 999])
+    result = asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
+    claim = result.output.bullets[0]
+    assert claim.unverified and [source.page for source in claim.evidence] == [2]
+
+
 def test_source_budget_keeps_offsets_balances_late_pages_and_reports_truncation():
     pages = [{'page': i, 'text': f'Page {i}: ' + (f'word{i} ' * 300)} for i in range(1, 31)]
     selected, wire, truncated = gemini.select_excerpts(pages, 'bullet', 8000)
