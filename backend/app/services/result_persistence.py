@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from app.models import Citation, Document, ReviewState
 from app.schemas.result import DocumentResult, LabelMetadata, ReaderMetadata
 from app.services.evidence import EvidenceValidator, claim_contexts, claims, parse_analysis
+from app.services.bullet_output import finalize_bullet_actions
 from app.services.reader_extraction import ReaderConversionError, publish_pdf, reader_file, sha256
 
 
@@ -55,6 +56,8 @@ def save_analysis(db, job, document, prepared, raw_result):
         validator.validate(claim, heading)
     if any(claim.text and claim.unverified for claim in all_claims) and 'unverified_claims' not in result.warnings:
         result.warnings.append('unverified_claims')
+    if result.output.type == 'bullet':
+        result.output = finalize_bullet_actions(result.output, result.warnings)
     if result.output.type == 'concept' and len(result.output.concepts) < 3:
         if not getattr(result.output, 'limitation', None):
             result.output.limitation = 'Nội dung nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi.'

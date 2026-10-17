@@ -49,6 +49,15 @@ class BulletOutput(Payload):
     type: Literal['bullet'] = 'bullet'
     bullets: list[Claim] = Field(default_factory=list)
     actions: list[Claim] = Field(default_factory=list)
+    limitation: str | None = Field(default=None, min_length=1, max_length=500)
+
+    @model_validator(mode='after')
+    def word_budget(self):
+        words = sum(len((claim.text or '').split()) for claim in self.bullets + self.actions)
+        words += len((self.limitation or '').split())
+        if words > 1000:
+            raise ValueError('Bullet summary, actions and limitation must not exceed 1,000 words.')
+        return self
 
 
 class TableOutput(Payload):

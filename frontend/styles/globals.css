@@ -63,8 +63,25 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .analysis-warning { color: #895b09; background: #fff3d8; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
 .analysis-unverified { font-size: 13px; color: #895b09; }.analysis-label, .analysis-note { font-size: 13px; line-height: 1.8; }
 .analysis-table-wrap { overflow-x: auto; }.analysis-card table { border-collapse: collapse; width: 100%; margin-top: 24px; }
+.financial-comparison-table { min-width: 760px; table-layout: fixed; }
+.financial-comparison-table th[scope="row"] { font-weight: normal; }
+.financial-comparison-table th[scope="row"] > a { font-weight: 600; }
+.financial-field-label { display: none; }
+.financial-source-label { font-size: 13px; font-weight: 600; margin: 8px 0 4px; }
 .analysis-card caption { text-align: left; font-weight: 600; padding-bottom: 12px; }.analysis-card th, .analysis-card td { padding: 12px; border: 1px solid #dce4de; text-align: left; vertical-align: top; }
 @media (max-width: 540px) { .analysis-card { padding: 16px; }.analysis-card th, .analysis-card td { padding: 8px; } }
+@media (max-width: 640px) {
+  .analysis-table-wrap { border: 0; padding: 0; background: transparent; overflow: visible; }
+  .analysis-table-wrap .financial-comparison-table { display: block; min-width: 0; margin-top: 0; }
+  .financial-comparison-table caption { display: block; }
+  .financial-comparison-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .financial-comparison-table tbody { display: grid; gap: 16px; }
+  .financial-comparison-table tbody tr { display: block; min-width: 0; padding: 16px; border: 1px solid #dce4de; border-radius: 14px; background: #fff; }
+  .financial-comparison-table tbody th, .financial-comparison-table tbody td { display: block; width: 100%; padding: 12px 0; border: 0; }
+  .financial-comparison-table tbody th { padding-top: 0; border-bottom: 1px solid #dce4de; }
+  .financial-comparison-table tbody td:last-child { padding-bottom: 0; }
+  .financial-field-label { display: block; font-size: 14px; font-weight: 600; }
+}
 .job-progress-card { background: #fff; border: 1px solid #dce4de; border-radius: 16px; padding: 28px; margin-top: 30px; }
 .job-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .job-progress-heading h2 { font-size: 21px; margin: 0; }
