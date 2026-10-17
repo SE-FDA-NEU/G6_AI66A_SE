@@ -176,11 +176,13 @@ export default function Reader({
     }
   }
 
+  const currentReturnJobId = (router.isReady && router.query.job !== undefined ? router.query.job : returnJobId) || null;
+
   function changePage(next) {
     if (data?.page_count && (next < 1 || next > data.page_count)) return;
     setPage(next);
     const nextQuery = { ...router.query, documentId, page: next };
-    if (returnJobId) nextQuery.job = returnJobId;
+    if (currentReturnJobId) nextQuery.job = currentReturnJobId;
     router.push(
       { pathname: '/documents/[documentId]', query: nextQuery },
       undefined,
@@ -212,12 +214,22 @@ export default function Reader({
         <header>
           <a href="/workspace" className="brand">DocuMind.</a>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {returnJobId && (
-              <a href={`/results/${returnJobId}`} className="btn return-job-link">
-                Quay lại tác vụ #{returnJobId}
+            {currentReturnJobId && (
+              <a
+                href={`/results/${currentReturnJobId}`}
+                className="btn return-job-link"
+                aria-label={`Back to Results · Quay lại tác vụ #${currentReturnJobId}`}
+              >
+                Back to Results
               </a>
             )}
-            <a href="/workspace" className="btn">Về thư viện</a>
+            <a
+              href="/workspace"
+              className="btn return-workspace-link"
+              aria-label="Back to Workspace · Về thư viện"
+            >
+              Back to Workspace
+            </a>
           </div>
         </header>
 
@@ -383,7 +395,7 @@ export async function getServerSideProps({ req, res, params, query }) {
     }
   }
   if (!page) page = 1;
-  const returnJobId = /^\d+$/.test(query.job || '') ? query.job : null;
+  const returnJobId = query.job && /^[a-zA-Z0-9_-]+$/.test(String(query.job)) ? String(query.job) : null;
   const initialEvidenceId = query.evidence ?? null;
   const initialStart = /^\d+$/.test(query.start || '') ? Number(query.start) : null;
   const initialEnd = /^\d+$/.test(query.end || '') ? Number(query.end) : null;

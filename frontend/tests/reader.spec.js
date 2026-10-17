@@ -331,4 +331,145 @@ test('unresolved span fallback still opens the correct page and displays exact h
   await expect(page.locator('.text-layer-snippet')).toHaveText('Đoạn văn bản mẫu trang 1 ngắn gọn.');
 });
 
+test('originating job ID displays Back to Results, survives reader refresh and page navigation, and returns to /results/:jobId with saved results', async ({ page }) => {
+  const version = 'g'.repeat(64);
+  const jobId = 105;
+  const docId = 88;
+
+  // Mock job endpoint returning completed job with saved analysis results
+  const jobPayload = {
+    id: jobId,
+    status: 'completed',
+    file_count: 1,
+    completed_count: 1,
+    job_files: [
+      { id: 1, document_id: docId, original_filename: 'HopDongKinhTe.pdf', status: 'completed', attempt_count: 1 },
+    ],
+    result_data: {
+      schema_version: 1,
+      documents: {
+        [docId]: {
+          schema_version: 1,
+          document_id: docId,
+          original_filename: 'HopDongKinhTe.pdf',
+          mode: 'table',
+          analysis_status: 'completed',
+          reader: { page_count: 3, page_kind: 'page' },
+          label: { ai_label: 'Hợp đồng', ai_confidence: 0.95, confidence_level: 'high' },
+          warnings: [],
+          output: {
+            type: 'table',
+            value: { text: '1.500.000.000 VNĐ', unverified: false, evidence: [
+              { document_id: docId, page: 2, start: 0, end: 17, quote: '1.500.000.000 VNĐ', reader_version: version },
+            ] },
+            payment_term: { text: null, unverified: true, evidence: [] },
+            penalty: { text: null, unverified: true, evidence: [] },
+          },
+        },
+      },
+    },
+  };
+
+  await page.route(`**/jobs/${jobId}`, route => route.fulfill({ json: jobPayload }));
+
+  // Mock reader pages and pdf
+  await page.route(`**/api/documents/${docId}/pages`, route => route.fulfill({ json: {
+    page_count: 3,
+    page_kind: 'page',
+    reader_version: version,
+    reader_url: `/documents/${docId}/reader.pdf?version=${version}`,
+    pages: [
+      { page: 1, text: 'Trang 1 nội dung' },
+      { page: 2, text: '1.500.000.000 VNĐ là giá trị hợp đồng', positions: [] },
+      { page: 3, text: 'Trang 3 điều khoản bổ sung' },
+    ],
+  } }));
+  await page.route(`**/api/documents/${docId}/reader.pdf?*`, route => route.fulfill({
+    contentType: 'application/pdf',
+    body: pdfFixture(),
+  }));
+
+  // Step 1: Start at /results/:jobId and verify saved results are rendered
+  await page.goto(`/results/${jobId}`);
+  await expect(page.getByText('TÁC VỤ #105')).toBeVisible();
+  await expect(page.getByText('1.500.000.000 VNĐ')).toBeVisible();
+
+  // Step 2: Click citation link which contains ?page=2&...&job=105
+  const citationBadge = page.locator('.citation-badge').first();
+  await expect(citationBadge).toBeVisible();
+  await citationBadge.click();
+
+  // Reader opens at page 2
+  await expect(page).toHaveURL(new RegExp(`/documents/${docId}.*job=${jobId}`));
+  await expect(page.getByText('Trang 2/3', { exact: true })).toBeVisible();
+
+  // "Back to Results" link is displayed and points to /results/105
+  const backToResults = page.getByRole('link', { name: 'Back to Results' });
+  await expect(backToResults).toBeVisible();
+  await expect(backToResults).toHaveAttribute('href', `/results/${jobId}`);
+
+  // Page navigation preserves the job parameter
+  await page.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(page.getByText('Trang 3/3', { exact: true })).toBeVisible();
+  await expect(backToResults).toBeVisible();
+  await expect(backToResults).toHaveAttribute('href', `/results/${jobId}`);
+
+  // Step 3: Reader refresh retains Back to Results button and return job ID
+  await page.reload();
+  await expect(page.getByText('Trang 3/3', { exact: true })).toBeVisible();
+  const backAfterReload = page.getByRole('link', { name: 'Back to Results' });
+  await expect(backAfterReload).toBeVisible();
+  await expect(backAfterReload).toHaveAttribute('href', `/results/${jobId}`);
+
+  // Step 4: Click Back to Results and return to the same /results/:jobId with saved results
+  await backAfterReload.click();
+  await expect(page).toHaveURL(`/results/${jobId}`);
+  await expect(page.getByText('TÁC VỤ #105')).toBeVisible();
+  await expect(page.getByText('1.500.000.000 VNĐ')).toBeVisible();
+  await expect(page.getByRole('status', { name: 'Trạng thái job' })).toHaveText('Completed');
+});
+
+test('document opened from workspace provides workspace return path and preserves it across refresh', async ({ page }) => {
+  const version = 'h'.repeat(64);
+  const docId = 72;
+
+  await page.route(`**/api/documents/${docId}/pages`, route => route.fulfill({ json: {
+    page_count: 2,
+    page_kind: 'page',
+    reader_version: version,
+    reader_url: `/documents/${docId}/reader.pdf?version=${version}`,
+    pages: [
+      { page: 1, text: 'Tài liệu không gian làm việc' },
+      { page: 2, text: 'Trang 2 tài liệu' },
+    ],
+  } }));
+  await page.route(`**/api/documents/${docId}/reader.pdf?*`, route => route.fulfill({
+    contentType: 'application/pdf',
+    body: pdfFixture(),
+  }));
+
+  // Step 1: Open document directly without originating job ID (workspace entry path)
+  await page.goto(`/documents/${docId}`);
+
+  // "Back to Results" is NOT displayed
+  await expect(page.locator('.return-job-link')).toHaveCount(0);
+
+  // "Back to Workspace" return link is displayed and points to /workspace
+  const workspaceReturn = page.locator('.return-workspace-link');
+  await expect(workspaceReturn).toBeVisible();
+  await expect(workspaceReturn).toHaveAttribute('href', '/workspace');
+
+  // Step 2: Reader refresh retains workspace return path without inventing Back to Results
+  await page.reload();
+  await expect(page.locator('.return-job-link')).toHaveCount(0);
+  const workspaceReturnAfterReload = page.locator('.return-workspace-link');
+  await expect(workspaceReturnAfterReload).toBeVisible();
+  await expect(workspaceReturnAfterReload).toHaveAttribute('href', '/workspace');
+
+  // Step 3: Clicking workspace return path returns to /workspace
+  await workspaceReturnAfterReload.click();
+  await expect(page).toHaveURL('/workspace');
+  await expect(page.getByText('Không gian tài liệu')).toBeVisible();
+});
+
 
