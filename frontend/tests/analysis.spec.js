@@ -132,3 +132,54 @@ test('upload errors keep selection and allow an explicit retry', async ({ page }
   await expect(page.getByRole('button', { name: 'Tải lên và phân tích', exact: true })).toBeEnabled();
   await expect(page.getByText('retry.pdf', { exact: true })).toBeVisible();
 });
+
+test.describe('AI Label Prediction and Confidence Boundary (US06 / US10)', () => {
+  for (const { score, level, needsReviewText } of [
+    { score: 0.87, level: 'high', needsReviewText: false },
+    { score: 0.80, level: 'high', needsReviewText: false },
+    { score: 0.79, level: 'low', needsReviewText: true },
+    { score: 0.72, level: 'low', needsReviewText: true },
+  ]) {
+    test(`renders AI label prediction for ${Math.round(score * 100)}% score (${level} confidence)`, async ({ page }) => {
+      const doc = result('bullet');
+      doc.label = {
+        ai_label: 'Hợp đồng',
+        ai_confidence: score,
+        confidence_level: level,
+        review_state: 'needs_review',
+        user_label: null,
+      };
+      await page.route('**/jobs/77', route => route.fulfill({ json: job(doc) }));
+      await page.goto('/results/77');
+
+      const labelPara = page.locator('.analysis-label');
+      await expect(labelPara).toBeVisible();
+      await expect(labelPara).toContainText(`Nhãn AI: Hợp đồng · ${Math.round(score * 100)}%`);
+
+      if (needsReviewText) {
+        await expect(labelPara).toContainText('· Cần kiểm tra');
+      } else {
+        await expect(labelPara).not.toContainText('· Cần kiểm tra');
+      }
+    });
+  }
+
+  test('AI label suggestion renders alongside user_label independently', async ({ page }) => {
+    const doc = result('bullet');
+    doc.label = {
+      ai_label: 'Hợp đồng',
+      ai_confidence: 0.87,
+      confidence_level: 'high',
+      review_state: 'confirmed',
+      user_label: 'Tài liệu pháp lý',
+    };
+    await page.route('**/jobs/77', route => route.fulfill({ json: job(doc) }));
+    await page.goto('/results/77');
+
+    const labelPara = page.locator('.analysis-label');
+    await expect(labelPara).toBeVisible();
+    await expect(labelPara).toContainText('Nhãn AI: Hợp đồng · 87%');
+    await expect(labelPara).toContainText('Nhãn của bạn: Tài liệu pháp lý');
+    await expect(labelPara).not.toContainText('· Cần kiểm tra');
+  });
+});
