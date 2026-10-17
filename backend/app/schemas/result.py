@@ -66,6 +66,7 @@ class Concept(Payload):
 class ConceptOutput(Payload):
     type: Literal['concept'] = 'concept'
     concepts: list[Concept] = Field(default_factory=list, max_length=5)
+    limitation: str | None = None
 
 
 Output = Annotated[BulletOutput | TableOutput | ConceptOutput, Field(discriminator='type')]
