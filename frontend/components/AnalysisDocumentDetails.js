@@ -14,7 +14,8 @@ export default function AnalysisDocumentDetails({ document }) {
       {document.label.confidence_level === 'low' && ' · Cần kiểm tra'}
       {document.label.user_label && <span> · Nhãn của bạn: {document.label.user_label}</span>}
     </p>}
-    {document.warnings?.map(warning => <p className="analysis-warning" key={warning}>
+    {document.warnings?.filter(warning => !(warning === 'insufficient_actions' &&
+      document.analysis_status === 'completed' && document.output?.type === 'bullet')).map(warning => <p className="analysis-warning" key={warning}>
       {warnings[warning] || warning}
     </p>)}
     {document.error_message && <p className="analysis-error error-box" role="alert" data-testid="document-analysis-error">

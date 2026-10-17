@@ -1,13 +1,17 @@
 import { ClaimEvidence } from './CitationBadge';
 
-export function ActionResults({ actions, documentName, documentId, jobId, pageKind }) {
-  if (!actions || actions.length === 0) return null;
+export function ActionResults({ actions = [], limitation, documentName, documentId, jobId, pageKind }) {
+  const recommendations = actions || [];
+  // Older saved results may not have the explicit limitation field yet.
+  const sourceLimitation = limitation || (recommendations.length < 2
+    ? 'Tài liệu không đủ căn cứ nguồn để hỗ trợ hai hành động đề xuất.' : null);
 
   return (
-    <section className="analysis-section analysis-actions" aria-label="Hành động đề xuất">
-      <h4>Hành động đề xuất</h4>
-      <ul className="actions-list">
-        {actions.map((claim, index) => (
+    <section className="analysis-section analysis-actions" aria-label="Recommended actions">
+      <h4>Recommended actions</h4>
+      {sourceLimitation && <p className="analysis-warning" data-testid="action-limitation">{sourceLimitation}</p>}
+      {recommendations.length > 0 && <ul className="actions-list">
+        {recommendations.map((claim, index) => (
           <li key={index} className="action-item">
             <ClaimEvidence
               claim={claim}
@@ -18,7 +22,7 @@ export function ActionResults({ actions, documentName, documentId, jobId, pageKi
             />
           </li>
         ))}
-      </ul>
+      </ul>}
     </section>
   );
 }

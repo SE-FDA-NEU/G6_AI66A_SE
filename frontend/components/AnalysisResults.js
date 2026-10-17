@@ -27,6 +27,7 @@ export default function AnalysisResults({ data, jobId, mode, jobFiles = [] }) {
           />
           <ActionResults
             actions={document.output.actions}
+            limitation={document.output.limitation}
             documentName={document.original_filename}
             documentId={document.document_id}
             jobId={jobId}
