@@ -582,5 +582,39 @@ input::placeholder { color: #96a29a; font-size: 13px; }
   border: 1px solid #bfdbfe;
 }
 
+/* Concept Results & Limitation */
+.concept-limitation {
+  background: #f8fafc;
+  border-left: 4px solid #64748b;
+  padding: 10px 14px;
+  margin: 10px 0 16px;
+  border-radius: 0 6px 6px 0;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.concepts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.concept-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.concept-card h5 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
 
 

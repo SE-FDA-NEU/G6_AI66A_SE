@@ -36,7 +36,10 @@ def save_analysis(db, job, document, prepared, raw_result):
     """Stage JSON, native pages, labels and citations in the caller's transaction."""
     if document.owner_id != job.owner_id or document.id not in {link.document_id for link in job.job_files}:
         raise InvalidAnalysisResult('The job does not own this document.')
-    result = parse_analysis(raw_result)
+    try:
+        result = parse_analysis(raw_result)
+    except Exception as error:
+        raise InvalidAnalysisResult(f'Invalid analysis result schema: {error}') from error
     if result.output.type != job.mode.value:
         raise InvalidAnalysisResult('Analyzer returned a different output mode.')
     pages = prepared.data['extracted_text']
@@ -52,6 +55,11 @@ def save_analysis(db, job, document, prepared, raw_result):
         validator.validate(claim, heading)
     if any(claim.text and claim.unverified for claim in all_claims) and 'unverified_claims' not in result.warnings:
         result.warnings.append('unverified_claims')
+    if result.output.type == 'concept' and len(result.output.concepts) < 3:
+        if not getattr(result.output, 'limitation', None):
+            result.output.limitation = 'Nội dung nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi.'
+        if 'insufficient_concepts' not in result.warnings and 'no_text_layer' not in result.warnings:
+            result.warnings.append('insufficient_concepts')
 
     document.page_count = prepared.data['page_count']
     document.extracted_text = pages

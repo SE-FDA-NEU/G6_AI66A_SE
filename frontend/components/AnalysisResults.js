@@ -8,6 +8,7 @@ const warnings = {
   no_text_layer: 'Tài liệu không có lớp chữ để phân tích. Hệ thống không tự tạo nội dung hoặc chạy OCR.',
   source_truncated: 'Đã chọn các đoạn nguồn trong giới hạn tiết kiệm token. Kết quả chưa bao quát toàn bộ tài liệu.',
   unverified_claims: 'Một số nội dung chưa có bằng chứng nguồn hợp lệ.',
+  insufficient_concepts: 'Tài liệu nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi. Không tự tạo khái niệm khi thiếu căn cứ nguồn.',
 };
 
 export default function AnalysisResults({ data, jobId }) {
@@ -52,6 +53,7 @@ export default function AnalysisResults({ data, jobId }) {
         />}
         {document.output?.type === 'concept' && <ConceptResults
           concepts={document.output.concepts}
+          limitation={document.output.limitation}
           documentName={document.original_filename}
           documentId={document.document_id}
           jobId={jobId}

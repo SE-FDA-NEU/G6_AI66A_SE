@@ -35,7 +35,7 @@ SYSTEM = (
 MODE_INSTRUCTIONS = {
     'bullet': 'Give up to 5 key bullets and up to 2 source-grounded actions. Avoid padding.',
     'table': 'Extract contract value, payment_term and penalty. Missing values stay null. Keep exact rates/periods.',
-    'concept': 'Give 3-5 core concepts (n=name,t=explanation,s=source); fewer for very short excerpts. Avoid padding.',
+    'concept': 'Give 3-5 core concepts (n=name,t=explanation,s=source); fewer for very short excerpts. If the source cannot support 3-5 concepts, return only supported concepts without padding and explain limitation. Avoid padding.',
 }
 FINANCIAL = re.compile(r'payment|penalt|late fee|contract value|total amount|thanh toán|phạt|giá trị|lãi|%', re.I)
 
@@ -104,6 +104,7 @@ class WireConcept(WireClaim):
 
 class WireConcepts(WireLabel):
     concepts: list[WireConcept] = Field(max_length=5)
+    limitation: str | None = Field(default=None, max_length=500)
 
 
 WIRE_TYPES = {'bullet': WireBullet, 'table': WireTable, 'concept': WireConcepts}
@@ -267,7 +268,9 @@ async def analyze_document(document, mode):
     selected, wire, truncated = select_excerpts(document.extracted_text, mode.value, settings.GEMINI_MAX_INPUT_CHARS)
     if not selected:
         empty = {'bullet': BulletOutput, 'table': TableOutput, 'concept': ConceptOutput}
-        return AnalysisResult(output=empty[mode.value](), warnings=['no_text_layer'])
+        limitation = 'Tài liệu không có lớp chữ để phân tích khái niệm.' if mode.value == 'concept' else None
+        output = ConceptOutput(limitation=limitation) if mode.value == 'concept' else empty[mode.value]()
+        return AnalysisResult(output=output, warnings=['no_text_layer'])
     body = request_body(mode.value, wire)
     model = WIRE_TYPES[mode.value]
     path = cache_file(document, body)
@@ -310,7 +313,16 @@ async def analyze_document(document, mode):
         output = TableOutput(value=claim(raw.value, 'amount'), payment_term=claim(raw.payment_term, 'clause'),
                              penalty=claim(raw.penalty, 'clause'))
     else:
-        output = ConceptOutput(concepts=[Concept(name=item.n, description=claim(item)) for item in raw.concepts])
+        limitation = getattr(raw, 'limitation', None)
+        if len(raw.concepts) < 3:
+            if not limitation:
+                limitation = 'Nội dung nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi.'
+            if 'insufficient_concepts' not in warnings and 'no_text_layer' not in warnings:
+                warnings.append('insufficient_concepts')
+        output = ConceptOutput(
+            concepts=[Concept(name=item.n, description=claim(item)) for item in raw.concepts],
+            limitation=limitation,
+        )
     def tokens(name):
         value = usage.get(name)
         return value if type(value) is int and value >= 0 else None
