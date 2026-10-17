@@ -124,7 +124,60 @@ def test_analyzer_payload_evidence_and_label_metadata_persist(client, session_fa
     assert client.get(f'/jobs/{job_id}').json() == saved
 
 
-def test_ai_suggestion_keeps_human_label_review_and_folder(client, session_factory, tmp_path):
+@pytest.mark.parametrize('confidence, expected_level, expected_state', [
+    (0.87, 'high', 'needs_review'),
+    (0.80, 'high', 'needs_review'),
+    (0.79, 'low', 'needs_review'),
+    (0.72, 'low', 'needs_review'),
+])
+def test_label_prediction_confidence_boundary_and_no_folder_auto_assignment(
+    client, session_factory, tmp_path, confidence, expected_level, expected_state
+):
+    """Test 87%, 72% and the 79%/80% boundary using controlled classifier outputs.
+    - Run label prediction on extracted document text.
+    - Reuse ai_label and ai_confidence independently of folder_id and user_label.
+    - Scores below 80% require review ('low'); scores at or above 80% are high-confidence AI suggestions ('high').
+    - Scores at or above 80% are NOT user-confirmed labels (review_state stays 'needs_review').
+    - Never auto-assign folders (folder_id is None).
+    """
+    job_id = upload(client, tmp_path, 'bullet')
+
+    async def controlled_classifier(document, mode):
+        # Verify classifier receives extracted document text
+        assert document.extracted_text and any(p['text'] for p in document.extracted_text)
+        return analysis(document, mode, confidence=confidence)
+
+    processing.process_job(job_id, session_factory, analyzer=controlled_classifier)
+
+    saved = client.get(f'/jobs/{job_id}').json()
+    assert saved['status'] == 'completed'
+    doc_id = saved['job_files'][0]['document_id']
+    doc_result = saved['result_data']['documents'][str(doc_id)]
+    label = doc_result['label']
+
+    # AI prediction attributes
+    assert label['ai_label'] == 'Contract'
+    assert label['ai_confidence'] == pytest.approx(confidence)
+    assert label['confidence_level'] == expected_level
+    # Scores at or above 80% are NOT user-confirmed labels; review_state stays needs_review
+    assert label['review_state'] == expected_state
+    # User label is not auto-assigned
+    assert label['user_label'] is None
+
+    # Verify database model persistence
+    with session_factory() as db:
+        document = db.get(Document, doc_id)
+        assert document.ai_label == 'Contract'
+        assert document.ai_confidence == pytest.approx(confidence)
+        # Folder is never auto-assigned
+        assert document.folder_id is None
+        # User label is never auto-assigned
+        assert document.user_label is None
+        assert document.review_state == ReviewState.NEEDS_REVIEW
+
+
+@pytest.mark.parametrize('confidence', [0.87, 0.72])
+def test_ai_suggestion_keeps_human_label_review_and_folder(client, session_factory, tmp_path, confidence):
     job_id = upload(client, tmp_path)
     with session_factory() as db:
         document = db.get(Job, job_id).job_files[0].document
@@ -137,15 +190,17 @@ def test_ai_suggestion_keeps_human_label_review_and_folder(client, session_facto
         doc_id, folder_id = document.id, folder.id
         db.commit()
     async def analyzer(document, mode):
-        return analysis(document, mode)
+        return analysis(document, mode, confidence=confidence)
     processing.process_job(job_id, session_factory, analyzer=analyzer)
     with session_factory() as db:
         document = db.get(Document, doc_id)
         assert document.folder_id == folder_id and document.user_label == 'My chosen label'
         assert document.review_state == ReviewState.CONFIRMED
         assert document.ai_label == 'Contract'
+        assert document.ai_confidence == pytest.approx(confidence)
     label = client.get(f'/jobs/{job_id}').json()['result_data']['documents'][str(doc_id)]['label']
     assert label['user_label'] == 'My chosen label' and label['review_state'] == 'confirmed'
+    assert label['confidence_level'] == ('high' if confidence >= 0.8 else 'low')
 
 
 @pytest.mark.parametrize('bad_reference', ['document_id', 'page', 'quote', 'reader_version', 'start'])

@@ -50,9 +50,20 @@ def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), 
         _, reference = reader_representation(document)
     except ReaderConversionError as error:
         raise reader_error(error)
-    return {'page_count': document.page_count, 'pages': document.extracted_text,
-            'page_kind': reference['page_kind'], 'reader_version': reference['sha256'],
-            'reader_url': f"/documents/{document_id}/reader.pdf?version={reference['sha256']}"}
+    return {
+        'page_count': document.page_count,
+        'pages': document.extracted_text,
+        'page_kind': reference['page_kind'],
+        'reader_version': reference['sha256'],
+        'reader_url': f"/documents/{document_id}/reader.pdf?version={reference['sha256']}",
+        'ai_label': document.ai_label,
+        'ai_confidence': document.ai_confidence,
+        'review_state': document.review_state.value if document.review_state else 'needs_review',
+        'user_label': document.user_label,
+        'folder_id': document.folder_id,
+        'original_filename': document.original_filename,
+    }
+
 
 
 @router.get('/{document_id}/reader.pdf')

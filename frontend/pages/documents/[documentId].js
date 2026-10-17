@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getSession } from '../../lib/session';
+import DocumentMetadata from '../../components/DocumentMetadata';
 
 export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData) {
   if (!evidenceId && rawStart == null && rawEnd == null) {
@@ -234,6 +235,18 @@ export default function Reader({
         </header>
 
         <h1>Đọc tài liệu</h1>
+
+        {/* Document Metadata (US10) */}
+        {!error && data && (
+          <DocumentMetadata
+            aiLabel={data.ai_label}
+            aiConfidence={data.ai_confidence}
+            reviewState={data.review_state}
+            userLabel={data.user_label}
+            folderId={data.folder_id}
+            className="reader-document-metadata"
+          />
+        )}
 
         {/* Loading state */}
         {loading && !error && !busy && (
