@@ -2,16 +2,19 @@ import { ClaimEvidence } from './CitationBadge';
 
 export function ConceptResults({ concepts, limitation, documentName, documentId, jobId, pageKind }) {
   const hasConcepts = Array.isArray(concepts) && concepts.length > 0;
-  if (!hasConcepts && !limitation) return null;
 
   return (
     <section className="analysis-section analysis-concepts" aria-label="Khái niệm chính">
       <h4>Khái niệm chính</h4>
-      {limitation && (
+      {limitation ? (
         <div className="concept-limitation" data-testid="concept-limitation">
           <p>{limitation}</p>
         </div>
-      )}
+      ) : !hasConcepts ? (
+        <div className="concept-limitation concept-empty-state" data-testid="concept-limitation">
+          <p>Tài liệu không có đủ nội dung để rút ra các khái niệm chính.</p>
+        </div>
+      ) : null}
       {hasConcepts && (
         <div className="concepts-list">
           {concepts.map((concept, index) => (
