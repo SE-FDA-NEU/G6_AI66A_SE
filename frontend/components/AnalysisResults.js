@@ -1,3 +1,8 @@
+import BulletResults from './BulletResults';
+import ActionResults from './ActionResults';
+import TableResults from './TableResults';
+import ConceptResults from './ConceptResults';
+
 const warnings = {
   analysis_not_configured: 'Chưa cấu hình Gemini. Thêm GEMINI_API_KEY vào backend/.env rồi tải lại tài liệu để phân tích.',
   no_text_layer: 'Tài liệu không có lớp chữ để phân tích. Hệ thống không tự tạo nội dung hoặc chạy OCR.',
@@ -5,20 +10,7 @@ const warnings = {
   unverified_claims: 'Một số nội dung chưa có bằng chứng nguồn hợp lệ.',
 };
 
-function Claim({ value, pageKind }) {
-  if (!value?.text) return <span className="analysis-unverified">Không có thông tin · Unverified</span>;
-  return <div className="analysis-claim">
-    <p>{value.text}</p>
-    {value.unverified && <span className="analysis-unverified">Unverified · Cần kiểm tra</span>}
-    {value.evidence?.map((source, index) =>
-      <a className="analysis-source" key={index}
-        href={`/documents/${source.document_id}?page=${source.page}&start=${source.start}&end=${source.end}`} title={source.quote}>
-        {pageKind === 'slide' ? 'Slide' : 'Trang'} {source.page} · #{source.document_id}
-      </a>)}
-  </div>;
-}
-
-export default function AnalysisResults({ data }) {
+export default function AnalysisResults({ data, jobId }) {
   const documents = Object.values(data?.documents || {}).filter(item => item?.schema_version === 1);
   if (!documents.length) return null;
   return <section className="analysis-results" aria-label="Kết quả phân tích AI">
@@ -36,25 +28,35 @@ export default function AnalysisResults({ data }) {
       </p>)}
       {document.analysis_status === 'completed' && <>
         {document.output?.type === 'bullet' && <>
-          <h4>Tóm tắt</h4>
-          <ul>{document.output.bullets.map((claim, index) => <li key={index}>
-            <Claim value={claim} pageKind={document.reader?.page_kind} /></li>)}</ul>
-          {document.output.actions?.length > 0 && <><h4>Hành động đề xuất</h4>
-            <ul>{document.output.actions.map((claim, index) => <li key={index}>
-              <Claim value={claim} pageKind={document.reader?.page_kind} /></li>)}</ul></>}
+          <BulletResults
+            bullets={document.output.bullets}
+            documentName={document.original_filename}
+            documentId={document.document_id}
+            jobId={jobId}
+            pageKind={document.reader?.page_kind}
+          />
+          <ActionResults
+            actions={document.output.actions}
+            documentName={document.original_filename}
+            documentId={document.document_id}
+            jobId={jobId}
+            pageKind={document.reader?.page_kind}
+          />
         </>}
-        {document.output?.type === 'table' && <div className="analysis-table-wrap"><table>
-          <caption>Điều khoản hợp đồng</caption>
-          <thead><tr><th scope="col">Nội dung</th><th scope="col">Kết quả và nguồn</th></tr></thead>
-          <tbody>{[['value', 'Giá trị'], ['payment_term', 'Thanh toán'], ['penalty', 'Phạt']].map(([field, label]) =>
-            <tr key={field}><th scope="row">{label}</th><td>
-              <Claim value={document.output[field]} pageKind={document.reader?.page_kind} />
-            </td></tr>)}</tbody>
-        </table></div>}
-        {document.output?.type === 'concept' && <><h4>Khái niệm chính</h4>
-          {document.output.concepts.map((concept, index) => <section key={index}>
-            <h5>{concept.name}</h5><Claim value={concept.description} pageKind={document.reader?.page_kind} />
-          </section>)}</>}
+        {document.output?.type === 'table' && <TableResults
+          table={document.output}
+          documentName={document.original_filename}
+          documentId={document.document_id}
+          jobId={jobId}
+          pageKind={document.reader?.page_kind}
+        />}
+        {document.output?.type === 'concept' && <ConceptResults
+          concepts={document.output.concepts}
+          documentName={document.original_filename}
+          documentId={document.document_id}
+          jobId={jobId}
+          pageKind={document.reader?.page_kind}
+        />}
         {document.analysis_metadata?.cache_hit && <p className="analysis-note">Đã dùng kết quả lưu sẵn, không gọi lại Gemini.</p>}
       </>}
     </article>)}

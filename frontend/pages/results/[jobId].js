@@ -95,7 +95,7 @@ export default function Results({ jobId }) {
               <Badge status={file.status} />
             </li>)}
           </ul> : <p className="muted">Chưa có thông tin tệp.</p>}
-          <AnalysisResults data={job.result_data} />
+          <AnalysisResults data={job.result_data} jobId={jobId} />
         </>}
       </section>
     </main>

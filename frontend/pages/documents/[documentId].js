@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getSession } from '../../lib/session';
 
-export default function Reader({ documentId, initialPage }) {
+export default function Reader({ documentId, initialPage, returnJobId }) {
   const router = useRouter();
   const [data, setData] = useState(null);
   const [page, setPage] = useState(initialPage);
@@ -53,7 +53,9 @@ export default function Reader({ documentId, initialPage }) {
 
   function changePage(next) {
     setPage(next);
-    router.replace({ pathname: '/documents/[documentId]', query: { documentId, page: next } },
+    const query = { documentId, page: next };
+    if (returnJobId) query.job = returnJobId;
+    router.replace({ pathname: '/documents/[documentId]', query },
                    undefined, { shallow: true, scroll: false });
   }
 
@@ -61,7 +63,10 @@ export default function Reader({ documentId, initialPage }) {
   const pdfUrl = data ? `/api${data.reader_url}#page=${page}` : '';
   return <><Head><title>DocuMind · Đọc tài liệu</title></Head>
     <main className="workspace reader-page"><header><a href="/workspace" className="brand">DocuMind.</a>
-      <a href="/workspace" className="btn">Về thư viện</a></header>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        {returnJobId && <a href={`/results/${returnJobId}`} className="btn return-job-link">Quay lại tác vụ #{returnJobId}</a>}
+        <a href="/workspace" className="btn">Về thư viện</a>
+      </div></header>
       <h1>Đọc tài liệu</h1>
       {error && <p role="alert" className="error-box">{error}</p>}
       {needsPreparation && <button className="btn" disabled={busy} onClick={prepare}>{busy ? 'Đang chuyển đổi…' : 'Chuẩn bị bản đọc'}</button>}
@@ -85,5 +90,12 @@ export async function getServerSideProps({ req, res, params, query }) {
   if (!await getSession(req)) return { redirect: { destination: '/', permanent: false } };
   if (!/^[1-9]\d*$/.test(params.documentId)) return { notFound: true };
   const page = /^\d+$/.test(query.page || '') ? Number(query.page) : 1;
-  return { props: { documentId: params.documentId, initialPage: Number.isSafeInteger(page) && page > 0 ? page : 1 } };
+  const returnJobId = /^\d+$/.test(query.job || '') ? query.job : null;
+  return {
+    props: {
+      documentId: params.documentId,
+      initialPage: Number.isSafeInteger(page) && page > 0 ? page : 1,
+      returnJobId,
+    },
+  };
 }
