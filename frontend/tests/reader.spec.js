@@ -192,4 +192,143 @@ test('invalid-page state displays out-of-range error and allows returning to pag
   await expect(page.getByTitle('Bản đọc PDF — Trang 1')).toBeVisible();
 });
 
+test('precise highlighting resolves evidence passage using stored positions and avoids earlier repeated text occurrence', async ({ page }) => {
+  const version = 'e'.repeat(64);
+  const repeatedPhrase = 'Phí dịch vụ 0.05% mỗi ngày';
+  // Occurrence 1 starts at index 18; Occurrence 2 starts at index 72
+  const textWithDuplicates = `Khoản 1 quy định: ${repeatedPhrase} nếu trễ hạn đợt 1. Khoản 2 quy định: ${repeatedPhrase} nếu trễ hạn đợt 2.`;
+  const occ1Start = textWithDuplicates.indexOf(repeatedPhrase);
+  const occ2Start = textWithDuplicates.lastIndexOf(repeatedPhrase);
+  const occ2End = occ2Start + repeatedPhrase.length;
+
+  expect(occ1Start).toBe(18);
+  expect(occ2Start).toBe(82);
+
+  // Stored glyph/token positions
+  const positions = [
+    { text: repeatedPhrase, start: occ1Start, end: occ1Start + repeatedPhrase.length, bbox: [72, 100, 250, 115] },
+    { text: repeatedPhrase, start: occ2Start, end: occ2End, bbox: [72, 180, 250, 195] },
+  ];
+
+  const docData = {
+    page_count: 5,
+    page_kind: 'page',
+    reader_version: version,
+    reader_url: `/documents/55/reader.pdf?version=${version}`,
+    pages: [
+      { page: 1, text: 'Trang 1 nội dung' },
+      { page: 2, text: '' }, // scanned page
+      { page: 3, text: textWithDuplicates, positions },
+      { page: 4, text: 'Trang 4 nội dung' },
+      { page: 5, text: 'Trang 5 nội dung' },
+    ],
+  };
+
+  await page.route('**/api/documents/55/pages', route => route.fulfill({ json: docData }));
+  await page.route('**/api/documents/55/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+
+  // Direct navigation to occurrence 2 via citation query params
+  await page.goto(`/documents/55?page=3&start=${occ2Start}&end=${occ2End}&evidence=55-3-${occ2Start}-${occ2End}`);
+
+  // Page 3 is loaded correctly
+  await expect(page.getByText('Trang 3/5', { exact: true })).toBeVisible();
+  await expect(page.getByTitle('Bản đọc PDF — Trang 3')).toHaveAttribute('src', `/api${docData.reader_url}#page=3`);
+
+  // Highlighted passage card is displayed with the exact quote and stored positions tag
+  const card = page.locator('.highlighted-passage-card');
+  await expect(card).toBeVisible();
+  await expect(card).toContainText(`55-3-${occ2Start}-${occ2End}`);
+  await expect(card).toContainText(repeatedPhrase);
+  await expect(page.locator('.stored-positions-tag')).toBeVisible();
+
+  // Highlight inside the text layer
+  const mark = page.locator('mark.citation-highlight');
+  await expect(mark).toHaveCount(1);
+  await expect(mark).toHaveText(repeatedPhrase);
+  await expect(mark).toHaveAttribute('data-start', String(occ2Start));
+  await expect(mark).toHaveAttribute('data-end', String(occ2End));
+
+  // The text before the mark contains the first occurrence, confirming occurrence 1 was NOT highlighted
+  const textBefore = page.locator('.text-layer-rendered .text-before');
+  await expect(textBefore).toContainText(`Khoản 1 quy định: ${repeatedPhrase}`);
+
+  // Fallback notice should NOT be present for precise matches
+  await expect(page.locator('.highlight-fallback-notice')).toHaveCount(0);
+});
+
+test('scanned page fallback still opens the correct page and displays exact highlight not available message', async ({ page }) => {
+  const version = 'f'.repeat(64);
+  const docData = {
+    page_count: 3,
+    page_kind: 'page',
+    reader_version: version,
+    reader_url: `/documents/66/reader.pdf?version=${version}`,
+    pages: [
+      { page: 1, text: 'Trang văn bản 1' },
+      { page: 2, text: '', positions: [] }, // Scanned page without OCR / text layer
+      { page: 3, text: 'Trang văn bản 3' },
+    ],
+  };
+
+  await page.route('**/api/documents/66/pages', route => route.fulfill({ json: docData }));
+  await page.route('**/api/documents/66/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+
+  // Citation link pointing to page 2 (scanned page)
+  await page.goto('/documents/66?page=2&evidence=66-2-0-30&start=0&end=30');
+
+  // Reader still opens the correct page (page 2)
+  await expect(page.getByText('Trang 2/3', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Chọn trang nguồn' })).toHaveValue('2');
+  await expect(page.getByTitle('Bản đọc PDF — Trang 2')).toHaveAttribute('src', `/api${docData.reader_url}#page=2`);
+
+  // Fallback notice is displayed with exact required text
+  const fallbackNotice = page.locator('.highlight-fallback-notice');
+  await expect(fallbackNotice).toBeVisible();
+  await expect(fallbackNotice).toContainText('Exact highlight not available for this passage.');
+
+  // Text layer informs that no text layer is available
+  await expect(page.getByText('Trang này không có lớp chữ để highlight chính xác.')).toBeVisible();
+
+  // Navigation controls still work normally
+  await expect(page.getByRole('button', { name: 'Trước', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Sau', exact: true })).toBeEnabled();
+});
+
+test('unresolved span fallback still opens the correct page and displays exact highlight not available message', async ({ page }) => {
+  const version = 'f'.repeat(64);
+  const docData = {
+    page_count: 3,
+    page_kind: 'page',
+    reader_version: version,
+    reader_url: `/documents/66/reader.pdf?version=${version}`,
+    pages: [
+      { page: 1, text: 'Đoạn văn bản mẫu trang 1 ngắn gọn.' },
+      { page: 2, text: 'Đoạn văn bản mẫu trang 2.' },
+      { page: 3, text: 'Đoạn văn bản mẫu trang 3.' },
+    ],
+  };
+
+  await page.route('**/api/documents/66/pages', route => route.fulfill({ json: docData }));
+  await page.route('**/api/documents/66/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+
+  // Citation link with out-of-bounds start & end offsets (start=5000 > text length)
+  await page.goto('/documents/66?page=1&evidence=unresolved-span-evidence&start=5000&end=5050');
+
+  // Reader still opens the correct page (page 1)
+  await expect(page.getByText('Trang 1/3', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Chọn trang nguồn' })).toHaveValue('1');
+  await expect(page.getByTitle('Bản đọc PDF — Trang 1')).toHaveAttribute('src', `/api${docData.reader_url}#page=1`);
+
+  // Fallback notice is displayed with exact required text
+  const fallbackNotice = page.locator('.highlight-fallback-notice');
+  await expect(fallbackNotice).toBeVisible();
+  await expect(fallbackNotice).toContainText('Exact highlight not available for this passage.');
+
+  // No <mark> element is rendered
+  await expect(page.locator('mark.citation-highlight')).toHaveCount(0);
+
+  // Text layer snippet is rendered normally as plain text
+  await expect(page.locator('.text-layer-snippet')).toHaveText('Đoạn văn bản mẫu trang 1 ngắn gọn.');
+});
+
 
