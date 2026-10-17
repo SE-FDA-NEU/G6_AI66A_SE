@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import FileResponse
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session, defer
 
 from app.db.database import get_db
 from app.models.document import Document
+from app.models.fileformat import FileFormat
 from app.models.reviewstate import ReviewState
 from app.schemas.document import DocumentResponse
 from app.core.security import get_current_user_id
@@ -65,6 +67,106 @@ def reader_pdf(document_id: int, version: str = Query(...), user_id: int = Depen
     return FileResponse(path, media_type='application/pdf', filename='reader.pdf',
                         content_disposition_type='inline', headers={'Cache-Control': 'no-store',
                                                                    'X-Reader-Version': version})
+
+
+@router.get('/{document_id}/file', summary="Get original or rendered document file")
+def get_document_file(
+    document_id: int,
+    page: Optional[int] = Query(None, description="Selects the initial view page"),
+    rendered: bool = Query(False, description="Return the rendered PDF representation"),
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve the original file or rendered PDF representation for a document (BR07).
+    Reuses ownership protection from US05.
+    Returns page metadata and readable file stream without exposing storage paths or other users' content.
+    """
+    document = owned_reader_document(db, document_id, current_user_id)
+
+    # Validate page selection if provided (BR07 & design: 422 page outside document)
+    if page is not None:
+        if page < 1:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Page must be greater than or equal to 1",
+            )
+        if document.page_count is not None and page > document.page_count:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Page outside document",
+            )
+
+    if rendered:
+        if document.file_format == FileFormat.PDF:
+            file_path = Path(document.storage_path)
+            if not file_path.is_file():
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+            media_type = "application/pdf"
+            filename = document.original_filename
+        else:
+            try:
+                rendered_path, reference = reader_representation(document)
+            except ReaderConversionError as error:
+                if error.code == 'source_missing':
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+                raise reader_error(error)
+            file_path = rendered_path
+            media_type = "application/pdf"
+            filename = f"{Path(document.original_filename).stem}.pdf"
+    else:
+        file_path = Path(document.storage_path)
+        if not file_path.is_file():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+
+        mime_types = {
+            FileFormat.PDF: "application/pdf",
+            FileFormat.DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            FileFormat.PPTX: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        }
+        media_type = mime_types.get(document.file_format, "application/octet-stream")
+        filename = document.original_filename
+
+    # Update retention access timestamp (BR06)
+    document.last_accessed_at = datetime.utcnow()
+    document.expires_at = datetime.utcnow() + timedelta(days=30)
+    db.commit()
+
+    headers = {
+        "Cache-Control": "no-store",
+        "X-Original-Filename": document.original_filename,
+        "X-File-Format": document.file_format.value,
+        "X-Page-Kind": "slide" if document.file_format == FileFormat.PPTX else "page",
+    }
+    if document.page_count is not None:
+        headers["X-Page-Count"] = str(document.page_count)
+    if page is not None:
+        headers["X-Initial-Page"] = str(page)
+
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        filename=filename,
+        content_disposition_type="inline",
+        headers=headers,
+    )
+
+
+@router.get('/{document_id}/rendered-file', summary="Get rendered PDF representation")
+def get_rendered_file(
+    document_id: int,
+    page: Optional[int] = Query(None, description="Selects the initial view page"),
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Convenience alias for GET /{document_id}/file?rendered=true."""
+    return get_document_file(
+        document_id=document_id,
+        page=page,
+        rendered=True,
+        current_user_id=current_user_id,
+        db=db,
+    )
 
 
 @router.get("", response_model=List[DocumentResponse], summary="Get list of documents for current user")
