@@ -4,6 +4,7 @@ const warnings = {
   source_truncated: 'Đã chọn các đoạn nguồn trong giới hạn tiết kiệm token. Kết quả chưa bao quát toàn bộ tài liệu.',
   unverified_claims: 'Một số nội dung chưa có bằng chứng nguồn hợp lệ.',
   insufficient_concepts: 'Tài liệu nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi. Không tự tạo khái niệm khi thiếu căn cứ nguồn.',
+  insufficient_actions: 'Tài liệu không đủ căn cứ nguồn để hỗ trợ hai hành động đề xuất.',
 };
 
 export default function AnalysisDocumentDetails({ document }) {
