@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import { getSession } from '../lib/session';
 import { MB, validateSelection } from '../lib/upload-validation';
+import UploadModeSelector from '../components/UploadModeSelector';
 
 export default function Upload() {
   const [entries, setEntries] = useState([]);
@@ -9,8 +10,23 @@ export default function Upload() {
   const [mode, setMode] = useState('bullet');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    setReady(true);
+    try {
+      const saved = sessionStorage.getItem('upload_analysis_mode');
+      if (saved && ['bullet', 'table', 'concept'].includes(saved)) {
+        setMode(saved);
+      }
+    } catch {}
+  }, []);
   const nextId = useRef(0);
+
+  function handleModeChange(newMode) {
+    setMode(newMode);
+    try {
+      sessionStorage.setItem('upload_analysis_mode', newMode);
+    } catch {}
+  }
   const accepted = entries.filter(entry => entry.errors.length === 0);
   const rejected = entries.length - accepted.length;
   const total = accepted.reduce((sum, entry) => sum + entry.file.size, 0);
@@ -99,12 +115,7 @@ export default function Upload() {
         </ul>}
         {accepted.length > 0 && rejected === 0 && <p className="upload-ready">Các tệp đã chọn hợp lệ và sẵn sàng tải lên.</p>}
         <div className="analysis-submit">
-          <label htmlFor="analysis-mode">Kiểu phân tích</label>
-          <select id="analysis-mode" value={mode} disabled={submitting} onChange={event => setMode(event.target.value)}>
-            <option value="bullet">Tóm tắt gạch đầu dòng</option>
-            <option value="table">Bảng điều khoản hợp đồng</option>
-            <option value="concept">Khái niệm chính</option>
-          </select>
+          <UploadModeSelector value={mode} disabled={submitting} onChange={handleModeChange} />
           <button type="button" className="btn primary" disabled={!ready || submitting || !accepted.length || rejected > 0}
             onClick={submit}>{submitting ? 'Đang gửi…' : 'Tải lên và phân tích'}</button>
           {error && <p className="error-box" role="alert">{error}</p>}

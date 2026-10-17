@@ -27,6 +27,16 @@ export default function AnalysisResults({ data, jobId }) {
       {document.warnings?.map(warning => <p className="analysis-warning" key={warning}>
         {warnings[warning] || warning}
       </p>)}
+      {document.error_message && (
+        <p className="analysis-error error-box" role="alert" data-testid="document-analysis-error">
+          {document.error_message}
+        </p>
+      )}
+      {document.analysis_status === 'failed' && !document.error_message && (
+        <p className="analysis-error error-box" role="alert" data-testid="document-analysis-failed">
+          Xử lý phân tích tài liệu thất bại.
+        </p>
+      )}
       {document.analysis_status === 'completed' && <>
         {document.output?.type === 'bullet' && <>
           <BulletResults

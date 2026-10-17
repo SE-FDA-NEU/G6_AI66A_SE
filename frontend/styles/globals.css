@@ -616,5 +616,36 @@ input::placeholder { color: #96a29a; font-size: 13px; }
   color: #0f172a;
 }
 
+/* Upload Mode Selector */
+.upload-mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.upload-mode-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.upload-mode-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.upload-mode-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
 
 
