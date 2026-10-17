@@ -89,3 +89,103 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 @media (max-width: 540px) { .results-page { padding: 20px; }.results-page header { flex-wrap: wrap; }.results-content { margin: 40px auto; }.job-progress-card { padding: 20px; }.job-file { padding: 16px; flex-wrap: wrap; }.job-count { font-size: 16px; } }
 @media (max-width: 540px) { .upload-page { padding: 20px; }.upload-page header { flex-wrap: wrap; }.upload-content { margin: 40px auto; }.upload-picker { padding: 18px; }.upload-file { padding: 14px; gap: 10px; } }
 @media (max-width: 760px) { .auth-page { grid-template-columns: 1fr; }.auth-story { padding: 28px 24px; }.story-content { padding: 28px 0 0; }.story-content h1 { font-size: 34px; }.story-description { font-size: 14px; }.preview-card, .story-footer { display: none; }.auth-form-wrap { padding: 36px 24px 50px; }.auth-form { max-width: 440px; } h2 { font-size: 25px; } }
+
+/* Shared Citation & Evidence Components (US08 / BR05) */
+.citation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e4f2e9;
+  color: #176b52;
+  border: 1px solid #b5dcc4;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.citation-badge:hover {
+  background: #d4ebd9;
+  border-color: #176b52;
+}
+.unverified-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #fff3d8;
+  color: #895b09;
+  border: 1px solid #f4ddaa;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.evidence-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.claim-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+.workspace-search {
+  margin: 24px 0 32px;
+}
+.workspace-search .search-form {
+  margin-bottom: 16px;
+}
+.workspace-search .search-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.workspace-search .search-bar {
+  display: flex;
+  gap: 10px;
+}
+.workspace-search .search-bar input {
+  flex: 1;
+}
+.workspace-search .search-bar .btn {
+  width: auto;
+  white-space: nowrap;
+}
+.search-results {
+  margin-top: 16px;
+}
+.search-count {
+  font-size: 13px;
+  color: #5f7167;
+  margin-bottom: 12px;
+}
+.search-hit-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.search-hit-card {
+  background: #fff;
+  border: 1px solid #dce4de;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+}
+.search-hit-card:hover {
+  border-color: #176b52;
+}
+.search-snippet {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.return-job-link {
+  background: #eaf2fc;
+  color: #245da0;
+  border-color: #bdd6f4;
+}
+

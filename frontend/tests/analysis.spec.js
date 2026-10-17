@@ -34,12 +34,12 @@ for (const mode of ['bullet', 'table', 'concept']) {
     await page.goto('/results/77');
     const analysis = page.getByRole('region', { name: 'Kết quả phân tích AI' });
     await expect(analysis.getByText('Phạt 0.05% mỗi ngày.', { exact: true })).toBeVisible();
-    await expect(analysis.getByRole('link', { name: 'Trang 2 · #17', exact: true }))
-      .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10');
+    await expect(analysis.getByRole('link', { name: 'contract.pdf — page 2', exact: true }))
+      .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10&evidence=17-2-0-10&job=77');
     await expect(analysis.getByText(/Nhãn AI:/)).toContainText('Hợp đồng');
     if (mode === 'bullet') {
       await expect(analysis.getByText('Unverified · Cần kiểm tra')).toBeVisible();
-      await expect(analysis.getByRole('link', { name: 'Trang 2' })).toHaveCount(1);
+      await expect(analysis.getByRole('link', { name: 'contract.pdf — page 2' })).toHaveCount(1);
     }
     if (mode === 'table') await expect(analysis.getByText('Không có thông tin · Unverified')).toHaveCount(2);
     await page.reload();
@@ -83,13 +83,13 @@ test('same claim keeps separate source links, including passages for Unverified 
   await page.route('**/jobs/77', route => route.fulfill({ json: job(document) }));
   await page.goto('/results/77');
   const region = page.getByRole('region', { name: 'Kết quả phân tích AI' });
-  await expect(region.getByRole('link', { name: 'Trang 2 · #17', exact: true }))
-    .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10');
-  await expect(region.getByRole('link', { name: 'Trang 2 · #18', exact: true }))
-    .toHaveAttribute('href', '/documents/18?page=2&start=20&end=30');
+  await expect(region.getByRole('link', { name: 'contract.pdf — page 2', exact: true }))
+    .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10&evidence=17-2-0-10&job=77');
+  await expect(region.getByRole('link', { name: 'Document #18 — page 2', exact: true }))
+    .toHaveAttribute('href', '/documents/18?page=2&start=20&end=30&evidence=18-2-20-30&job=77');
   await expect(region.getByText('Unverified · Cần kiểm tra')).toHaveCount(2);
   await page.reload();
-  await expect(region.getByRole('link', { name: /Trang 2 · #/ })).toHaveCount(2);
+  await expect(region.getByRole('link', { name: /— page 2/ })).toHaveCount(2);
 });
 
 function pdf() {
