@@ -79,6 +79,7 @@ export function ClaimEvidence({
   jobId,
   pageKind = 'page',
   className = '',
+  showEvidence = true,
 }) {
   if (!claim) return null;
   const hasText = Boolean(claim.text);
@@ -98,7 +99,7 @@ export function ClaimEvidence({
       <p className="claim-text">{claim.text}</p>
       <div className="claim-citations">
         {isUnverified && <UnverifiedBadge />}
-        {hasEvidence && (
+        {showEvidence && hasEvidence && (
           <div className="evidence-badges">
             {claim.evidence.map((source, index) => (
               <CitationBadge
