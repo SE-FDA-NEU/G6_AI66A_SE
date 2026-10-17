@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CitationBadge } from './CitationBadge';
+import DocumentMetadata from './DocumentMetadata';
 
 export function WorkspaceSearch({ initialHits = [], jobId }) {
   const [query, setQuery] = useState('');
@@ -34,6 +35,10 @@ export function WorkspaceSearch({ initialHits = [], jobId }) {
         quote: q,
         snippet: doc.ai_label ? `${doc.original_filename} · Nhãn: ${doc.ai_label}` : doc.original_filename,
         ai_label: doc.ai_label,
+        ai_confidence: doc.ai_confidence,
+        review_state: doc.review_state,
+        user_label: doc.user_label,
+        folder_id: doc.folder_id,
       }));
 
       setHits(matchingHits);
@@ -78,6 +83,14 @@ export function WorkspaceSearch({ initialHits = [], jobId }) {
                 <li key={index} className="search-hit-card">
                   <div className="search-hit-body">
                     <p className="search-snippet">{hit.snippet || hit.quote}</p>
+                    <DocumentMetadata
+                      aiLabel={hit.ai_label}
+                      aiConfidence={hit.ai_confidence}
+                      reviewState={hit.review_state}
+                      userLabel={hit.user_label}
+                      folderId={hit.folder_id}
+                      className="search-hit-metadata"
+                    />
                     <div className="search-hit-citations">
                       <CitationBadge
                         source={hit}
