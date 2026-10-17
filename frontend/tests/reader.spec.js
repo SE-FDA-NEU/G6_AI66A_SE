@@ -92,3 +92,104 @@ test('conversion failure is shown explicitly without fabricated reader pages', a
   await expect(page.locator('iframe')).toHaveCount(0);
   await expect(page.getByRole('combobox')).toHaveCount(0);
 });
+
+function mockContract24() {
+  const version = 'c'.repeat(64);
+  const pages = Array.from({ length: 24 }, (_, i) => ({
+    page: i + 1,
+    text: i === 11 ? 'Điều khoản hợp đồng trang 12: Phí dịch vụ 0.05% mỗi ngày.' : (i === 12 ? '' : `Nội dung hợp đồng trang ${i + 1}`),
+  }));
+  return {
+    page_count: 24,
+    page_kind: 'page',
+    reader_version: version,
+    reader_url: `/documents/99/reader.pdf?version=${version}`,
+    pages,
+  };
+}
+
+test('page-12 direct link in a 24-page contract and browser history navigation', async ({ page }) => {
+  const contract = mockContract24();
+  await page.route('**/api/documents/99/pages', route => route.fulfill({ json: contract }));
+  await page.route('**/api/documents/99/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+
+  // 1. Direct link to page 12
+  await page.goto('/documents/99?page=12');
+
+  // Verify page 12 of 24 is loaded directly
+  await expect(page.getByText('Trang 12/24', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Chọn trang nguồn' })).toHaveValue('12');
+  const frame = page.getByTitle('Bản đọc PDF — Trang 12');
+  await expect(frame).toHaveAttribute('src', `/api${contract.reader_url}#page=12`);
+
+  // Verify text layer for page 12
+  await expect(page.getByText(/Điều khoản hợp đồng trang 12/)).toBeVisible();
+
+  // Both Previous and Next buttons are enabled on page 12
+  await expect(page.getByRole('button', { name: 'Trước', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Sau', exact: true })).toBeEnabled();
+
+  // 2. Click Next -> Page 13
+  await page.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(page).toHaveURL('/documents/99?page=13');
+  await expect(page.getByText('Trang 13/24', { exact: true })).toBeVisible();
+  await expect(page.getByTitle('Bản đọc PDF — Trang 13')).toBeVisible();
+
+  // Page 13 has no text layer in our mock
+  await expect(page.getByText('Trang này không có lớp chữ để highlight chính xác.')).toBeVisible();
+
+  // 3. Browser Back navigation
+  await page.goBack();
+  await expect(page).toHaveURL('/documents/99?page=12');
+  await expect(page.getByText('Trang 12/24', { exact: true })).toBeVisible();
+  await expect(page.getByTitle('Bản đọc PDF — Trang 12')).toBeVisible();
+
+  // 4. Browser Forward navigation
+  await page.goForward();
+  await expect(page).toHaveURL('/documents/99?page=13');
+  await expect(page.getByText('Trang 13/24', { exact: true })).toBeVisible();
+  await expect(page.getByTitle('Bản đọc PDF — Trang 13')).toBeVisible();
+});
+
+test('missing document state shows 404 message and library link without iframe', async ({ page }) => {
+  await page.route('**/api/documents/999/pages', route => route.fulfill({
+    status: 404,
+    json: { detail: 'Document not found' },
+  }));
+  await page.goto('/documents/999');
+  await expect(page.locator('.reader-page .error-box')).toContainText('Không tìm thấy tài liệu.');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(page.locator('.reader-error').getByRole('link', { name: 'Về thư viện' })).toBeVisible();
+});
+
+test('access-denied document state shows 403 message and library link without iframe', async ({ page }) => {
+  await page.route('**/api/documents/888/pages', route => route.fulfill({
+    status: 403,
+    json: { detail: 'Access denied' },
+  }));
+  await page.goto('/documents/888');
+  await expect(page.locator('.reader-page .error-box')).toContainText('Access denied');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(page.locator('.reader-error').getByRole('link', { name: 'Về thư viện' })).toBeVisible();
+});
+
+test('invalid-page state displays out-of-range error and allows returning to page 1', async ({ page }) => {
+  const contract = mockContract24();
+  await page.route('**/api/documents/99/pages', route => route.fulfill({ json: contract }));
+  await page.route('**/api/documents/99/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+
+  // Request page 99 in a 24-page contract
+  await page.goto('/documents/99?page=99');
+
+  await expect(page.locator('.reader-page .error-box')).toContainText('Trang nguồn không tồn tại');
+  await expect(page.locator('.reader-page .error-box')).toContainText('24 trang');
+  await expect(page.locator('iframe')).toHaveCount(0);
+
+  // Click 'Về trang 1'
+  await page.getByRole('button', { name: 'Về trang 1' }).click();
+  await expect(page).toHaveURL('/documents/99?page=1');
+  await expect(page.getByText('Trang 1/24', { exact: true })).toBeVisible();
+  await expect(page.getByTitle('Bản đọc PDF — Trang 1')).toBeVisible();
+});
+
+
