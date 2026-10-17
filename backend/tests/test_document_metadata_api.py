@@ -159,3 +159,35 @@ def test_reader_pages_cross_account_protection(client, session_factory, sample_p
     assert res.status_code == 403
     assert res.json()['detail'] == 'Access denied'
 
+
+def test_get_page_text_endpoint_authorized_access(client, session_factory, sample_pdf):
+    doc_id = create_doc_with_metadata(
+        session_factory,
+        owner_id=123,
+        pdf_path=sample_pdf,
+        ai_label='Lạm phát',
+        ai_confidence=0.85,
+        review_state=ReviewState.NEEDS_REVIEW,
+    )
+
+    # 1. Authorized owner gets page text
+    res = client.get(f'/documents/{doc_id}/pages/1/text')
+    assert res.status_code == 200
+    data = res.json()
+    assert data['document_id'] == doc_id
+    assert data['page'] == 1
+    assert 'Page 1 sample content' in data['text']
+    assert isinstance(data['positions'], list)
+
+    # 2. Non-existent page returns 404
+    res_404 = client.get(f'/documents/{doc_id}/pages/99/text')
+    assert res_404.status_code == 404
+    assert res_404.json()['detail'] == 'Page not found'
+
+    # 3. Cross-account request returns 403
+    other_token = f"Bearer {create_access_token({'sub': '124'})}"
+    res_403 = client.get(f'/documents/{doc_id}/pages/1/text', headers={'Authorization': other_token})
+    assert res_403.status_code == 403
+    assert res_403.json()['detail'] == 'Access denied'
+
+

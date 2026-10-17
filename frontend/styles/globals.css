@@ -441,4 +441,146 @@ input::placeholder { color: #96a29a; font-size: 13px; }
   margin: 4px 0 0;
 }
 
+/* Reader In-Document Search (US04) */
+.reader-search-bar {
+  margin: 16px 0 24px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #dce4de;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reader-search-form {
+  width: 100%;
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#reader-search-input {
+  flex: 1;
+  min-width: 200px;
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1px solid #dce4de;
+  border-radius: 8px;
+  background: #fcfdfc;
+  font-size: 14px;
+}
+
+#reader-search-input:focus {
+  border-color: #339d7a;
+  outline: none;
+}
+
+.reader-search-bar .btn-search {
+  background: #176b52;
+  color: #ffffff;
+  border: 1px solid #176b52;
+  min-height: 42px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.reader-search-bar .btn-search:hover {
+  background: #115840;
+}
+
+.reader-search-bar .btn-clear-search {
+  background: #f8faf8;
+  color: #5f7167;
+  border: 1px solid #dce4de;
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+.reader-search-bar .btn-clear-search:hover {
+  background: #edf1ee;
+}
+
+.reader-search-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px dashed #e2ece5;
+}
+
+.search-match-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #176b52;
+  background: #e4f2e9;
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+.search-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-nav-match {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #dce4de;
+  background: #ffffff;
+}
+
+.btn-nav-match:hover {
+  background: #f4f8f5;
+  border-color: #b5cec0;
+}
+
+.search-no-results {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: #855d14;
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+/* In-document Search Highlighting */
+.search-highlight {
+  background: #fef08a;
+  color: #713f12;
+  padding: 1px 3px;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.search-highlight.active-match {
+  background: #f59e0b;
+  color: #ffffff;
+  font-weight: bold;
+  box-shadow: 0 0 0 2px #d97706;
+}
+
+.search-match-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #bfdbfe;
+}
+
+
 
