@@ -42,7 +42,8 @@ test('guest cannot read document list or detail from the backend', async ({ back
 
 test('owner can read their document using a real Bearer token', async ({ backend }) => {
   const headers = await bearer(backend, user);
-  const [document] = await documents(backend, headers);
+  const document = (await documents(backend, headers)).find(item => item.original_filename === 'private-playwright_user.pdf');
+  expect(document).toBeDefined();
   expect(document.original_filename).toBe('private-playwright_user.pdf');
   const response = await backend.get(`/documents/${document.id}`, { headers });
   expect(response.status()).toBe(200);
@@ -57,18 +58,20 @@ for (const [owner, visitor] of [[user, otherUser], [otherUser, user]]) {
     const ownerHeaders = await bearer(backend, owner);
     const visitorHeaders = await bearer(backend, visitor);
     const owned = await documents(backend, ownerHeaders);
-    expect(owned).toHaveLength(1);
-    const [document] = owned;
+    // Upload-flow regressions may have added documents earlier in the same run.
+    const document = owned.find(item => item.original_filename.startsWith('private-'));
+    expect(document).toBeDefined();
     const visible = await documents(backend, visitorHeaders);
-    expect(visible).toHaveLength(1);
-    expect(visible[0].owner_id).not.toBe(document.owner_id);
-    expect(visible.map(item => item.id)).not.toContain(document.id);
+    expect(visible.length).toBeGreaterThan(0);
+    expect(visible.every(item => item.owner_id !== document.owner_id)).toBe(true);
+    const ownedIds = new Set(owned.map(item => item.id));
+    expect(visible.some(item => ownedIds.has(item.id))).toBe(false);
 
     const response = await backend.get(`/documents/${document.id}`, { headers: visitorHeaders });
     expect(response.status()).toBe(403);
     // Exact generic error excludes all document metadata, paths and extracted text.
     expect(await response.json()).toEqual({ detail: 'Access denied' });
-    const [after] = await documents(backend, ownerHeaders);
+    const after = (await documents(backend, ownerHeaders)).find(item => item.id === document.id);
     expect(after.last_accessed_at).toBe(document.last_accessed_at);
     expect(after.expires_at).toBe(document.expires_at);
   });
