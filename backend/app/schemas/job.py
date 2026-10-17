@@ -4,6 +4,7 @@ from pydantic import AliasPath, BaseModel, ConfigDict, Field
 
 from app.models.jobmode import JobMode
 from app.models.jobstatus import JobStatus
+from app.schemas.result import JobResultData
 
 
 class JobFileResponse(BaseModel):
@@ -43,7 +44,8 @@ class JobResponse(BaseModel):
     status: JobStatus
     file_count: int
     completed_count: int
-    result_data: Optional[Any] = None
+    # Legacy seeded jobs may still contain unversioned JSON.
+    result_data: Optional[JobResultData | dict[str, Any]] = None
     created_at: datetime
     finished_at: Optional[datetime] = None
 

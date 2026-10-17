@@ -53,6 +53,18 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .reader-pdf { width: 100%; height: 75vh; border: 1px solid #dce4de; border-radius: 12px; background: #fff; }
 @media (max-width: 540px) { .reader-page header { flex-wrap: wrap; }.reader-page { padding: 20px; }.reader-pdf { height: 65vh; } }
 .results-content { max-width: 850px; margin: 60px auto; }
+.analysis-submit { margin-top: 28px; }
+.analysis-submit select { width: 100%; padding: 12px; border: 1px solid #dce4de; border-radius: 9px; background: white; margin-bottom: 16px; }
+.analysis-results { margin-top: 36px; }
+.analysis-card { margin: 18px 0; padding: 24px; background: white; border: 1px solid #dce4de; border-radius: 14px; overflow-wrap: anywhere; }
+.analysis-card h3 { margin: 0 0 12px; }.analysis-card h4 { font-size: 18px; margin: 24px 0 12px; }.analysis-card h5 { font-size: 16px; margin-bottom: 8px; }
+.analysis-card li { margin: 14px 0; }.analysis-claim p { margin: 6px 0; line-height: 1.7; }
+.analysis-source { display: inline-block; color: #176b52; border-bottom: 1px solid; margin: 4px 12px 4px 0; font-size: 13px; }
+.analysis-warning { color: #895b09; background: #fff3d8; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+.analysis-unverified { font-size: 13px; color: #895b09; }.analysis-label, .analysis-note { font-size: 13px; line-height: 1.8; }
+.analysis-table-wrap { overflow-x: auto; }.analysis-card table { border-collapse: collapse; width: 100%; margin-top: 24px; }
+.analysis-card caption { text-align: left; font-weight: 600; padding-bottom: 12px; }.analysis-card th, .analysis-card td { padding: 12px; border: 1px solid #dce4de; text-align: left; vertical-align: top; }
+@media (max-width: 540px) { .analysis-card { padding: 16px; }.analysis-card th, .analysis-card td { padding: 8px; } }
 .job-progress-card { background: #fff; border: 1px solid #dce4de; border-radius: 16px; padding: 28px; margin-top: 30px; }
 .job-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .job-progress-heading h2 { font-size: 21px; margin: 0; }

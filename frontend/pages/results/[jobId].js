@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { getSession } from '../../lib/session';
+import AnalysisResults from '../../components/AnalysisResults';
 
 const labels = {
   pending: 'Pending', processing: 'Processing', completed: 'Completed',
@@ -94,6 +95,7 @@ export default function Results({ jobId }) {
               <Badge status={file.status} />
             </li>)}
           </ul> : <p className="muted">Chưa có thông tin tệp.</p>}
+          <AnalysisResults data={job.result_data} />
         </>}
       </section>
     </main>

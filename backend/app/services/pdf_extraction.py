@@ -62,7 +62,7 @@ def _extract_page(page):
     }
 
 
-def extract_pdf(path: str | Path) -> dict:
+def extract_pdf(path: str | Path, on_page_count=None) -> dict:
     """Return {page_count, extracted_text: [{page, text, positions, ...}]}.
 
     Blank, graphics-only and image-only pages remain present with text=""
@@ -71,6 +71,8 @@ def extract_pdf(path: str | Path) -> dict:
     """
     try:
         with pdfplumber.open(path) as pdf:
+            if on_page_count is not None:
+                on_page_count(len(pdf.pages))
             pages = []
             for page in pdf.pages:
                 try:

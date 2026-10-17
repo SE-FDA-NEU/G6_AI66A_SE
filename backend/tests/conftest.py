@@ -5,6 +5,7 @@ from pathlib import Path
 
 os.environ["DB_PASSWORD"] = "unused-test-value"
 os.environ["SECRET_KEY"] = "isolated-upload-validation-test-key"
+os.environ['GEMINI_API_KEY'] = ''  # tests never spend a developer's real quota
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pytest
