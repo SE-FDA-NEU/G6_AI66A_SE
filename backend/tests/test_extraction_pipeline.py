@@ -106,9 +106,9 @@ def test_analyzer_payload_evidence_and_label_metadata_persist(client, session_fa
     assert verified['text_span'] == 'Late fee 0.05% per day.'
     assert verified['claim_text'] == '0.05% per day'
     if mode == 'bullet':
-        assert result['output']['actions'][0]['unverified'] is True
-        unsupported = next(c for c in saved['citations'] if c['unverified'])
-        assert unsupported['page'] is None and unsupported['text_span'] is None
+        assert result['output']['actions'] == [] and result['output']['limitation']
+        assert 'insufficient_actions' in result['warnings']
+        assert not any(c['unverified'] for c in saved['citations'])
     if mode == 'table':
         for field in ('value', 'payment_term'):
             assert result['output'][field]['text'] is None
@@ -290,7 +290,7 @@ def test_analyzer_timeout_retries_after_real_extraction_then_saves_once(client, 
     assert calls == file['attempt_count'] == 3
     assert file['timeout_seconds'] == 39 and file['error_message'] is None
     assert saved['status'] == file['status'] == 'completed' and saved['completed_count'] == 1
-    assert len(saved['citations']) == 2  # failed attempts did not leave duplicates
+    assert len(saved['citations']) == 1  # unsupported actions and failed attempts leave no citations
     assert len(saved['result_data']['documents']) == 1
 
 
@@ -393,7 +393,7 @@ def test_results_and_reader_survive_database_engine_restart(client, session_fact
         saved = json.loads(json.dumps(job.result_data))
         doc_id = job.job_files[0].document_id
         saved_pages = job.job_files[0].document.extracted_text
-        assert len(job.citations) == 2
+        assert len(job.citations) == 1
     engine.dispose()
     restarted = create_engine(database_url)
     factory = sessionmaker(bind=restarted)
@@ -403,7 +403,7 @@ def test_results_and_reader_survive_database_engine_restart(client, session_fact
             job = db.get(Job, job_id)
             assert job.result_data == saved and job.status == JobStatus.COMPLETED
             assert db.get(Document, doc_id).extracted_text == saved_pages
-            assert len(job.citations) == 2
+            assert len(job.citations) == 1
             from app.services.reader_extraction import reader_representation
             path, _ = reader_representation(db.get(Document, doc_id))
             assert extract_pdf(path)['extracted_text'][2]['text'] == 'Late fee 0.05% per day.'
