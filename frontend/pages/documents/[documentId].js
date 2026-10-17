@@ -3,7 +3,91 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getSession } from '../../lib/session';
 
-export default function Reader({ documentId, initialPage, rawPageParam, returnJobId }) {
+export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData) {
+  if (!evidenceId && rawStart == null && rawEnd == null) {
+    return { requested: false };
+  }
+
+  let start = rawStart != null ? Number(rawStart) : null;
+  let end = rawEnd != null ? Number(rawEnd) : null;
+  let evidencePage = null;
+
+  // Try parsing offsets from evidenceId (format: docId-page-start-end) if start/end are missing
+  if (evidenceId) {
+    const parts = String(evidenceId).split('-');
+    if (parts.length >= 4) {
+      const p = Number(parts[parts.length - 3]);
+      const s = Number(parts[parts.length - 2]);
+      const e = Number(parts[parts.length - 1]);
+      if (Number.isSafeInteger(p) && p > 0) {
+        evidencePage = p;
+      }
+      if ((start == null || end == null || isNaN(start) || isNaN(end)) &&
+          Number.isSafeInteger(s) && Number.isSafeInteger(e)) {
+        start = s;
+        end = e;
+      }
+    }
+  }
+
+  // If evidence is explicitly for another page, don't attempt highlight on current page
+  if (evidencePage != null && pageData?.page && evidencePage !== pageData.page) {
+    return { requested: false };
+  }
+
+  // Fallback 1: Scanned page without text layer
+  if (!pageData || !pageData.text || !pageData.text.trim()) {
+    return {
+      requested: true,
+      status: 'fallback',
+      reason: 'scanned_page',
+      message: 'Exact highlight not available for this passage.',
+    };
+  }
+
+  // Fallback 2: Unresolved or out-of-bounds span
+  if (
+    start == null ||
+    end == null ||
+    isNaN(start) ||
+    isNaN(end) ||
+    start < 0 ||
+    end <= start ||
+    end > pageData.text.length
+  ) {
+    return {
+      requested: true,
+      status: 'fallback',
+      reason: 'unresolved_span',
+      message: 'Exact highlight not available for this passage.',
+    };
+  }
+
+  const quote = pageData.text.slice(start, end);
+  const matchingPositions = Array.isArray(pageData.positions)
+    ? pageData.positions.filter(pos => pos.start >= start && pos.end <= end)
+    : [];
+
+  return {
+    requested: true,
+    status: 'precise',
+    start,
+    end,
+    quote,
+    matchingPositions,
+    evidenceId: evidenceId || `${pageData.page}-${start}-${end}`,
+  };
+}
+
+export default function Reader({
+  documentId,
+  initialPage,
+  rawPageParam,
+  returnJobId,
+  initialEvidenceId,
+  initialStart,
+  initialEnd,
+}) {
   const router = useRouter();
   const [data, setData] = useState(null);
   const [page, setPage] = useState(initialPage);
@@ -113,6 +197,12 @@ export default function Reader({ documentId, initialPage, rawPageParam, returnJo
   const currentPage = data?.pages?.find(item => item.page === page);
   const pdfUrl = data ? `/api${data.reader_url}#page=${page}` : '';
 
+  // Resolve citation evidence highlight for the current page
+  const evidenceId = router.query.evidence || initialEvidenceId || null;
+  const rawStart = router.query.start !== undefined ? router.query.start : initialStart;
+  const rawEnd = router.query.end !== undefined ? router.query.end : initialEnd;
+  const highlightInfo = resolveCitationHighlight(evidenceId, rawStart, rawEnd, currentPage);
+
   return (
     <>
       <Head>
@@ -213,6 +303,28 @@ export default function Reader({ documentId, initialPage, rawPageParam, returnJo
               </a>
             </div>
 
+            {/* Fallback notice for scanned pages or unresolved evidence spans */}
+            {highlightInfo.requested && highlightInfo.status === 'fallback' && (
+              <div className="highlight-fallback-notice" role="status">
+                <p className="fallback-message">Exact highlight not available for this passage.</p>
+              </div>
+            )}
+
+            {/* Highlighted passage card when resolved */}
+            {highlightInfo.status === 'precise' && (
+              <div className="highlighted-passage-card" role="region" aria-label="Đoạn trích dẫn được tô sáng">
+                <div className="highlighted-passage-header">
+                  <strong>Đoạn trích dẫn bằng chứng (#{highlightInfo.evidenceId}):</strong>
+                  {highlightInfo.matchingPositions?.length > 0 && (
+                    <span className="stored-positions-tag" data-positions-count={highlightInfo.matchingPositions.length}>
+                      {highlightInfo.matchingPositions.length} vị trí tọa độ
+                    </span>
+                  )}
+                </div>
+                <p className="highlighted-passage-quote">"{highlightInfo.quote}"</p>
+              </div>
+            )}
+
             <iframe
               className="reader-pdf"
               src={pdfUrl}
@@ -225,7 +337,23 @@ export default function Reader({ documentId, initialPage, rawPageParam, returnJo
                 <div className="text-layer-header">
                   <strong>Lớp chữ {pageName.toLowerCase()} {page}:</strong>
                 </div>
-                <p className="text-layer-snippet">{currentPage.text}</p>
+                {highlightInfo.status === 'precise' ? (
+                  <p className="text-layer-snippet text-layer-rendered">
+                    <span className="text-before">{currentPage.text.slice(0, highlightInfo.start)}</span>
+                    <mark
+                      className="citation-highlight"
+                      data-evidence-id={highlightInfo.evidenceId}
+                      data-start={highlightInfo.start}
+                      data-end={highlightInfo.end}
+                      data-positions-count={highlightInfo.matchingPositions?.length || 0}
+                    >
+                      {highlightInfo.quote}
+                    </mark>
+                    <span className="text-after">{currentPage.text.slice(highlightInfo.end)}</span>
+                  </p>
+                ) : (
+                  <p className="text-layer-snippet">{currentPage.text}</p>
+                )}
               </div>
             ) : (
               <p role="status" className="text-layer-empty">
@@ -244,14 +372,30 @@ export async function getServerSideProps({ req, res, params, query }) {
   if (!await getSession(req)) return { redirect: { destination: '/', permanent: false } };
   if (!/^[1-9]\d*$/.test(params.documentId)) return { notFound: true };
   const rawPageParam = query.page ?? null;
-  const page = /^\d+$/.test(query.page || '') ? Number(query.page) : 1;
+  let page = /^\d+$/.test(query.page || '') ? Number(query.page) : null;
+  if (!page && query.evidence) {
+    const parts = String(query.evidence).split('-');
+    if (parts.length >= 4) {
+      const p = Number(parts[parts.length - 3]);
+      if (Number.isSafeInteger(p) && p > 0) {
+        page = p;
+      }
+    }
+  }
+  if (!page) page = 1;
   const returnJobId = /^\d+$/.test(query.job || '') ? query.job : null;
+  const initialEvidenceId = query.evidence ?? null;
+  const initialStart = /^\d+$/.test(query.start || '') ? Number(query.start) : null;
+  const initialEnd = /^\d+$/.test(query.end || '') ? Number(query.end) : null;
   return {
     props: {
       documentId: params.documentId,
       initialPage: Number.isSafeInteger(page) && page > 0 ? page : 1,
       rawPageParam,
       returnJobId,
+      initialEvidenceId,
+      initialStart,
+      initialEnd,
     },
   };
 }
