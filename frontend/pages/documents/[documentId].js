@@ -80,6 +80,44 @@ export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData)
   };
 }
 
+export function renderTextWithSearchHighlights(text, pageMatches, activeMatch) {
+  if (!pageMatches || pageMatches.length === 0) return text;
+  const sorted = [...pageMatches].sort((a, b) => a.start - b.start);
+  const result = [];
+  let currentIdx = 0;
+
+  sorted.forEach((m, idx) => {
+    if (m.start < currentIdx) return;
+    if (m.start > currentIdx) {
+      result.push(<span key={`text-${currentIdx}`}>{text.slice(currentIdx, m.start)}</span>);
+    }
+    const isActive = Boolean(
+      activeMatch &&
+      activeMatch.page === m.page &&
+      activeMatch.start === m.start &&
+      activeMatch.end === m.end
+    );
+    result.push(
+      <mark
+        key={`match-${m.page}-${m.start}-${idx}`}
+        className={`search-highlight ${isActive ? 'active-match' : 'other-match'}`}
+        data-testid="search-highlight"
+        data-is-active={isActive ? 'true' : 'false'}
+        data-start={m.start}
+        data-end={m.end}
+      >
+        {text.slice(m.start, m.end)}
+      </mark>
+    );
+    currentIdx = m.end;
+  });
+
+  if (currentIdx < text.length) {
+    result.push(<span key="text-tail">{text.slice(currentIdx)}</span>);
+  }
+  return result;
+}
+
 export default function Reader({
   documentId,
   initialPage,
@@ -88,6 +126,7 @@ export default function Reader({
   initialEvidenceId,
   initialStart,
   initialEnd,
+  initialSearch = '',
 }) {
   const router = useRouter();
   const [data, setData] = useState(null);
@@ -97,6 +136,13 @@ export default function Reader({
   const [needsPreparation, setNeedsPreparation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // In-document text search states (US04)
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [searchMatches, setSearchMatches] = useState([]);
+  const [activeMatchIndex, setActiveMatchIndex] = useState(-1);
+  const [searchPerformed, setSearchPerformed] = useState(false);
 
   // Sync with router.query.page on client-side navigation (e.g. browser back/forward)
   useEffect(() => {
@@ -177,13 +223,108 @@ export default function Reader({
     }
   }
 
+  // Search logic across extracted pages (US04)
+  function executeSearch(queryOverride) {
+    const q = (queryOverride !== undefined ? queryOverride : searchInput).trim();
+    setSearchQuery(q);
+    if (!q) {
+      setSearchMatches([]);
+      setActiveMatchIndex(-1);
+      setSearchPerformed(false);
+      return;
+    }
+
+    if (!data?.pages || !Array.isArray(data.pages)) {
+      setSearchMatches([]);
+      setActiveMatchIndex(-1);
+      setSearchPerformed(true);
+      return;
+    }
+
+    const lowerQ = q.toLowerCase();
+    const found = [];
+
+    data.pages.forEach((p) => {
+      const text = p.text || '';
+      const lowerText = text.toLowerCase();
+      let idx = 0;
+      while (idx < lowerText.length) {
+        const matchPos = lowerText.indexOf(lowerQ, idx);
+        if (matchPos === -1) break;
+        found.push({
+          matchIndex: found.length,
+          page: p.page,
+          start: matchPos,
+          end: matchPos + lowerQ.length,
+          quote: text.slice(matchPos, matchPos + lowerQ.length),
+        });
+        idx = matchPos + Math.max(1, lowerQ.length);
+      }
+    });
+
+    setSearchMatches(found);
+    setSearchPerformed(true);
+
+    if (found.length > 0) {
+      setActiveMatchIndex(0);
+      const firstMatch = found[0];
+      if (firstMatch.page !== page) {
+        changePage(firstMatch.page, q);
+      }
+    } else {
+      setActiveMatchIndex(-1);
+    }
+  }
+
+  function goToNextMatch() {
+    if (searchMatches.length === 0) return;
+    const nextIdx = (activeMatchIndex + 1) % searchMatches.length;
+    setActiveMatchIndex(nextIdx);
+    const target = searchMatches[nextIdx];
+    if (target.page !== page) {
+      changePage(target.page);
+    }
+  }
+
+  function goToPrevMatch() {
+    if (searchMatches.length === 0) return;
+    const prevIdx = (activeMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+    setActiveMatchIndex(prevIdx);
+    const target = searchMatches[prevIdx];
+    if (target.page !== page) {
+      changePage(target.page);
+    }
+  }
+
+  function clearSearch() {
+    setSearchInput('');
+    setSearchQuery('');
+    setSearchMatches([]);
+    setActiveMatchIndex(-1);
+    setSearchPerformed(false);
+  }
+
+  // Auto-trigger search when data arrives or URL search query changes
+  useEffect(() => {
+    if (data?.pages) {
+      const q = String(router.query.search || initialSearch || '').trim();
+      if (q && (!searchPerformed || q !== searchQuery)) {
+        setSearchInput(q);
+        executeSearch(q);
+      }
+    }
+  }, [data?.pages, router.query.search, initialSearch]);
+
+
   const currentReturnJobId = (router.isReady && router.query.job !== undefined ? router.query.job : returnJobId) || null;
 
-  function changePage(next) {
+  function changePage(next, activeSearchOverride) {
     if (data?.page_count && (next < 1 || next > data.page_count)) return;
     setPage(next);
     const nextQuery = { ...router.query, documentId, page: next };
     if (currentReturnJobId) nextQuery.job = currentReturnJobId;
+    const qToKeep = activeSearchOverride !== undefined ? activeSearchOverride : searchQuery;
+    if (qToKeep) nextQuery.search = qToKeep;
     router.push(
       { pathname: '/documents/[documentId]', query: nextQuery },
       undefined,
@@ -205,6 +346,12 @@ export default function Reader({
   const rawStart = router.query.start !== undefined ? router.query.start : initialStart;
   const rawEnd = router.query.end !== undefined ? router.query.end : initialEnd;
   const highlightInfo = resolveCitationHighlight(evidenceId, rawStart, rawEnd, currentPage);
+
+  // Active search match and matches on current page
+  const activeSearchMatch = activeMatchIndex >= 0 && activeMatchIndex < searchMatches.length
+    ? searchMatches[activeMatchIndex]
+    : null;
+  const currentPageMatches = searchMatches.filter(m => m.page === page);
 
   return (
     <>
@@ -328,6 +475,91 @@ export default function Reader({
               </a>
             </div>
 
+            {/* In-Document Search Bar (US04) */}
+            <div className="reader-search-bar" role="search" aria-label="Tìm kiếm trong tài liệu">
+              <form
+                className="reader-search-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  executeSearch();
+                }}
+              >
+                <div className="search-input-group">
+                  <input
+                    id="reader-search-input"
+                    data-testid="reader-search-input"
+                    type="search"
+                    placeholder="Tìm kiếm trong tài liệu (ví dụ: inflation causes)..."
+                    value={searchInput}
+                    onChange={(e) => {
+                      setSearchInput(e.target.value);
+                      if (!e.target.value.trim()) {
+                        clearSearch();
+                      }
+                    }}
+                    aria-label="Tìm kiếm trong văn bản tài liệu"
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-search"
+                    data-testid="reader-search-button"
+                    aria-label="Tìm"
+                  >
+                    Tìm
+                  </button>
+                  {searchInput && (
+                    <button
+                      type="button"
+                      className="btn btn-clear-search"
+                      data-testid="reader-search-clear"
+                      onClick={clearSearch}
+                      aria-label="Xóa tìm kiếm"
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {/* Match Counter & Navigation */}
+              {searchPerformed && searchMatches.length > 0 && (
+                <div className="reader-search-nav" aria-label="Điều hướng kết quả tìm kiếm">
+                  <span className="search-match-count" data-testid="search-match-count">
+                    {activeMatchIndex + 1}/{searchMatches.length} kết quả
+                  </span>
+                  <div className="search-nav-buttons">
+                    <button
+                      type="button"
+                      className="btn btn-nav-match prev-match-btn"
+                      data-testid="prev-match-btn"
+                      onClick={goToPrevMatch}
+                      aria-label="Kết quả trước"
+                      title="Kết quả trước"
+                    >
+                      Trước
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-nav-match next-match-btn"
+                      data-testid="next-match-btn"
+                      onClick={goToNextMatch}
+                      aria-label="Kết quả tiếp theo"
+                      title="Kết quả tiếp theo"
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* No results state */}
+              {searchPerformed && searchMatches.length === 0 && (
+                <p className="search-no-results" role="status" data-testid="search-no-results">
+                  Không tìm thấy kết quả phù hợp cho "{searchQuery}".
+                </p>
+              )}
+            </div>
+
             {/* Fallback notice for scanned pages or unresolved evidence spans */}
             {highlightInfo.requested && highlightInfo.status === 'fallback' && (
               <div className="highlight-fallback-notice" role="status">
@@ -335,8 +567,21 @@ export default function Reader({
               </div>
             )}
 
-            {/* Highlighted passage card when resolved */}
-            {highlightInfo.status === 'precise' && (
+            {/* Highlighted passage card for active search result */}
+            {activeSearchMatch && activeSearchMatch.page === page && (
+              <div className="search-match-card highlighted-passage-card" role="region" aria-label="Đoạn văn bản tìm kiếm được chọn">
+                <div className="highlighted-passage-header">
+                  <strong>Kết quả tìm kiếm ({activeMatchIndex + 1}/{searchMatches.length}) — {pageName} {page}:</strong>
+                  <span className="search-match-badge" data-testid="search-match-badge">
+                    Vị trí: {activeSearchMatch.start} - {activeSearchMatch.end}
+                  </span>
+                </div>
+                <p className="highlighted-passage-quote">"{activeSearchMatch.quote}"</p>
+              </div>
+            )}
+
+            {/* Highlighted passage card when citation resolved and no active search on current page */}
+            {(!activeSearchMatch || activeSearchMatch.page !== page) && highlightInfo.status === 'precise' && (
               <div className="highlighted-passage-card" role="region" aria-label="Đoạn trích dẫn được tô sáng">
                 <div className="highlighted-passage-header">
                   <strong>Đoạn trích dẫn bằng chứng (#{highlightInfo.evidenceId}):</strong>
@@ -362,7 +607,11 @@ export default function Reader({
                 <div className="text-layer-header">
                   <strong>Lớp chữ {pageName.toLowerCase()} {page}:</strong>
                 </div>
-                {highlightInfo.status === 'precise' ? (
+                {currentPageMatches.length > 0 ? (
+                  <p className="text-layer-snippet text-layer-rendered">
+                    {renderTextWithSearchHighlights(currentPage.text, currentPageMatches, activeSearchMatch)}
+                  </p>
+                ) : highlightInfo.status === 'precise' ? (
                   <p className="text-layer-snippet text-layer-rendered">
                     <span className="text-before">{currentPage.text.slice(0, highlightInfo.start)}</span>
                     <mark
@@ -387,6 +636,7 @@ export default function Reader({
             )}
           </>
         )}
+
       </main>
     </>
   );
@@ -412,6 +662,7 @@ export async function getServerSideProps({ req, res, params, query }) {
   const initialEvidenceId = query.evidence ?? null;
   const initialStart = /^\d+$/.test(query.start || '') ? Number(query.start) : null;
   const initialEnd = /^\d+$/.test(query.end || '') ? Number(query.end) : null;
+  const initialSearch = query.search && typeof query.search === 'string' ? String(query.search).trim() : '';
   return {
     props: {
       documentId: params.documentId,
@@ -421,6 +672,8 @@ export async function getServerSideProps({ req, res, params, query }) {
       initialEvidenceId,
       initialStart,
       initialEnd,
+      initialSearch,
     },
   };
 }
+

@@ -65,6 +65,31 @@ def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), 
     }
 
 
+@router.get('/{document_id}/pages/{page}/text', summary="Get extracted text for a specific page")
+def get_page_text(
+    document_id: int,
+    page: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """
+    Get extracted text and position tokens for a specific page of an owned document (BR07).
+    Reuses ownership protection from US05.
+    """
+    document = owned_reader_document(db, document_id, user_id)
+    if not document.extracted_text or not isinstance(document.extracted_text, list):
+        raise HTTPException(status_code=404, detail="Page text not available")
+    for p in document.extracted_text:
+        if isinstance(p, dict) and p.get('page') == page:
+            return {
+                'document_id': document_id,
+                'page': page,
+                'text': p.get('text', ''),
+                'positions': p.get('positions', []),
+            }
+    raise HTTPException(status_code=404, detail="Page not found")
+
+
 
 @router.get('/{document_id}/reader.pdf')
 def reader_pdf(document_id: int, version: str = Query(...), user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
