@@ -1,4 +1,4 @@
-import { ClaimEvidence } from './CitationBadge';
+import { CitationBadge, ClaimEvidence } from './CitationBadge';
 import AnalysisDocumentDetails from './AnalysisDocumentDetails';
 
 const TABLE_FIELDS = [
@@ -28,6 +28,7 @@ export function TableResults({ documents = [], jobFiles = [], jobId }) {
           <tr>
             <th scope="col">Tài liệu</th>
             {TABLE_FIELDS.map(([field, label]) => <th key={field} scope="col">{label}</th>)}
+            <th scope="col">Nguồn</th>
           </tr>
         </thead>
         <tbody>
@@ -41,17 +42,36 @@ export function TableResults({ documents = [], jobFiles = [], jobId }) {
                 <a className="analysis-source" href={`/documents/${file.document_id}?page=1`}>{name}</a>
                 {document && <AnalysisDocumentDetails document={document} />}
               </th>
-              {hasResult ? TABLE_FIELDS.map(([field]) => <td key={field} className={`table-field-${field}`}>
+              {hasResult ? <>{TABLE_FIELDS.map(([field, label]) => <td key={field} className={`table-field-${field}`}>
+                <span className="financial-field-label" aria-hidden="true">{label}</span>
                 <ClaimEvidence
                   claim={document.output[field] || { text: null, evidence: [], unverified: true }}
                   documentName={name}
                   documentId={file.document_id}
                   jobId={jobId}
                   pageKind={document.reader?.page_kind}
+                  showEvidence={false}
                 />
                 {document.output[field]?.verification_issues?.includes('unsupported_fact') &&
                   <p className="analysis-unverified">Nguồn không hỗ trợ nội dung này.</p>}
-              </td>) : <td colSpan={3}>
+              </td>)}<td className="table-sources">
+                <span className="financial-field-label" aria-hidden="true">Nguồn</span>
+                {TABLE_FIELDS.map(([field, label]) => {
+                  const claim = document.output[field];
+                  const sources = claim?.text && Array.isArray(claim.evidence) ? claim.evidence : [];
+                  return <div key={field} className={`table-source-${field}`} role="group" aria-label={`Nguồn: ${label}`}>
+                    <p className="financial-source-label">{label}</p>
+                    {sources.length ? sources.map((source, index) => <CitationBadge
+                      key={index}
+                      source={source}
+                      documentName={name}
+                      currentDocumentId={file.document_id}
+                      jobId={jobId}
+                      pageKind={document.reader?.page_kind}
+                    />) : <span className="analysis-unverified">Chưa có nguồn xác thực</span>}
+                  </div>;
+                })}
+              </td></> : <td colSpan={4}>
                 <p className="analysis-unverified">{fileStates[file.status] || 'Chưa có kết quả phân tích · Unverified'}</p>
               </td>}
             </tr>;

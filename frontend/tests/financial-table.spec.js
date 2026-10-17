@@ -39,7 +39,7 @@ test('five saved contracts render as five comparison rows with exact numbers, un
   await page.route('**/jobs/125', route => route.fulfill({ json: saved }));
   const table = page.getByRole('table', { name: 'So sánh điều khoản tài chính' });
   async function checkRows() {
-    await expect(table.getByRole('columnheader')).toHaveText(['Tài liệu', 'Giá trị', 'Thanh toán', 'Phạt']);
+    await expect(table.getByRole('columnheader')).toHaveText(['Tài liệu', 'Giá trị', 'Thanh toán', 'Phạt', 'Nguồn']);
     await expect(table.locator('tbody tr')).toHaveCount(5);
     for (const [index, file] of saved.job_files.entries()) {
       const row = table.locator('tbody tr').nth(index);
@@ -49,9 +49,10 @@ test('five saved contracts render as five comparison rows with exact numbers, un
       for (const [field, pageNumber] of [['value', 1], ['payment_term', 2], ['penalty', 3]]) {
         const cell = row.locator(`.table-field-${field}`);
         await expect(cell.locator('.claim-text')).toHaveText(output[field].text);
-        await expect(cell.getByRole('link')).toHaveAttribute('href',
+        const sources = row.getByRole('group', { name: `Nguồn: ${{ value: 'Giá trị', payment_term: 'Thanh toán', penalty: 'Phạt' }[field]}`, exact: true });
+        await expect(sources.getByRole('link')).toHaveAttribute('href',
           `/documents/${file.document_id}?page=${pageNumber}&start=0&end=${output[field].text.length}&evidence=${file.document_id}-${pageNumber}-0-${output[field].text.length}&job=125`);
-        await expect(cell.getByRole('link')).toHaveAttribute('title', output[field].text);
+        await expect(sources.getByRole('link')).toHaveAttribute('title', output[field].text);
       }
     }
     await expect(table.getByText('Unverified · Cần kiểm tra', { exact: true })).toHaveCount(0);
@@ -79,17 +80,18 @@ test('missing and unsupported fields are explicit without replacing numeric text
   const rows = table.locator('tbody tr');
   for (const [index, field] of [[0, 'payment_term'], [1, 'penalty']]) {
     const cell = rows.nth(index).locator(`.table-field-${field}`);
-    await expect(cell).toHaveText('Không có thông tin · Unverified');
-    await expect(cell.getByRole('link')).toHaveCount(0);
+    await expect(cell.locator('.analysis-claim')).toHaveText('Không có thông tin · Unverified');
+    await expect(rows.nth(index).locator(`.table-source-${field}`).getByRole('link')).toHaveCount(0);
+    await expect(rows.nth(index).locator(`.table-source-${field}`)).toContainText('Chưa có nguồn xác thực');
   }
   const unsupported = rows.nth(2).locator('.table-field-value');
   await expect(unsupported.locator('.claim-text')).toHaveText('1,200,000,000 USD');
   await expect(unsupported).toContainText('Unverified · Cần kiểm tra');
   await expect(unsupported).toContainText('Nguồn không hỗ trợ nội dung này.');
-  await expect(unsupported.getByRole('link')).toHaveCount(0);
+  await expect(rows.nth(2).locator('.table-source-value').getByRole('link')).toHaveCount(0);
   // A valid passage remains available for review even when it does not substantiate the claim.
   await expect(rows.nth(3).locator('.table-field-penalty')).toContainText('Unverified · Cần kiểm tra');
-  await expect(rows.nth(3).locator('.table-field-penalty').getByRole('link')).toHaveCount(1);
+  await expect(rows.nth(3).locator('.table-source-penalty').getByRole('link')).toHaveCount(1);
   await expect(rows.nth(4).locator('.table-field-value .claim-text')).toHaveText(amounts[4]);
 });
 
@@ -152,7 +154,7 @@ test('table appears before results exist and keeps five pending rows', async ({ 
   await expect(table.locator('.claim-text')).toHaveCount(0);
 });
 
-test('mobile comparison scrolls locally, keeps duplicate filenames distinct and displays AI text safely', async ({ page }) => {
+test('mobile comparison renders five cards without horizontal scrolling, keeps duplicate filenames distinct and displays AI text safely', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const saved = tableJob();
   saved.job_files[0].original_filename = saved.job_files[1].original_filename = `${'long-contract-'.repeat(12)}.pdf`;
@@ -166,7 +168,110 @@ test('mobile comparison scrolls locally, keeps duplicate filenames distinct and 
   await expect(region.getByText('<script>window.unsafeAI = true</script>', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.unsafeAI)).toBeUndefined();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  expect(await region.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
+  expect(await region.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  expect(await region.locator('tbody tr').first().evaluate(element => getComputedStyle(element).display)).toBe('block');
+  for (const label of ['Giá trị', 'Thanh toán', 'Phạt', 'Nguồn']) {
+    await expect(region.locator('tbody tr').first().locator('.financial-field-label').filter({ hasText: new RegExp(`^${label}$`) })).toBeVisible();
+  }
   await region.focus();
   await expect(region).toBeFocused();
+});
+
+for (const width of [375, 640]) {
+  test(`mobile cards at ${width}px preserve numeric units, field sources and saved results across reload and resize`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 812 });
+    const saved = tableJob();
+    await page.route('**/jobs/125', route => route.fulfill({ json: saved }));
+    await page.goto('/results/125');
+    const table = page.getByRole('table', { name: 'So sánh điều khoản tài chính' });
+    const cards = table.locator('tbody tr');
+    async function checkCards() {
+      await expect(cards).toHaveCount(5);
+      for (let index = 0; index < 5; index++) {
+        const card = cards.nth(index);
+        await expect(card.locator('.table-field-value .claim-text')).toHaveText(amounts[index]);
+        await expect(card.locator('.table-field-penalty .claim-text')).toHaveText('0.05% per day');
+        await expect(card.locator('.table-field-payment_term .claim-text')).toHaveText('Within 30 days');
+        await expect(card.getByRole('link', { name: `contract-${index + 1}.pdf — page 3`, exact: true }))
+          .toHaveAttribute('href', `/documents/${51 + index}?page=3&start=0&end=13&evidence=${51 + index}-3-0-13&job=125`);
+        expect(await card.evaluate(element => getComputedStyle(element).display)).toBe('block');
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+    await checkCards();
+    await page.reload();
+    await checkCards();
+    await page.setViewportSize({ width: 1100, height: 900 });
+    expect(await cards.first().evaluate(element => getComputedStyle(element).display)).toBe('table-row');
+    await expect(table.getByRole('columnheader')).toHaveText(['Tài liệu', 'Giá trị', 'Thanh toán', 'Phạt', 'Nguồn']);
+    await page.setViewportSize({ width, height: 812 });
+    await checkCards();
+    if (width === 375) await page.screenshot({ path: 'test-results/financial-cards-mobile.png', fullPage: true });
+  });
+}
+
+for (const width of [375, 1100]) {
+  test(`field citation at ${width}px opens its exact source page and returns to the saved comparison`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const saved = tableJob();
+    const doc = saved.result_data.documents[53];
+    const version = 'a'.repeat(64);
+    await page.route('**/jobs/125', route => route.fulfill({ json: saved }));
+    await page.route('**/api/documents/53/pages', route => route.fulfill({ json: {
+      page_count: 3, page_kind: 'page', reader_version: version,
+      reader_url: `/documents/53/reader.pdf?version=${version}`,
+      pages: [doc.output.value.text, doc.output.payment_term.text, doc.output.penalty.text]
+        .map((text, index) => ({ page: index + 1, text, positions: [] })),
+    } }));
+    await page.route('**/api/documents/53/reader.pdf?*', route => route.fulfill({
+      contentType: 'application/pdf', body: Buffer.from('%PDF-1.4\n%EOF\n'),
+    }));
+    await page.goto('/results/125');
+    const table = page.getByRole('table', { name: 'So sánh điều khoản tài chính' });
+    const row = table.locator('tbody tr').nth(2);
+    await row.getByRole('group', { name: 'Nguồn: Phạt', exact: true }).getByRole('link').click();
+    await expect(page).toHaveURL('/documents/53?page=3&start=0&end=13&evidence=53-3-0-13&job=125');
+    await expect(page.getByText('Trang 3/3', { exact: true })).toBeVisible();
+    await expect(page.getByTitle('Bản đọc PDF — Trang 3')).toHaveAttribute('src', `/api/documents/53/reader.pdf?version=${version}#page=3`);
+    await page.reload();
+    await expect(page.getByText('Trang 3/3', { exact: true })).toBeVisible();
+    await page.getByRole('link', { name: /^Back to Results/ }).click();
+    await expect(page).toHaveURL('/results/125');
+    await expect(table.locator('tbody tr')).toHaveCount(5);
+    await expect(row.locator('.table-field-value .claim-text')).toHaveText(amounts[2]);
+    await expect(row.locator('.table-field-penalty .claim-text')).toHaveText('0.05% per day');
+  });
+}
+
+test('mobile cards retain pending and failed contracts beside US07 progress and failure details', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  const saved = tableJob();
+  saved.status = 'failed';
+  saved.completed_count = 3;
+  saved.result_data.documents[51].output.payment_term = { text: null, evidence: [], unverified: true };
+  saved.result_data.documents[52].output.penalty = { text: '0.5% per day', evidence: [], unverified: true,
+    verification_issues: ['unsupported_fact'] };
+  const failed = saved.job_files[3];
+  failed.status = 'failed';
+  failed.error_message = 'Processing timed out after 3 attempts.';
+  delete saved.result_data.documents[failed.document_id];
+  const pending = saved.job_files[4];
+  pending.status = 'pending';
+  delete saved.result_data.documents[pending.document_id];
+  await page.route('**/jobs/125', route => route.fulfill({ json: saved }));
+  await page.goto('/results/125');
+  await expect(page.getByLabel('Trạng thái job')).toHaveText('Failed');
+  await expect(page.getByText('3/5 tệp đã xử lý thành công')).toBeVisible();
+  await expect(page.getByText(failed.error_message, { exact: true })).toBeVisible();
+  const cards = page.getByRole('table', { name: 'So sánh điều khoản tài chính' }).locator('tbody tr');
+  await expect(cards).toHaveCount(5);
+  await expect(cards.nth(0).locator('.table-field-payment_term')).toContainText('Không có thông tin · Unverified');
+  await expect(cards.nth(0).locator('.table-source-payment_term').getByRole('link')).toHaveCount(0);
+  await expect(cards.nth(1).locator('.table-field-penalty .claim-text')).toHaveText('0.5% per day');
+  await expect(cards.nth(1).locator('.table-field-penalty')).toContainText('Unverified · Cần kiểm tra');
+  await expect(cards.nth(1).locator('.table-source-penalty').getByRole('link')).toHaveCount(0);
+  await expect(cards.nth(3)).toContainText('Phân tích thất bại · Unverified');
+  await expect(cards.nth(4)).toContainText('Đang chờ xử lý');
+  await expect(cards.nth(3).locator('.citation-badge')).toHaveCount(0);
+  await expect(cards.nth(4).locator('.citation-badge')).toHaveCount(0);
 });
