@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict
+from typing import Annotated, Any, Optional
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.fileformat import FileFormat
 from app.models.reviewstate import ReviewState
@@ -20,7 +20,10 @@ class DocumentLabelUpdate(BaseModel):
 
 
 class DocumentFolderUpdate(BaseModel):
-    folder_id: Optional[int] = None
+    model_config = ConfigDict(extra='forbid')
+
+    # Explicit null unfiles a document; an omitted field must not clear it.
+    folder_id: Annotated[int, Field(strict=True, gt=0, le=2147483647)] | None
 
 
 class DocumentResponse(BaseModel):
