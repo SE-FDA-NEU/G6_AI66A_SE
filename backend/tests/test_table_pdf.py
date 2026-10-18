@@ -55,7 +55,7 @@ def test_five_saved_rows_units_vietnamese_missing_fields_and_repeat_download(
         assert f'Hợp đồng {index + 1}.pdf' in text
         assert amount in text
     assert text.count('0.05% per day') == 5
-    assert 'Không có thông tin' in text and 'Unverified' in text
+    assert 'Không có thông tin' in text and 'Chưa xác thực' in text
     assert 'Chưa có nguồn xác thực' in text and 'trang 1' in text
     assert 'renamed-' not in text
     with pdfplumber.open(BytesIO(result.content)) as pdf:
@@ -159,7 +159,7 @@ def test_unverified_cells_and_only_real_authorized_page_references(
     assert '1,200,000,000 VND' in text
     with pdfplumber.open(BytesIO(response.content)) as pdf:
         first_row = pdf.pages[0].extract_tables()[0][1]
-        assert 'Unverified' in first_row[1] and 'Unverified' in first_row[4]
+        assert 'Chưa xác thực' in first_row[1] and 'Chưa xác thực' in first_row[4]
         if problem in ('missing', 'foreign_source', 'wrong_version', 'bad_page'):
             source_value = first_row[4].split('Thanh toán:')[0]
             assert 'trang' not in source_value and 'Chưa có nguồn xác thực' in source_value
@@ -213,3 +213,18 @@ def test_long_clauses_wrap_split_rows_repeat_headers_and_render_without_clipping
             page.close()
     finally:
         rendered.close()
+
+
+def test_export_does_not_translate_saved_cells_and_uses_job_language(client, session_factory, completed_table):
+    job_id, _ = completed_table
+    with session_factory() as db:
+        job = db.get(Job, job_id)
+        original = deepcopy(job.result_data)
+        job.result_data = {**original, 'language': 'en'}
+        db.commit()
+    response = client.get(f'/jobs/{job_id}/export.pdf', headers={'X-DocuMind-Language': 'vi'})
+    assert response.status_code == 200
+    text = pdf_text(response.content)
+    assert 'Financial clause comparison' in text and 'Payment' in text
+    with session_factory() as db:
+        assert db.get(Job, job_id).result_data['documents'] == original['documents']

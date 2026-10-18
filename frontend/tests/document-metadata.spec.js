@@ -82,7 +82,7 @@ test.describe('Document Metadata UI - Threshold Display & Boundary (US10)', () =
 
       // Check AI label
       const labelBadge = metadata.locator('[data-testid="document-ai-label"]');
-      await expect(labelBadge).toContainText('Hợp đồng mua bán');
+      await expect(labelBadge).toHaveAttribute('data-original-label', 'Hợp đồng mua bán');
 
       // Check confidence badge and threshold classification
       const confBadge = metadata.locator('[data-testid="document-ai-confidence"]');
@@ -95,13 +95,13 @@ test.describe('Document Metadata UI - Threshold Display & Boundary (US10)', () =
         await expect(confBadge).toHaveAttribute('data-confidence-level', 'low');
       }
 
-      // Check Needs review state
+      // Check Cần kiểm tra state
       const reviewBadge = metadata.locator('[data-testid="document-review-state"]');
       if (expectNeedsReview) {
-        await expect(reviewBadge).toContainText('Needs review');
+        await expect(reviewBadge).toContainText('Cần kiểm tra');
         await expect(reviewBadge).toHaveClass(/review-needs-review/);
       } else {
-        await expect(reviewBadge).not.toContainText('Needs review');
+        await expect(reviewBadge).not.toContainText('Cần kiểm tra');
         await expect(reviewBadge).toContainText('Gợi ý độ tin cậy cao');
       }
     });
@@ -120,7 +120,7 @@ test.describe('Document Metadata UI - Unchanged Folder Placement (US10)', () => 
     await page.goto('/documents/99');
     const folderBadge = page.locator('.reader-document-metadata [data-testid="document-folder-placement"]');
     await expect(folderBadge).toBeVisible();
-    await expect(folderBadge).toContainText('Chưa phân thư mục (Unassigned)');
+    await expect(folderBadge).toContainText('Chưa phân thư mục');
     await expect(folderBadge).toHaveAttribute('data-folder-id', 'unassigned');
   });
 
@@ -165,6 +165,7 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
 
     await page.route('**/api/documents?*', route => route.fulfill({ json: mockDocs }));
     await page.goto('/workspace');
+    for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
 
     const rows = page.locator('.workspace-document-row');
     await expect(rows).toHaveCount(2);
@@ -172,15 +173,15 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     // Row 1: High confidence suggestion, unassigned folder
     const row1 = rows.first();
     await expect(row1.locator('.document-row-title')).toContainText('hop_dong_thue_nha.pdf');
-    await expect(row1.locator('[data-testid="document-ai-label"]')).toContainText('Hợp đồng thuê');
+    await expect(row1.locator('[data-testid="document-ai-label"]')).toHaveAttribute('data-original-label', 'Hợp đồng thuê');
     await expect(row1.locator('[data-testid="document-ai-confidence"]')).toContainText('88%');
     await expect(row1.locator('[data-testid="document-folder-placement"]')).toContainText('Chưa phân thư mục');
 
-    // Row 2: Low confidence suggestion (Needs review), assigned folder, user label
+    // Row 2: Low confidence suggestion (Cần kiểm tra), assigned folder, user label
     const row2 = rows.nth(1);
     await expect(row2.locator('.document-row-title')).toContainText('hoa_don_vat.pdf');
     await expect(row2.locator('[data-testid="document-ai-confidence"]')).toContainText('74%');
-    await expect(row2.locator('[data-testid="document-review-state"]')).toContainText('Needs review');
+    await expect(row2.locator('[data-testid="document-review-state"]')).toContainText('Cần kiểm tra');
     await expect(row2.locator('[data-testid="document-folder-placement"]')).toContainText('#15');
     await expect(row2.locator('[data-testid="document-user-label"]')).toContainText('Chi phí Q3');
   });
@@ -191,6 +192,7 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     }));
 
     await page.goto('/workspace');
+    for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
     await page.getByLabel('Tìm kiếm trong tài liệu').fill('tài chính');
     await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
 
@@ -200,14 +202,14 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     // Check DocumentMetadata inside search hit
     const hitMetadata = hitCard.locator('[data-testid="document-metadata"]');
     await expect(hitMetadata).toBeVisible();
-    await expect(hitMetadata.locator('[data-testid="document-ai-label"]')).toContainText('Báo cáo');
+    await expect(hitMetadata.locator('[data-testid="document-ai-label"]')).toHaveAttribute('data-original-label', 'Báo cáo');
     await expect(hitMetadata.locator('[data-testid="document-ai-confidence"]')).toHaveCount(0);
     await expect(hitMetadata.locator('[data-testid="document-review-state"]')).toContainText('Chưa có điểm tin cậy');
 
     // Check CitationBadge is distinct and separate
     const citationBadge = hitCard.locator('.citation-badge');
     await expect(citationBadge).toBeVisible();
-    await expect(citationBadge).toContainText('bao_cao_tai_chinh.pdf — page 1');
+    await expect(citationBadge).toContainText('bao_cao_tai_chinh.pdf — trang 1');
 
     // Crucial requirement: AI confidence is NOT a claim citation badge
     const labelBadge = hitMetadata.locator('[data-testid="document-ai-label"]');

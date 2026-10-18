@@ -1,3 +1,4 @@
+import { languageHeaders, useI18n } from '../lib/i18n';
 import { useEffect, useRef, useState } from 'react';
 
 function hasCompleteTable(job) {
@@ -20,6 +21,7 @@ function hasCompleteTable(job) {
 }
 
 export default function ExportTableButton({ job, jobId }) {
+  const { t, locale, errorText } = useI18n();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [downloaded, setDownloaded] = useState(false);
@@ -39,7 +41,7 @@ export default function ExportTableButton({ job, jobId }) {
       if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
       downloadUrl.current = null;
     };
-  }, [jobId]);
+  }, [jobId, locale]);
 
   async function download() {
     if (!ready || request.current) return;
@@ -50,18 +52,18 @@ export default function ExportTableButton({ job, jobId }) {
     setDownloaded(false);
     try {
       const response = await fetch(`/jobs/${jobId}/export.pdf`, {
-        credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
+        credentials: 'same-origin', cache: 'no-store', signal: controller.signal, headers: languageHeaders(locale),
       });
-      if (response.status === 401) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xuất PDF.');
-      if (response.status === 403 || response.status === 404) throw new Error('Không tìm thấy tác vụ hoặc bạn không có quyền xuất bảng này.');
-      if (response.status === 409) throw new Error('Bảng chưa sẵn sàng để xuất PDF. Vui lòng tải lại trang để cập nhật kết quả.');
-      if (!response.ok) throw new Error('Không thể xuất PDF. Vui lòng thử lại.');
+      if (response.status === 401) throw new Error(t("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xuất PDF."));
+      if (response.status === 403 || response.status === 404) throw new Error(t("Không tìm thấy tác vụ hoặc bạn không có quyền xuất bảng này."));
+      if (response.status === 409) throw new Error(t("Bảng chưa sẵn sàng để xuất PDF. Vui lòng tải lại trang để cập nhật kết quả."));
+      if (!response.ok) throw new Error(t("Không thể xuất PDF. Vui lòng thử lại."));
       if (response.headers.get('content-type')?.split(';')[0].trim() !== 'application/pdf') {
-        throw new Error('Máy chủ không trả về PDF hợp lệ. Vui lòng thử lại.');
+        throw new Error(t("Máy chủ không trả về PDF hợp lệ. Vui lòng thử lại."));
       }
       const blob = await response.blob();
       if (await blob.slice(0, 5).text() !== '%PDF-') {
-        throw new Error('Máy chủ không trả về PDF hợp lệ. Vui lòng thử lại.');
+        throw new Error(t("Máy chủ không trả về PDF hợp lệ. Vui lòng thử lại."));
       }
       if (controller.signal.aborted) return;
       clearTimeout(revokeTimer.current);
@@ -82,7 +84,7 @@ export default function ExportTableButton({ job, jobId }) {
       setDownloaded(true);
     } catch (err) {
       if (!controller.signal.aborted) setError(err instanceof TypeError
-        ? 'Không thể kết nối để tải PDF. Vui lòng thử lại.' : err.message);
+        ? t("Không thể kết nối để tải PDF. Vui lòng thử lại.") : err.message);
     } finally {
       if (request.current === controller) {
         request.current = null;
@@ -91,13 +93,13 @@ export default function ExportTableButton({ job, jobId }) {
     }
   }
 
-  return <section className="table-export" aria-label="Xuất bảng so sánh">
+  return <section className="table-export" aria-label={t("Xuất bảng so sánh")}>
     <button type="button" className="btn" onClick={download} disabled={!ready || pending}
-      aria-busy={pending} aria-describedby="table-export-status">Export Table</button>
+      aria-busy={pending} aria-describedby="table-export-status">{t("Export Table")}</button>
     <p id="table-export-status" role="status" aria-live="polite" className="muted">
-      {pending ? 'Đang tạo và tải PDF…' : !ready ? 'Chỉ xuất PDF khi tác vụ hoàn tất và có đủ tất cả dòng trong bảng.'
-        : downloaded ? 'Đã gửi PDF để tải xuống.' : 'Tải bảng so sánh đã lưu dưới dạng PDF.'}
+      {pending ? t("Đang tạo và tải PDF…") : !ready ? t("Chỉ xuất PDF khi tác vụ hoàn tất và có đủ tất cả dòng trong bảng.")
+        : downloaded ? t("Đã gửi PDF để tải xuống.") : t("Tải bảng so sánh đã lưu dưới dạng PDF.")}
     </p>
-    {error && <p className="error-box" role="alert">{error}</p>}
+    {error && <p className="error-box" role="alert">{errorText(error)}</p>}
   </section>;
 }

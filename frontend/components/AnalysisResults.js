@@ -1,20 +1,22 @@
+import { useI18n } from '../lib/i18n';
 import BulletResults from './BulletResults';
 import ActionResults from './ActionResults';
 import TableResults from './TableResults';
 import ConceptResults from './ConceptResults';
 import AnalysisDocumentDetails from './AnalysisDocumentDetails';
 
-export default function AnalysisResults({ data, jobId, mode, jobFiles = [] }) {
+export default function AnalysisResults({ data, jobId, mode, jobFiles = [], title = 'Kết quả phân tích' }) {
+  const { t, locale, errorText } = useI18n();
   const documents = Object.values(data?.documents || {}).filter(item => item?.schema_version === 1);
   const tableDocuments = documents.filter(document => document.output?.type === 'table');
   const showTable = mode === 'table' || tableDocuments.length > 0;
   if (!documents.length && !showTable) return null;
-  return <section className="analysis-results" aria-label="Kết quả phân tích AI">
-    <h2>Kết quả phân tích</h2>
+  return <section className="analysis-results" aria-label={t("Kết quả phân tích AI")}>
+    {title && <h2>{t(title)}</h2>}
     {showTable && <TableResults documents={tableDocuments} jobId={jobId} jobFiles={jobFiles} />}
     {documents.filter(document => document.output?.type !== 'table').map(document => <article className="analysis-card" key={document.document_id}>
       <h3>{document.original_filename}</h3>
-      <a href={`/documents/${document.document_id}?page=1`}>Mở tài liệu nguồn</a>
+      <a href={`/documents/${document.document_id}?page=1`}>{t("Mở tài liệu nguồn")}</a>
       <AnalysisDocumentDetails document={document} />
       {document.analysis_status === 'completed' && <>
         {document.output?.type === 'bullet' && <>

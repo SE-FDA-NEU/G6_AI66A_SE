@@ -103,7 +103,7 @@ test('returning to terminal results revalidates expiry, hides old facts and disa
   await page.request.post('/auth/login', { form: { username: 'export@example.com', password: user.password } });
   const completed = await (await page.request.get('/jobs/9002')).json();
   await page.goto('/results/9002');
-  await expect(page.getByRole('button', { name: 'Export Table', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Xuất bảng', exact: true })).toBeEnabled();
   const expired = structuredClone(completed);
   expired.job_files[0].status = 'failed';
   expired.job_files[0].error_message = 'source_expired: Source expired and is no longer available.';
@@ -114,7 +114,7 @@ test('returning to terminal results revalidates expiry, hides old facts and disa
   await expect(page.locator('main').getByRole('alert')).toContainText('Nguồn đã hết hạn');
   await expect(page.getByText('1,200,000,000 VND', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /— page/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Export Table', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Xuất bảng', exact: true })).toBeDisabled();
 });
 
 test('reader removes the old source if it expires during a label update', async ({ page }) => {

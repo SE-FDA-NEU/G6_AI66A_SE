@@ -13,7 +13,7 @@ test('email sign-in errors, HttpOnly session, persistence and logout', async ({ 
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page).toHaveURL('/workspace');
   await expect(page.getByRole('heading', { name: 'Không gian tài liệu' })).toBeVisible();
-  await expect(page.getByText(`Bạn đã đăng nhập với ${user.email}.`)).toBeVisible();
+  await expect(page.locator('.sidebar-account')).toContainText(user.email);
   const cookie = (await context.cookies()).find(c => c.name === 'documind_session');
   expect(cookie?.httpOnly).toBe(true);
   expect(cookie?.sameSite).toBe('Lax');

@@ -1,23 +1,19 @@
 """Pin native extraction to the exact immutable PDF served by the reader.
 
-DOCX pagination comes only from the rendered PDF. PPTX exports every slide,
+DOCX uses generated text-reader pages, not original Word pagination. PPTX exports every slide,
 including hidden slides, with no notes pages; its PDF page count must match
 the presentation's slide list. Original files are never overwritten.
 """
 import hashlib
-import json
 import os
 from pathlib import Path
 import re
 import shutil
-import signal
-import subprocess
 import tempfile
 import zipfile
 from app.services.document_retention import is_expired_source
 from xml.etree import ElementTree
 
-from app.core.config import settings
 from app.models import Document, FileFormat
 from app.services.pdf_extraction import extract_pdf, PDFExtractionError
 
@@ -36,66 +32,15 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def find_soffice():
-    configured = settings.SOFFICE_BINARY
-    candidates = [configured] if configured else [
-        shutil.which('soffice'), shutil.which('libreoffice'),
-        r'C:\Program Files\LibreOffice\program\soffice.com',
-        r'C:\Program Files\LibreOffice\program\soffice.exe',
-        '/Applications/LibreOffice.app/Contents/MacOS/soffice',
-    ]
-    for candidate in candidates:
-        if candidate and Path(candidate).is_file():
-            return str(candidate)
-    raise ReaderConversionError('converter_unavailable',
-                                'LibreOffice is required. Install it or configure SOFFICE_BINARY.')
-
-
-def _stop_conversion(process):
-    if os.name == 'nt':
-        subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-    else:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-    process.communicate()
-
-
 def convert_office(source, file_format, output_dir):
-    binary = find_soffice()
-    options = {
-        'ExportHiddenSlides': {'type': 'boolean', 'value': 'true'},
-        'ExportNotesPages': {'type': 'boolean', 'value': 'false'},
-        'ExportOnlyNotesPages': {'type': 'boolean', 'value': 'false'},
-        'IsSkipEmptyPages': {'type': 'boolean', 'value': 'false'},
-        'ExportFormFields': {'type': 'boolean', 'value': 'false'},
-    }
-    export_filter = 'writer_pdf_Export' if file_format == FileFormat.DOCX else 'impress_pdf_Export'
-    profile = (output_dir / 'profile').resolve().as_uri()
-    command = [binary, f'-env:UserInstallation={profile}', '--headless', '--norestore',
-               '--nodefault', '--nolockcheck', '--convert-to',
-               f'pdf:{export_filter}:{json.dumps(options, separators=(",", ":"))}',
-               '--outdir', str(output_dir), str(source)]
-    process_options = ({'creationflags': subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP}
-                       if os.name == 'nt' else {'start_new_session': True})
+    """Create the text reader PDF with Python libraries, no external app."""
+    from app.services.office_reader import render_office_pdf
     try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **process_options)
-    except OSError as error:
-        raise ReaderConversionError('converter_unavailable', 'Could not start LibreOffice.') from error
-    try:
-        process.communicate(timeout=settings.OFFICE_CONVERSION_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired as error:
-        _stop_conversion(process)
-        raise ReaderConversionError('conversion_timed_out', 'Office to PDF conversion exceeded its time limit.') from error
-    except BaseException:
-        # The async job adapter terminates this worker on cancellation.
-        _stop_conversion(process)
-        raise
-    output = output_dir / f'{source.stem}.pdf'
-    if process.returncode != 0 or not output.is_file() or output.stat().st_size == 0:
-        raise ReaderConversionError('conversion_failed', 'Office to PDF conversion did not produce a readable file.')
+        output = render_office_pdf(source, file_format, output_dir)
+    except Exception as error:
+        raise ReaderConversionError('conversion_failed', 'Could not create a reader from this Office document.') from error
+    if not output.is_file() or not output.stat().st_size:
+        raise ReaderConversionError('conversion_failed', 'The Office reader PDF is empty or missing.')
     return output
 
 
@@ -153,7 +98,7 @@ def prepare_reader(source, file_format, work, converter=None, on_page_count=None
     try:
         result = extract_pdf(rendered, on_page_count=on_page_count) if on_page_count else extract_pdf(rendered)
     except PDFExtractionError as error:
-        raise ReaderConversionError('invalid_rendered_pdf', 'The reader PDF could not be extracted.') from error
+        raise ReaderConversionError('invalid_rendered_pdf', f'The reader PDF could not be extracted: {error}') from error
     if not result['page_count']:
         raise ReaderConversionError('empty_rendered_pdf', 'The reader PDF has no pages.')
     if file_format == FileFormat.PPTX and result['page_count'] != _slide_count(snapshot):
@@ -162,6 +107,8 @@ def prepare_reader(source, file_format, work, converter=None, on_page_count=None
         raise ReaderConversionError('source_changed', 'The source changed during conversion. Please retry.')
     reference = {'sha256': sha256(rendered), 'source_sha256': source_hash,
                  'page_kind': 'slide' if file_format == FileFormat.PPTX else 'page'}
+    if file_format != FileFormat.PDF:
+        reference['renderer'] = 'python-text-v1'
     for page in result['extracted_text']:
         page['reader'] = reference.copy()
     return result, rendered
@@ -208,8 +155,7 @@ def extract_document_for_reader(document_id, session_factory, converter=None):
                 pass
             output_root = source.parent / '.reader' / str(document.id)
             output_root.mkdir(parents=True, exist_ok=True)
-            # A short OS temp path avoids LibreOffice profile paths exceeding
-            # Windows MAX_PATH inside deeply nested upload directories.
+            # Keep isolated temporary artifacts off the source storage path.
             with tempfile.TemporaryDirectory(prefix='documind-convert-') as work:
                 work = Path(work)
                 result, rendered = prepare_reader(source, document.file_format, work, converter)

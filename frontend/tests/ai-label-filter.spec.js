@@ -12,10 +12,11 @@ test('real API filters eight of twenty across folders and clearing restores both
     if (url.pathname === '/api/documents') requests.push(Object.fromEntries(url.searchParams));
   });
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   const rows = page.getByTestId('workspace-document-row');
   const pagination = page.getByRole('navigation', { name: 'Phân trang tài liệu', exact: true });
   await expect(rows).toHaveCount(10);
-  await expect(rows.getByTestId('document-ai-label').first()).toContainText('Microeconomics');
+  await expect(rows.getByTestId('document-ai-label').first()).toHaveAttribute('data-original-label', 'Microeconomics');
   await pagination.getByRole('button', { name: 'Trang sau' }).click();
   await expect(pagination).toContainText('Trang 2');
   const filter = page.getByRole('region', { name: 'Lọc danh sách tài liệu', exact: true });
@@ -23,7 +24,7 @@ test('real API filters eight of twenty across folders and clearing restores both
   await filter.getByRole('button', { name: 'Áp dụng nhãn AI', exact: true }).click();
   await expect(rows).toHaveCount(8);
   expect(requests.at(-1)).toEqual({ skip: '0', limit: '11', label: 'Macroeconomics' });
-  await expect(rows.getByTestId('document-ai-label')).toHaveText(Array(8).fill('Nhãn AI: Macroeconomics'));
+  expect(await rows.getByTestId('document-ai-label').evaluateAll(elements => elements.map(element => element.getAttribute('data-original-label')))).toEqual(Array(8).fill('Macroeconomics'));
   await expect(rows.getByTestId('document-user-label')).toHaveText(Array(8).fill('Nhãn người dùng: User correction'));
   const placements = await rows.getByTestId('document-folder-placement').allTextContents();
   expect(placements.some(text => text.includes('Economics 101'))).toBe(true);
@@ -44,6 +45,7 @@ test('combined folder/AI label is explicit AND; clear-label preserves the folder
   const folders = await (await page.request.get('/api/folders')).json();
   const folder = folders.find(item => item.name === 'Economics 101');
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   await page.getByLabel('Thư mục hiển thị', { exact: true }).selectOption(String(folder.id));
   const filter = page.getByRole('region', { name: 'Lọc danh sách tài liệu', exact: true });
   await filter.getByLabel('Nhãn AI hiển thị', { exact: true }).fill('Macroeconomics');
@@ -64,6 +66,7 @@ test('combined folder/AI label is explicit AND; clear-label preserves the folder
 
 test('unmatched AI label has a filter-specific empty message and clear restores documents', async ({ page }) => {
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   const filter = page.getByRole('region', { name: 'Lọc danh sách tài liệu', exact: true });
   await filter.getByLabel('Nhãn AI hiển thị', { exact: true }).fill('macroeconomics');
   await filter.getByRole('button', { name: 'Áp dụng nhãn AI', exact: true }).click();
@@ -89,6 +92,7 @@ test('filter values survive loading/error and retry uses the same exact query', 
     return route.fulfill({ json: [] });
   });
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   const filter = page.getByRole('region', { name: 'Lọc danh sách tài liệu', exact: true });
   const input = filter.getByLabel('Nhãn AI hiển thị', { exact: true });
   await input.fill('Macroeconomics');

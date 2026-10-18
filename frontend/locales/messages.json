@@ -1,0 +1,1462 @@
+{
+  " trong tác vụ này": {
+    "en": " in this task",
+    "vi": " trong tác vụ này"
+  },
+  " · Giới hạn {0} giây": {
+    "en": " · {0} second limit",
+    "vi": " · Giới hạn {0} giây"
+  },
+  "(UTC)": {
+    "en": "(UTC)",
+    "vi": "(UTC)"
+  },
+  ", kể cả các trang danh sách khác.": {
+    "en": ", including other list pages.",
+    "vi": ", kể cả các trang danh sách khác."
+  },
+  "/5 tệp hợp lệ ·": {
+    "en": "/5 valid files ·",
+    "vi": "/5 tệp hợp lệ ·"
+  },
+  "Back to Results": {
+    "en": "Back to results",
+    "vi": "Về kết quả"
+  },
+  "Back to Results · Quay lại tác vụ #{0}": {
+    "vi": "Về kết quả · Quay lại tác vụ #{0}",
+    "en": "Back to results · Return to job #{0}"
+  },
+  "Back to Workspace": {
+    "en": "Back to library",
+    "vi": "Về thư viện"
+  },
+  "Back to Workspace · Về thư viện": {
+    "vi": "Về thư viện",
+    "en": "Back to library"
+  },
+  "Biến tài liệu thành": {
+    "en": "Turn documents into",
+    "vi": "Biến tài liệu thành"
+  },
+  "Bullet Summary": {
+    "en": "Bullet summary",
+    "vi": "Tóm tắt điểm chính"
+  },
+  "Bạn không có quyền truy cập tài liệu này (Access denied).": {
+    "en": "You do not have access to this document (Access denied).",
+    "vi": "Bạn không có quyền truy cập tài liệu này (Từ chối truy cập)."
+  },
+  "Bạn nhớ một câu hay ý trong tài liệu? Nhập từ khóa như “điều khoản thanh toán”. Kết quả là đoạn trích kèm trang nguồn, không phải tên tệp.": {
+    "en": "Remember a sentence or idea in the document? Enter keywords like “payment terms”. The result is the excerpt with the source page, not the file name.",
+    "vi": "Bạn nhớ một câu hay ý trong tài liệu? Nhập từ khóa như “điều khoản thanh toán”. Kết quả là đoạn trích kèm trang nguồn, không phải tên tệp."
+  },
+  "Bạn đang xem các tài liệu trong thư mục này.": {
+    "en": "You are viewing documents in this folder.",
+    "vi": "Bạn đang xem các tài liệu trong thư mục này."
+  },
+  "Bản nháp của người dùng · Chưa xác nhận": {
+    "en": "User Draft · Unverified",
+    "vi": "Bản nháp của người dùng · Chưa xác thực"
+  },
+  "Bản tóm tắt thuộc phiên bản tài liệu khác. Mở tác vụ cũ để xem kết quả.": {
+    "en": "The summary belongs to a different document version. Open the old task to view results.",
+    "vi": "Bản tóm tắt thuộc phiên bản tài liệu khác. Mở tác vụ cũ để xem kết quả."
+  },
+  "Bản tóm tắt đã lưu": {
+    "en": "Saved Summary",
+    "vi": "Bản tóm tắt đã lưu"
+  },
+  "Bản đọc PDF — {0} {1}": {
+    "en": "PDF Reader — {0} {1}",
+    "vi": "Bản đọc PDF — {0} {1}"
+  },
+  "Bảng chưa sẵn sàng để xuất PDF. Vui lòng tải lại trang để cập nhật kết quả.": {
+    "en": "Table is not ready for PDF export. Please reload the page to update results.",
+    "vi": "Bảng chưa sẵn sàng để xuất PDF. Vui lòng tải lại trang để cập nhật kết quả."
+  },
+  "Bảng điều khoản hợp đồng": {
+    "en": "Contract Terms Table",
+    "vi": "Bảng điều khoản hợp đồng"
+  },
+  "Bấm vào thư mục để xem các tài liệu bên trong.": {
+    "en": "Click on the folder to view documents inside.",
+    "vi": "Bấm vào thư mục để xem các tài liệu bên trong."
+  },
+  "Bỏ thư mục": {
+    "en": "Remove folder",
+    "vi": "Bỏ thư mục"
+  },
+  "Bộ lọc nhãn AI": {
+    "en": "AI Label Filter",
+    "vi": "Bộ lọc nhãn AI"
+  },
+  "CHÀO MỪNG ĐẾN DOCUMIND": {
+    "en": "WELCOME TO DOCUMIND",
+    "vi": "CHÀO MỪNG ĐẾN DOCUMIND"
+  },
+  "Chuyển": {
+    "en": "Move",
+    "vi": "Chuyển"
+  },
+  "Chuyển tài liệu tới": {
+    "en": "Move document to",
+    "vi": "Chuyển tài liệu tới"
+  },
+  "Chuẩn bị bản đọc": {
+    "en": "Preparing reader",
+    "vi": "Chuẩn bị bản đọc"
+  },
+  "Chưa có kết quả phân tích · Unverified": {
+    "en": "No analysis available · Unverified",
+    "vi": "Chưa có kết quả phân tích · Chưa xác thực"
+  },
+  "Chưa có nguồn xác thực": {
+    "en": "No verified sources",
+    "vi": "Chưa có nguồn xác thực"
+  },
+  "Chưa có ngày hết hạn.": {
+    "en": "No expiration date.",
+    "vi": "Chưa có ngày hết hạn."
+  },
+  "Chưa có nhãn AI": {
+    "en": "No AI labels",
+    "vi": "Chưa có nhãn AI"
+  },
+  "Chưa có thông tin tệp.": {
+    "en": "No file information.",
+    "vi": "Chưa có thông tin tệp."
+  },
+  "Chưa có thư mục. Tạo thư mục để sắp xếp tài liệu.": {
+    "en": "No folders yet. Create a folder to organize documents.",
+    "vi": "Chưa có thư mục. Tạo thư mục để sắp xếp tài liệu."
+  },
+  "Chưa có tài liệu nào trong không gian làm việc. Tải tài liệu để bắt đầu.": {
+    "en": "No documents in the workspace. Upload documents to get started.",
+    "vi": "Chưa có tài liệu nào trong không gian làm việc. Tải tài liệu để bắt đầu."
+  },
+  "Chưa cấu hình Gemini. Thêm GEMINI_API_KEY vào backend/.env rồi tải lại tài liệu để phân tích.": {
+    "en": "Gemini not configured. Add GEMINI_API_KEY to backend/.env and reload the document to analyze.",
+    "vi": "Chưa cấu hình Gemini. Thêm GEMINI_API_KEY vào backend/.env rồi tải lại tài liệu để phân tích."
+  },
+  "Chưa phân thư mục": {
+    "en": "Unassigned",
+    "vi": "Chưa phân thư mục"
+  },
+  "Chưa phân thư mục (Unassigned)": {
+    "en": "Unassigned",
+    "vi": "Chưa phân thư mục"
+  },
+  "Chưa tải được thư mục. Thử lại ở khu vực chính.": {
+    "en": "Failed to load folders. Please try again in the main area.",
+    "vi": "Chưa tải được thư mục. Thử lại ở khu vực chính."
+  },
+  "Chỉ chấp nhận PDF, DOCX hoặc PPTX.": {
+    "en": "Only PDF, DOCX, or PPTX are accepted.",
+    "vi": "Chỉ chấp nhận PDF, DOCX hoặc PPTX."
+  },
+  "Chỉ xuất PDF khi tác vụ hoàn tất và có đủ tất cả dòng trong bảng.": {
+    "en": "Only export PDF when the task is complete and all table rows are available.",
+    "vi": "Chỉ xuất PDF khi tác vụ hoàn tất và có đủ tất cả dòng trong bảng."
+  },
+  "Chỉnh sửa nhãn": {
+    "en": "Edit label",
+    "vi": "Chỉnh sửa nhãn"
+  },
+  "Chọn hoặc kéo thả tệp vào đây": {
+    "en": "Select or drag and drop files here",
+    "vi": "Chọn hoặc kéo thả tệp vào đây"
+  },
+  "Chọn trang nguồn": {
+    "en": "Select source page",
+    "vi": "Chọn trang nguồn"
+  },
+  "Chọn tài liệu để kiểm tra trước khi tải lên.": {
+    "en": "Select documents to review before uploading.",
+    "vi": "Chọn tài liệu để kiểm tra trước khi tải lên."
+  },
+  "Chọn tệp tài liệu": {
+    "en": "Select document files",
+    "vi": "Chọn tệp tài liệu"
+  },
+  "Chứa từ khóa": {
+    "en": "Contains keywords",
+    "vi": "Chứa từ khóa"
+  },
+  "Completed": {
+    "en": "Completed",
+    "vi": "Hoàn tất"
+  },
+  "Concept Overview": {
+    "en": "Concept overview",
+    "vi": "Tổng quan khái niệm"
+  },
+  "Các thư mục": {
+    "en": "Folders",
+    "vi": "Các thư mục"
+  },
+  "Các tệp chưa được xếp vào thư mục. Dùng “Chuyển tài liệu tới” trên thẻ để sắp xếp.": {
+    "en": "Unorganized files. Use \"Move document to\" on the card to organize.",
+    "vi": "Các tệp chưa được xếp vào thư mục. Dùng “Chuyển tài liệu tới” trên thẻ để sắp xếp."
+  },
+  "Các tệp đã chọn hợp lệ và sẵn sàng tải lên.": {
+    "en": "Selected files are valid and ready to upload.",
+    "vi": "Các tệp đã chọn hợp lệ và sẵn sàng tải lên."
+  },
+  "Có dẫn nguồn": {
+    "en": "Has citations",
+    "vi": "Có dẫn nguồn"
+  },
+  "Có lưu ý khi xử lý tài liệu.": {
+    "en": "There are notes when processing documents.",
+    "vi": "Có lưu ý khi xử lý tài liệu."
+  },
+  "Cần kiểm tra": {
+    "en": "Needs review",
+    "vi": "Cần kiểm tra"
+  },
+  "D": {
+    "en": "D",
+    "vi": "D"
+  },
+  "DOCX": {
+    "en": "DOCX",
+    "vi": "DOCX"
+  },
+  "Danh sách kết quả tìm kiếm": {
+    "en": "Search results list",
+    "vi": "Danh sách kết quả tìm kiếm"
+  },
+  "Danh sách tài liệu": {
+    "en": "Document list",
+    "vi": "Danh sách tài liệu"
+  },
+  "Danh sách tài liệu workspace": {
+    "en": "Workspace document list",
+    "vi": "Danh sách tài liệu workspace"
+  },
+  "DocuMind": {
+    "en": "DocuMind",
+    "vi": "DocuMind"
+  },
+  "DocuMind · Không gian tài liệu": {
+    "en": "DocuMind · Workspace",
+    "vi": "DocuMind · Không gian tài liệu"
+  },
+  "DocuMind · Tiến độ xử lý": {
+    "en": "DocuMind · Processing Progress",
+    "vi": "DocuMind · Tiến độ xử lý"
+  },
+  "DocuMind · Tải tài liệu": {
+    "en": "DocuMind · Upload Documents",
+    "vi": "DocuMind · Tải tài liệu"
+  },
+  "DocuMind · Đăng nhập": {
+    "en": "DocuMind · Sign In",
+    "vi": "DocuMind · Đăng nhập"
+  },
+  "DocuMind · Đọc tài liệu": {
+    "en": "DocuMind · Read Documents",
+    "vi": "DocuMind · Đọc tài liệu"
+  },
+  "DocuMind.": {
+    "en": "DocuMind.",
+    "vi": "DocuMind."
+  },
+  "Document #{0}": {
+    "en": "Document #{0}",
+    "vi": "Tài liệu #{0}"
+  },
+  "Dạng thẻ": {
+    "en": "Card view",
+    "vi": "Dạng thẻ"
+  },
+  "Email": {
+    "en": "Email",
+    "vi": "Email"
+  },
+  "Exact highlight not available for this passage.": {
+    "en": "Exact highlight not available for this passage.",
+    "vi": "Không có điểm nổi bật chính xác cho đoạn văn này."
+  },
+  "Export Table": {
+    "en": "Export table",
+    "vi": "Xuất bảng"
+  },
+  "Failed": {
+    "en": "Failed",
+    "vi": "Thất bại"
+  },
+  "Financial Clause Table": {
+    "en": "Financial clause table",
+    "vi": "Bảng điều khoản tài chính"
+  },
+  "Giá trị": {
+    "en": "Value",
+    "vi": "Giá trị"
+  },
+  "Giá trị · Thanh toán · Điều khoản phạt": {
+    "en": "Value · Payment · Penalty Clause",
+    "vi": "Giá trị · Thanh toán · Điều khoản phạt"
+  },
+  "Giới thiệu DocuMind": {
+    "en": "Introducing DocuMind",
+    "vi": "Giới thiệu DocuMind"
+  },
+  "Gợi ý độ tin cậy cao": {
+    "en": "High confidence suggestions",
+    "vi": "Gợi ý độ tin cậy cao"
+  },
+  "Hết hạn:": {
+    "en": "Expires:",
+    "vi": "Hết hạn:"
+  },
+  "Hợp lệ": {
+    "en": "Valid",
+    "vi": "Hợp lệ"
+  },
+  "Hợp đồng dịch vụ.pdf": {
+    "en": "Service contract.pdf",
+    "vi": "Hợp đồng dịch vụ.pdf"
+  },
+  "Hủy chỉnh sửa": {
+    "en": "Cancel editing",
+    "vi": "Hủy chỉnh sửa"
+  },
+  "Incorrect email or password": {
+    "en": "Incorrect email or password",
+    "vi": "Email hoặc mật khẩu không chính xác"
+  },
+  "KHÔNG GIAN LÀM VIỆC": {
+    "en": "WORKSPACE",
+    "vi": "KHÔNG GIAN LÀM VIỆC"
+  },
+  "Khái niệm chính": {
+    "en": "Key concept",
+    "vi": "Khái niệm chính"
+  },
+  "Không còn kết quả trên trang này. Hãy quay về trang trước.": {
+    "en": "No more results on this page. Please go back to the previous page.",
+    "vi": "Không còn kết quả trên trang này. Hãy quay về trang trước."
+  },
+  "Không còn tài liệu trên trang này. Hãy quay về trang trước.": {
+    "en": "No more documents on this page. Please go back to the previous page.",
+    "vi": "Không còn tài liệu trên trang này. Hãy quay về trang trước."
+  },
+  "Không có thông tin · Unverified": {
+    "en": "No information · Unverified",
+    "vi": "Không có thông tin · Chưa xác thực"
+  },
+  "Không có tài liệu khớp nhãn AI đã chọn.": {
+    "en": "No documents match the selected AI label.",
+    "vi": "Không có tài liệu khớp nhãn AI đã chọn."
+  },
+  "Không có tài liệu khớp đồng thời thư mục và nhãn AI đã chọn.": {
+    "en": "No documents match both the selected folder and AI label.",
+    "vi": "Không có tài liệu khớp đồng thời thư mục và nhãn AI đã chọn."
+  },
+  "Không gian tài liệu": {
+    "en": "Document space",
+    "vi": "Không gian tài liệu"
+  },
+  "Không thể chuyển tài liệu. Lựa chọn được giữ lại; vui lòng thử lại.": {
+    "en": "Unable to move documents. Selection is retained; please try again.",
+    "vi": "Không thể chuyển tài liệu. Lựa chọn được giữ lại; vui lòng thử lại."
+  },
+  "Không thể chuẩn bị bản đọc.": {
+    "en": "Unable to prepare reading view.",
+    "vi": "Không thể chuẩn bị bản đọc."
+  },
+  "Không thể cập nhật tiến độ. Hệ thống sẽ tự thử lại.": {
+    "en": "Unable to update progress. The system will retry automatically.",
+    "vi": "Không thể cập nhật tiến độ. Hệ thống sẽ tự thử lại."
+  },
+  "Không thể gửi tài liệu. Kiểm tra kết nối và thử lại.": {
+    "en": "Unable to submit document. Check connection and try again.",
+    "vi": "Không thể gửi tài liệu. Kiểm tra kết nối và thử lại."
+  },
+  "Không thể hoàn tất thao tác. Vui lòng thử lại.": {
+    "en": "Unable to complete operation. Please try again.",
+    "vi": "Không thể hoàn tất thao tác. Vui lòng thử lại."
+  },
+  "Không thể kết nối máy chủ. Vui lòng thử lại.": {
+    "en": "Unable to connect to server. Please try again.",
+    "vi": "Không thể kết nối máy chủ. Vui lòng thử lại."
+  },
+  "Không thể kết nối để tải PDF. Vui lòng thử lại.": {
+    "en": "Unable to connect to load PDF. Please try again.",
+    "vi": "Không thể kết nối để tải PDF. Vui lòng thử lại."
+  },
+  "Không thể lưu nhãn. Nội dung đã nhập được giữ lại; vui lòng thử lại.": {
+    "en": "Unable to save label. Entered content is retained; please try again.",
+    "vi": "Không thể lưu nhãn. Nội dung đã nhập được giữ lại; vui lòng thử lại."
+  },
+  "Không thể mở tài liệu này.": {
+    "en": "Unable to open this document.",
+    "vi": "Không thể mở tài liệu này."
+  },
+  "Không thể tìm kiếm lúc này. Vui lòng thử lại.": {
+    "en": "Unable to search at this time. Please try again.",
+    "vi": "Không thể tìm kiếm lúc này. Vui lòng thử lại."
+  },
+  "Không thể tạo thư mục. Tên đã nhập được giữ lại; vui lòng thử lại.": {
+    "en": "Unable to create folder. Entered name is retained; please try again.",
+    "vi": "Không thể tạo thư mục. Tên đã nhập được giữ lại; vui lòng thử lại."
+  },
+  "Không thể tải bản tóm tắt đã lưu. Vui lòng thử lại.": {
+    "vi": "Không thể tải bản tóm tắt đã lưu. Vui lòng thử lại.",
+    "en": "Unable to load the saved summary. Please retry."
+  },
+  "Không thể tải danh sách tài liệu. Vui lòng thử lại.": {
+    "en": "Unable to load document list. Please try again.",
+    "vi": "Không thể tải danh sách tài liệu. Vui lòng thử lại."
+  },
+  "Không thể xuất PDF. Vui lòng thử lại.": {
+    "en": "Unable to export PDF. Please try again.",
+    "vi": "Không thể xuất PDF. Vui lòng thử lại."
+  },
+  "Không thể đăng nhập. Vui lòng thử lại.": {
+    "en": "Unable to sign in. Please try again.",
+    "vi": "Không thể đăng nhập. Vui lòng thử lại."
+  },
+  "Không thể đăng xuất. Vui lòng thử lại.": {
+    "en": "Unable to sign out. Please try again.",
+    "vi": "Không thể đăng xuất. Vui lòng thử lại."
+  },
+  "Không tìm thấy kết quả phù hợp": {
+    "en": "No matching results found",
+    "vi": "Không tìm thấy kết quả phù hợp"
+  },
+  "Không tìm thấy kết quả phù hợp cho \"": {
+    "en": "No matching results found for \"",
+    "vi": "Không tìm thấy kết quả phù hợp cho \""
+  },
+  "Không tìm thấy tài liệu.": {
+    "en": "No documents found.",
+    "vi": "Không tìm thấy tài liệu."
+  },
+  "Không tìm thấy tác vụ hoặc bạn không có quyền truy cập.": {
+    "en": "Task not found or you do not have access permission.",
+    "vi": "Không tìm thấy tác vụ hoặc bạn không có quyền truy cập."
+  },
+  "Không tìm thấy tác vụ hoặc bạn không có quyền xuất bảng này.": {
+    "en": "Task not found or you do not have permission to export this table.",
+    "vi": "Không tìm thấy tác vụ hoặc bạn không có quyền xuất bảng này."
+  },
+  "Không tìm thấy tệp có tên chứa “{0}”.": {
+    "en": "No file found with a name containing \"{0}\".",
+    "vi": "Không tìm thấy tệp có tên chứa “{0}”."
+  },
+  "Khẳng định chưa được xác thực": {
+    "en": "Unverified assertion",
+    "vi": "Khẳng định chưa được xác thực"
+  },
+  "Kiểu phân tích": {
+    "en": "Analysis type",
+    "vi": "Kiểu phân tích"
+  },
+  "Kiểu tìm kiếm": {
+    "en": "Search type",
+    "vi": "Kiểu tìm kiếm"
+  },
+  "Kết quả phân tích": {
+    "en": "Analysis results",
+    "vi": "Kết quả phân tích"
+  },
+  "Kết quả phân tích AI": {
+    "en": "AI analysis results",
+    "vi": "Kết quả phân tích AI"
+  },
+  "Kết quả tiếp theo": {
+    "en": "Next result",
+    "vi": "Kết quả tiếp theo"
+  },
+  "Kết quả trước": {
+    "en": "Previous result",
+    "vi": "Kết quả trước"
+  },
+  "Kết quả được tô sáng trực tiếp trên tài liệu; vị trí đang chọn có màu cam.": {
+    "en": "Results are highlighted directly on the document; the currently selected location is orange.",
+    "vi": "Kết quả được tô sáng trực tiếp trên tài liệu; vị trí đang chọn có màu cam."
+  },
+  "Lưu nhãn": {
+    "en": "Save label",
+    "vi": "Lưu nhãn"
+  },
+  "Lần thử": {
+    "en": "Attempt",
+    "vi": "Lần thử"
+  },
+  "Lần đầu có thể lâu hơn vì cần lập chỉ mục nội dung. Những lần sau sẽ dùng lại chỉ mục đã lưu.": {
+    "en": "The first time may take longer because content indexing is required. Subsequent times will reuse the saved index.",
+    "vi": "Lần đầu có thể lâu hơn vì cần lập chỉ mục nội dung. Những lần sau sẽ dùng lại chỉ mục đã lưu."
+  },
+  "Lọc danh sách tài liệu": {
+    "en": "Filter document list",
+    "vi": "Lọc danh sách tài liệu"
+  },
+  "Lọc theo nhãn": {
+    "en": "Filter by label",
+    "vi": "Lọc theo nhãn"
+  },
+  "Lỗi khi tải tài liệu.": {
+    "en": "Error loading document.",
+    "vi": "Lỗi khi tải tài liệu."
+  },
+  "MB": {
+    "en": "MB",
+    "vi": "MB"
+  },
+  "Menu": {
+    "en": "Menu",
+    "vi": "Điều hướng"
+  },
+  "Máy chủ không trả về PDF hợp lệ. Vui lòng thử lại.": {
+    "en": "The server did not return a valid PDF. Please try again.",
+    "vi": "Máy chủ không trả về PDF hợp lệ. Vui lòng thử lại."
+  },
+  "Mật khẩu": {
+    "en": "Password",
+    "vi": "Mật khẩu"
+  },
+  "Mọi tài liệu, một nơi": {
+    "en": "All documents, one place",
+    "vi": "Mọi tài liệu, một nơi"
+  },
+  "Một số nội dung chưa có bằng chứng nguồn hợp lệ.": {
+    "en": "Some content lacks valid source evidence.",
+    "vi": "Một số nội dung chưa có bằng chứng nguồn hợp lệ."
+  },
+  "Mở bản PDF": {
+    "en": "Open PDF",
+    "vi": "Mở bản PDF"
+  },
+  "Mở menu điều hướng": {
+    "en": "Open navigation menu",
+    "vi": "Mở menu điều hướng"
+  },
+  "Mở thư mục": {
+    "en": "Open folder",
+    "vi": "Mở thư mục"
+  },
+  "Mở thư mục {0}": {
+    "en": "Open folder {0}",
+    "vi": "Mở thư mục {0}"
+  },
+  "Mở tài liệu nguồn": {
+    "en": "Open source document",
+    "vi": "Mở tài liệu nguồn"
+  },
+  "Needs review · Cần kiểm tra": {
+    "en": "Needs review",
+    "vi": "Cần kiểm tra"
+  },
+  "Nguồn": {
+    "en": "Source",
+    "vi": "Nguồn"
+  },
+  "Nguồn không hỗ trợ nội dung này.": {
+    "en": "Source does not support this content.",
+    "vi": "Nguồn không hỗ trợ nội dung này."
+  },
+  "Nguồn đã hết hạn và không còn khả dụng.": {
+    "en": "Source has expired and is no longer available.",
+    "vi": "Nguồn đã hết hạn và không còn khả dụng."
+  },
+  "Nguồn đã hết hạn và không còn khả dụng. Không thể cập nhật nhãn.": {
+    "en": "Source has expired and is no longer available. Cannot update label.",
+    "vi": "Nguồn đã hết hạn và không còn khả dụng. Không thể cập nhật nhãn."
+  },
+  "Nguồn đã hết hạn và không còn khả dụng. Kết quả liên quan không thể hiển thị hoặc xuất PDF.": {
+    "en": "Source has expired and is no longer available. Related results cannot be displayed or export PDF.",
+    "vi": "Nguồn đã hết hạn và không còn khả dụng. Kết quả liên quan không thể hiển thị hoặc xuất PDF."
+  },
+  "Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này.": {
+    "en": "Source has expired and is no longer available. Old content cannot be opened or restored from this link.",
+    "vi": "Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này."
+  },
+  "Nguồn đã hết hạn. Kết quả này không còn khả dụng.": {
+    "en": "Source has expired. This result is no longer available.",
+    "vi": "Nguồn đã hết hạn. Kết quả này không còn khả dụng."
+  },
+  "Nguồn: {0}": {
+    "en": "Source: {0}",
+    "vi": "Nguồn: {0}"
+  },
+  "Ngôn ngữ": {
+    "en": "Language",
+    "vi": "Ngôn ngữ"
+  },
+  "Người dùng đã chỉnh sửa và xác nhận": {
+    "en": "User edited and confirmed",
+    "vi": "Người dùng đã chỉnh sửa và xác nhận"
+  },
+  "Người dùng đã xác nhận gợi ý AI": {
+    "en": "User confirmed AI suggestion",
+    "vi": "Người dùng đã xác nhận gợi ý AI"
+  },
+  "Nhãn AI hiển thị": {
+    "en": "AI label displayed",
+    "vi": "Nhãn AI hiển thị"
+  },
+  "Nhãn AI · Chưa có điểm tin cậy": {
+    "en": "AI label · No confidence score",
+    "vi": "Nhãn AI · Chưa có điểm tin cậy"
+  },
+  "Nhãn AI:": {
+    "en": "AI label:",
+    "vi": "Nhãn AI:"
+  },
+  "Nhãn AI: “{0}”": {
+    "en": "AI label: “{0}”",
+    "vi": "Nhãn AI: “{0}”"
+  },
+  "Nhãn người dùng": {
+    "en": "User label",
+    "vi": "Nhãn người dùng"
+  },
+  "Nhãn người dùng:": {
+    "en": "User label:",
+    "vi": "Nhãn người dùng:"
+  },
+  "Nhập mật khẩu của bạn": {
+    "en": "Enter your password",
+    "vi": "Nhập mật khẩu của bạn"
+  },
+  "Nhập từ khóa có chữ hoặc số và kiểm tra bộ lọc.": {
+    "en": "Enter alphanumeric keywords and check filters.",
+    "vi": "Nhập từ khóa có chữ hoặc số và kiểm tra bộ lọc."
+  },
+  "Nội dung có ý nghĩa tương tự": {
+    "en": "Content with similar meaning",
+    "vi": "Nội dung có ý nghĩa tương tự"
+  },
+  "Nội dung của toàn bộ tài liệu từ lần phân tích trước.": {
+    "en": "Content of the entire document from the previous analysis.",
+    "vi": "Nội dung của toàn bộ tài liệu từ lần phân tích trước."
+  },
+  "PDF": {
+    "en": "PDF",
+    "vi": "PDF"
+  },
+  "PDF, DOCX hoặc PPTX · Tối đa 5 tệp · Mỗi tệp ≤ 5 MB · Tổng ≤ 50 MB": {
+    "en": "PDF, DOCX or PPTX · Up to 5 files · Each file ≤ 5 MB · Total ≤ 50 MB",
+    "vi": "PDF, DOCX hoặc PPTX · Tối đa 5 tệp · Mỗi tệp ≤ 5 MB · Tổng ≤ 50 MB"
+  },
+  "PPTX": {
+    "en": "PPTX",
+    "vi": "PPTX"
+  },
+  "Pending": {
+    "en": "Pending",
+    "vi": "Đang chờ"
+  },
+  "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xuất PDF.": {
+    "en": "Session has expired. Please sign in again to export PDF.",
+    "vi": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xuất PDF."
+  },
+  "Phân trang tài liệu": {
+    "en": "Document pagination",
+    "vi": "Phân trang tài liệu"
+  },
+  "Phân trang tìm kiếm": {
+    "en": "Search pagination",
+    "vi": "Phân trang tìm kiếm"
+  },
+  "Phân tích thất bại · Unverified": {
+    "en": "Analysis failed · Unverified",
+    "vi": "Phân tích thất bại · Chưa xác thực"
+  },
+  "Phạm vi:": {
+    "en": "Scope:",
+    "vi": "Phạm vi:"
+  },
+  "Phạt": {
+    "en": "Penalty",
+    "vi": "Phạt"
+  },
+  "Processing": {
+    "en": "Processing",
+    "vi": "Đang xử lý"
+  },
+  "Quản lý thư mục": {
+    "en": "Folder management",
+    "vi": "Quản lý thư mục"
+  },
+  "Recommended actions": {
+    "en": "Recommended actions",
+    "vi": "Hành động đề xuất"
+  },
+  "Sau": {
+    "en": "Next",
+    "vi": "Sau"
+  },
+  "Sign in": {
+    "en": "Sign in",
+    "vi": "Đăng nhập"
+  },
+  "So sánh điều khoản tài chính": {
+    "en": "Compare financial terms",
+    "vi": "So sánh điều khoản tài chính"
+  },
+  "Sắp hết hạn · Còn tối đa 7 ngày. Mở, tải hoặc cập nhật tài liệu để gia hạn 30 ngày.": {
+    "en": "Expiring soon · Up to 7 days remaining. Open, download, or update document to extend 30 days.",
+    "vi": "Sắp hết hạn · Còn tối đa 7 ngày. Mở, tải hoặc cập nhật tài liệu để gia hạn 30 ngày."
+  },
+  "Sắp xếp gọn gàng. Tìm lại dễ dàng.": {
+    "en": "Keep things neat. Find things easily.",
+    "vi": "Sắp xếp gọn gàng. Tìm lại dễ dàng."
+  },
+  "Sắp xếp {0}": {
+    "en": "Sort {0}",
+    "vi": "Sắp xếp {0}"
+  },
+  "THÊM TÀI LIỆU": {
+    "en": "ADD DOCUMENT",
+    "vi": "THÊM TÀI LIỆU"
+  },
+  "THƯ MỤC": {
+    "en": "FOLDER",
+    "vi": "THƯ MỤC"
+  },
+  "THƯ VIỆN CỦA BẠN": {
+    "en": "YOUR LIBRARY",
+    "vi": "THƯ VIỆN CỦA BẠN"
+  },
+  "Thanh bên thư viện": {
+    "en": "Library sidebar",
+    "vi": "Thanh bên thư viện"
+  },
+  "Thanh toán": {
+    "en": "Billing",
+    "vi": "Thanh toán"
+  },
+  "Thu hẹp danh sách theo phân loại của AI": {
+    "en": "Narrow down the list by AI classification",
+    "vi": "Thu hẹp danh sách theo phân loại của AI"
+  },
+  "Thông tin phân loại tài liệu (AI Metadata)": {
+    "en": "AI Document Metadata",
+    "vi": "Thông tin phân loại tài liệu (AI Metadata)"
+  },
+  "Thư mục bạn tạo sẽ xuất hiện ở đây.": {
+    "en": "Folders you create will appear here.",
+    "vi": "Thư mục bạn tạo sẽ xuất hiện ở đây."
+  },
+  "Thư mục của bạn": {
+    "en": "Your folders",
+    "vi": "Thư mục của bạn"
+  },
+  "Thư mục hiển thị": {
+    "en": "Displayed folder",
+    "vi": "Thư mục hiển thị"
+  },
+  "Thư mục hiện tại (#": {
+    "en": "Current folder (#",
+    "vi": "Thư mục hiện tại (#"
+  },
+  "Thư mục này chưa có tài liệu.": {
+    "en": "This folder has no documents yet.",
+    "vi": "Thư mục này chưa có tài liệu."
+  },
+  "Thư mục tìm kiếm": {
+    "en": "Search folder",
+    "vi": "Thư mục tìm kiếm"
+  },
+  "Thư mục đã chọn": {
+    "en": "Selected folder",
+    "vi": "Thư mục đã chọn"
+  },
+  "Thư mục:": {
+    "en": "Folder:",
+    "vi": "Thư mục:"
+  },
+  "Thư mục: “{0}”": {
+    "en": "Folder: “{0}”",
+    "vi": "Thư mục: “{0}”"
+  },
+  "Thư viện": {
+    "en": "Library",
+    "vi": "Thư viện"
+  },
+  "Thư viện cá nhân": {
+    "en": "Personal library",
+    "vi": "Thư viện cá nhân"
+  },
+  "Thử lại bản tóm tắt": {
+    "en": "Retry summary",
+    "vi": "Thử lại bản tóm tắt"
+  },
+  "Thử lại danh sách": {
+    "en": "Retry list",
+    "vi": "Thử lại danh sách"
+  },
+  "Thử lại thư mục": {
+    "en": "Retry folder",
+    "vi": "Thử lại thư mục"
+  },
+  "Thử lại tìm kiếm": {
+    "en": "Retry search",
+    "vi": "Thử lại tìm kiếm"
+  },
+  "Timed out": {
+    "en": "Timed out",
+    "vi": "Quá thời gian"
+  },
+  "Tiến độ tác vụ": {
+    "en": "Task progress",
+    "vi": "Tiến độ tác vụ"
+  },
+  "Tiến độ tự cập nhật mỗi 3 giây. Bạn có thể quay lại trang này sau.": {
+    "en": "Progress auto-updates every 3 seconds. You can return to this page later.",
+    "vi": "Tiến độ tự cập nhật mỗi 3 giây. Bạn có thể quay lại trang này sau."
+  },
+  "Tiến độ xử lý": {
+    "en": "Processing progress",
+    "vi": "Tiến độ xử lý"
+  },
+  "Tiếng Anh": {
+    "en": "English",
+    "vi": "Tiếng Anh"
+  },
+  "Tiếng Việt": {
+    "en": "Vietnamese",
+    "vi": "Tiếng Việt"
+  },
+  "Tiếp tục công việc của bạn": {
+    "en": "Continue your work",
+    "vi": "Tiếp tục công việc của bạn"
+  },
+  "Toàn bộ thư viện": {
+    "en": "Entire library",
+    "vi": "Toàn bộ thư viện"
+  },
+  "Trang": {
+    "en": "Page",
+    "vi": "Trang"
+  },
+  "Trang nguồn không tồn tại trong bản đọc này (Tài liệu có": {
+    "en": "Source page does not exist in this reading version (The document has",
+    "vi": "Trang nguồn không tồn tại trong bản đọc này (Tài liệu có"
+  },
+  "Trang này chưa có đủ tọa độ chữ để tô sáng trực tiếp. Bạn vẫn có thể xem tài liệu và bản tóm tắt bên dưới.": {
+    "en": "This page does not have enough character coordinates for direct highlighting. You can still view the document and summary below.",
+    "vi": "Trang này chưa có đủ tọa độ chữ để tô sáng trực tiếp. Bạn vẫn có thể xem tài liệu và bản tóm tắt bên dưới."
+  },
+  "Trang sau": {
+    "en": "Next page",
+    "vi": "Trang sau"
+  },
+  "Trang trước": {
+    "en": "Previous page",
+    "vi": "Trang trước"
+  },
+  "Trước": {
+    "en": "Previous",
+    "vi": "Trước"
+  },
+  "Trạng thái job": {
+    "en": "Job status",
+    "vi": "Trạng thái tác vụ"
+  },
+  "Trạng thái từng tệp": {
+    "en": "File status",
+    "vi": "Trạng thái từng tệp"
+  },
+  "Trạng thái xử lý": {
+    "en": "Processing status",
+    "vi": "Trạng thái xử lý"
+  },
+  "TÀI LIỆU CỦA BẠN · KHÔNG GIAN CỦA BẠN": {
+    "en": "YOUR DOCUMENTS · YOUR SPACE",
+    "vi": "TÀI LIỆU CỦA BẠN · KHÔNG GIAN CỦA BẠN"
+  },
+  "TÁC VỤ #": {
+    "en": "TASK #",
+    "vi": "TÁC VỤ #"
+  },
+  "Tài liệu": {
+    "en": "Document",
+    "vi": "Tài liệu"
+  },
+  "Tài liệu #{0}": {
+    "en": "Document #{0}",
+    "vi": "Tài liệu #{0}"
+  },
+  "Tài liệu chưa có bản tóm tắt đã lưu": {
+    "en": "Document does not have a saved summary",
+    "vi": "Tài liệu chưa có bản tóm tắt đã lưu"
+  },
+  "Tài liệu cá nhân chỉ được truy cập sau khi đăng nhập.": {
+    "en": "Personal documents can only be accessed after logging in.",
+    "vi": "Tài liệu cá nhân chỉ được truy cập sau khi đăng nhập."
+  },
+  "Tài liệu của bạn": {
+    "en": "Your documents",
+    "vi": "Tài liệu của bạn"
+  },
+  "Tài liệu không có lớp chữ để phân tích. Hệ thống không tự tạo nội dung hoặc chạy OCR.": {
+    "en": "The document does not have a text layer for analysis. The system does not auto-generate content or run OCR.",
+    "vi": "Tài liệu không có lớp chữ để phân tích. Hệ thống không tự tạo nội dung hoặc chạy OCR."
+  },
+  "Tài liệu không có đủ nội dung để rút ra các khái niệm chính.": {
+    "en": "The document does not have enough content to extract key concepts.",
+    "vi": "Tài liệu không có đủ nội dung để rút ra các khái niệm chính."
+  },
+  "Tài liệu không đủ căn cứ nguồn để hỗ trợ hai hành động đề xuất.": {
+    "en": "The document does not have enough source grounding to support the two proposed actions.",
+    "vi": "Tài liệu không đủ căn cứ nguồn để hỗ trợ hai hành động đề xuất."
+  },
+  "Tài liệu nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi. Không tự tạo khái niệm khi thiếu căn cứ nguồn.": {
+    "en": "The source document is insufficient to support an overview of 3-5 core concepts. Do not self-generate concepts when source grounding is missing.",
+    "vi": "Tài liệu nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi. Không tự tạo khái niệm khi thiếu căn cứ nguồn."
+  },
+  "Tác vụ kết thúc với lỗi. Xem chi tiết từng tệp bên dưới.": {
+    "en": "Task ended with an error. See individual file details below.",
+    "vi": "Tác vụ kết thúc với lỗi. Xem chi tiết từng tệp bên dưới."
+  },
+  "Tác vụ đã vượt quá thời gian xử lý cho phép.": {
+    "en": "The task has exceeded the allowed processing time.",
+    "vi": "Tác vụ đã vượt quá thời gian xử lý cho phép."
+  },
+  "Tên thư mục mới": {
+    "en": "New folder name",
+    "vi": "Tên thư mục mới"
+  },
+  "Tìm": {
+    "en": "Find",
+    "vi": "Tìm"
+  },
+  "Tìm kiếm": {
+    "en": "Search",
+    "vi": "Tìm kiếm"
+  },
+  "Tìm kiếm trong tài liệu": {
+    "en": "Search in document",
+    "vi": "Tìm kiếm trong tài liệu"
+  },
+  "Tìm kiếm trong tài liệu (ví dụ: inflation causes)...": {
+    "en": "Search in document (e.g., inflation causes)...",
+    "vi": "Tìm kiếm trong tài liệu (ví dụ: inflation causes)..."
+  },
+  "Tìm kiếm trong văn bản tài liệu": {
+    "en": "Search in document text",
+    "vi": "Tìm kiếm trong văn bản tài liệu"
+  },
+  "Tìm kiếm tài liệu": {
+    "en": "Search documents",
+    "vi": "Tìm kiếm tài liệu"
+  },
+  "Tìm nội dung, ví dụ: điều khoản thanh toán…": {
+    "en": "Find content, e.g., payment terms...",
+    "vi": "Tìm nội dung, ví dụ: điều khoản thanh toán…"
+  },
+  "Tìm theo tên tệp": {
+    "en": "Search by file name",
+    "vi": "Tìm theo tên tệp"
+  },
+  "Tìm thấy {0} kết quả": {
+    "en": "Found {0} results",
+    "vi": "Tìm thấy {0} kết quả"
+  },
+  "Tìm trong nội dung tài liệu": {
+    "en": "Search in document content",
+    "vi": "Tìm trong nội dung tài liệu"
+  },
+  "Tìm tên tệp trong": {
+    "en": "Search file name in",
+    "vi": "Tìm tên tệp trong"
+  },
+  "Tìm tên tệp trong danh sách": {
+    "en": "Search file name in list",
+    "vi": "Tìm tên tệp trong danh sách"
+  },
+  "Tìm tệp": {
+    "en": "Search file",
+    "vi": "Tìm tệp"
+  },
+  "Tìm đoạn văn, điều khoản hoặc ý chính và mở đúng trang nguồn": {
+    "en": "Find paragraphs, clauses, or main ideas and open the correct source page",
+    "vi": "Tìm đoạn văn, điều khoản hoặc ý chính và mở đúng trang nguồn"
+  },
+  "Tóm tắt": {
+    "en": "Summarize",
+    "vi": "Tóm tắt"
+  },
+  "Tóm tắt nội dung, gợi ý nhãn và tìm lại thông tin. Một không gian gọn gàng cho mọi tài liệu của bạn.": {
+    "en": "Summarize content, suggest labels, and retrieve information. A clean space for all your documents.",
+    "vi": "Tóm tắt nội dung, gợi ý nhãn và tìm lại thông tin. Một không gian gọn gàng cho mọi tài liệu của bạn."
+  },
+  "Tóm tắt điểm chính": {
+    "en": "Summarize main points",
+    "vi": "Tóm tắt điểm chính"
+  },
+  "Tóm tắt, phân loại và tìm kiếm tài liệu trong không gian riêng của bạn.": {
+    "en": "Summarize, categorize, and search documents in your private space.",
+    "vi": "Tóm tắt, phân loại và tìm kiếm tài liệu trong không gian riêng của bạn."
+  },
+  "Tùy chọn: lọc thẻ tài liệu theo nhãn AI chính xác (phân biệt hoa/thường và dấu). Khi chọn thư mục và nhãn, tài liệu phải khớp đồng thời cả hai. Không áp dụng cho kết quả tìm nội dung.": {
+    "en": "Optional: filter document cards by exact AI labels (case-sensitive and accent-sensitive). When both folder and label are selected, documents must match both simultaneously. Does not apply to content search results.",
+    "vi": "Tùy chọn: lọc thẻ tài liệu theo nhãn AI chính xác (phân biệt hoa/thường và dấu). Khi chọn thư mục và nhãn, tài liệu phải khớp đồng thời cả hai. Không áp dụng cho kết quả tìm nội dung."
+  },
+  "Tạo thư mục": {
+    "en": "Create folder",
+    "vi": "Tạo thư mục"
+  },
+  "Tạo thư mục, chuyển tệp vào và tìm lại khi cần.": {
+    "en": "Create folders, move files into them, and retrieve them when needed.",
+    "vi": "Tạo thư mục, chuyển tệp vào và tìm lại khi cần."
+  },
+  "Tải bảng so sánh đã lưu dưới dạng PDF.": {
+    "en": "Download saved comparison table as PDF.",
+    "vi": "Tải bảng so sánh đã lưu dưới dạng PDF."
+  },
+  "Tải lên và phân tích": {
+    "en": "Upload and analyze",
+    "vi": "Tải lên và phân tích"
+  },
+  "Tải tài liệu": {
+    "en": "Upload document",
+    "vi": "Tải tài liệu"
+  },
+  "Tất cả nhãn": {
+    "en": "All labels",
+    "vi": "Tất cả nhãn"
+  },
+  "Tất cả nhãn AI": {
+    "en": "All AI labels",
+    "vi": "Tất cả nhãn AI"
+  },
+  "Tất cả thư mục": {
+    "en": "All folders",
+    "vi": "Tất cả thư mục"
+  },
+  "Tất cả tài liệu": {
+    "en": "All documents",
+    "vi": "Tất cả tài liệu"
+  },
+  "Tất cả tài liệu đã được xử lý xong.": {
+    "en": "All documents have finished processing.",
+    "vi": "Tất cả tài liệu đã được xử lý xong."
+  },
+  "Tệp vượt quá 5 MB.": {
+    "en": "File exceeds 5 MB.",
+    "vi": "Tệp vượt quá 5 MB."
+  },
+  "Tệp đã chọn": {
+    "en": "Selected file",
+    "vi": "Tệp đã chọn"
+  },
+  "Tối đa 5 tệp mỗi lần.": {
+    "en": "Maximum 5 files at a time.",
+    "vi": "Tối đa 5 tệp mỗi lần."
+  },
+  "Tổng dung lượng vượt quá 50 MB.": {
+    "en": "Total size exceeds 50 MB.",
+    "vi": "Tổng dung lượng vượt quá 50 MB."
+  },
+  "Từ tài liệu đến thông tin": {
+    "en": "From documents to insights",
+    "vi": "Từ tài liệu đến thông tin"
+  },
+  "Unknown": {
+    "en": "Unknown",
+    "vi": "Không xác định"
+  },
+  "Unverified": {
+    "en": "Unverified",
+    "vi": "Chưa xác thực"
+  },
+  "Ví dụ: Macroeconomics": {
+    "en": "Example: Macroeconomics",
+    "vi": "Ví dụ: Macroeconomics"
+  },
+  "Ví dụ: Research": {
+    "en": "Example: Research",
+    "vi": "Ví dụ: Research"
+  },
+  "Ví dụ: hợp đồng.pdf, báo cáo…": {
+    "en": "Example: contract.pdf, report...",
+    "vi": "Ví dụ: hợp đồng.pdf, báo cáo…"
+  },
+  "Về không gian tài liệu": {
+    "en": "About document space",
+    "vi": "Về không gian tài liệu"
+  },
+  "Về thư viện": {
+    "en": "About library",
+    "vi": "Về thư viện"
+  },
+  "Về trang 1": {
+    "en": "Go to page 1",
+    "vi": "Về trang 1"
+  },
+  "Xem tác vụ #": {
+    "en": "View task #",
+    "vi": "Xem tác vụ #"
+  },
+  "Xuất bảng so sánh": {
+    "en": "Export comparison table",
+    "vi": "Xuất bảng so sánh"
+  },
+  "Xác nhận nhãn AI": {
+    "en": "Confirm AI label",
+    "vi": "Xác nhận nhãn AI"
+  },
+  "Xác nhận nhãn người dùng": {
+    "en": "Confirm user label",
+    "vi": "Xác nhận nhãn người dùng"
+  },
+  "Xác nhận và chỉnh sửa nhãn": {
+    "en": "Confirm and edit labels",
+    "vi": "Xác nhận và chỉnh sửa nhãn"
+  },
+  "Xóa": {
+    "en": "Delete",
+    "vi": "Xóa"
+  },
+  "Xóa lọc danh sách": {
+    "en": "Clear list filter",
+    "vi": "Xóa lọc danh sách"
+  },
+  "Xóa lọc nhãn AI": {
+    "en": "Clear AI label filter",
+    "vi": "Xóa lọc nhãn AI"
+  },
+  "Xóa tên tệp": {
+    "en": "Clear file name",
+    "vi": "Xóa tên tệp"
+  },
+  "Xóa tìm kiếm": {
+    "en": "Clear search",
+    "vi": "Xóa tìm kiếm"
+  },
+  "Xóa {0}": {
+    "en": "Clear {0}",
+    "vi": "Xóa {0}"
+  },
+  "Xử lý phân tích tài liệu thất bại.": {
+    "en": "Document analysis processing failed.",
+    "vi": "Xử lý phân tích tài liệu thất bại."
+  },
+  "ban@example.com": {
+    "en": "ban@example.com",
+    "vi": "ban@example.com"
+  },
+  "kết quả": {
+    "en": "results",
+    "vi": "kết quả"
+  },
+  "page": {
+    "en": "page",
+    "vi": "trang"
+  },
+  "slide": {
+    "en": "slide",
+    "vi": "trang chiếu"
+  },
+  "thư mục đã chọn": {
+    "en": "selected folder",
+    "vi": "thư mục đã chọn"
+  },
+  "toàn bộ thư viện": {
+    "en": "entire library",
+    "vi": "toàn bộ thư viện"
+  },
+  "tệp cần kiểm tra": {
+    "en": "files to review",
+    "vi": "tệp cần kiểm tra"
+  },
+  "tệp đã xử lý thành công": {
+    "en": "successfully processed files",
+    "vi": "tệp đã xử lý thành công"
+  },
+  "tới “{0}”": {
+    "en": "to “{0}”",
+    "vi": "tới “{0}”"
+  },
+  "về Chưa phân thư mục": {
+    "en": "to Uncategorized",
+    "vi": "về Chưa phân thư mục"
+  },
+  "{0} — {1} {2}": {
+    "en": "{0} — {1} {2}",
+    "vi": "{0} — {1} {2}"
+  },
+  "{0}/{1} tệp đã xử lý thành công": {
+    "en": "{0}/{1} files successfully processed",
+    "vi": "{0}/{1} tệp đã xử lý thành công"
+  },
+  "· Nội dung tài liệu đã lập chỉ mục": {
+    "en": "· Indexed document content",
+    "vi": "· Nội dung tài liệu đã lập chỉ mục"
+  },
+  "Áp dụng nhãn AI": {
+    "en": "Apply AI label",
+    "vi": "Áp dụng nhãn AI"
+  },
+  "Đang chuyển ngôn ngữ bản tóm tắt…": {
+    "en": "Switching summary language…",
+    "vi": "Đang chuyển ngôn ngữ bản tóm tắt…"
+  },
+  "Đang chuyển đổi…": {
+    "en": "Converting…",
+    "vi": "Đang chuyển đổi…"
+  },
+  "Đang chuyển…": {
+    "en": "Moving…",
+    "vi": "Đang chuyển…"
+  },
+  "Đang chờ xử lý": {
+    "en": "Pending",
+    "vi": "Đang chờ xử lý"
+  },
+  "Đang cập nhật thư mục…": {
+    "en": "Updating folder…",
+    "vi": "Đang cập nhật thư mục…"
+  },
+  "Đang gửi…": {
+    "en": "Sending…",
+    "vi": "Đang gửi…"
+  },
+  "Đang lưu nhãn người dùng…": {
+    "en": "Saving user label…",
+    "vi": "Đang lưu nhãn người dùng…"
+  },
+  "Đang lưu…": {
+    "en": "Saving…",
+    "vi": "Đang lưu…"
+  },
+  "Đang mở tài liệu…": {
+    "en": "Opening document…",
+    "vi": "Đang mở tài liệu…"
+  },
+  "Đang phân tích": {
+    "en": "Analyzing",
+    "vi": "Đang phân tích"
+  },
+  "Đang tìm kiếm trong tài liệu…": {
+    "en": "Searching in document…",
+    "vi": "Đang tìm kiếm trong tài liệu…"
+  },
+  "Đang tìm…": {
+    "en": "Searching…",
+    "vi": "Đang tìm…"
+  },
+  "Đang tạo và tải PDF…": {
+    "en": "Generating and downloading PDF…",
+    "vi": "Đang tạo và tải PDF…"
+  },
+  "Đang tạo…": {
+    "en": "Generating…",
+    "vi": "Đang tạo…"
+  },
+  "Đang tải bản tóm tắt…": {
+    "en": "Loading summary…",
+    "vi": "Đang tải bản tóm tắt…"
+  },
+  "Đang tải danh sách tài liệu…": {
+    "en": "Loading document list...",
+    "vi": "Đang tải danh sách tài liệu…"
+  },
+  "Đang tải thư mục…": {
+    "en": "Loading folders...",
+    "vi": "Đang tải thư mục…"
+  },
+  "Đang tải tiến độ…": {
+    "en": "Loading progress...",
+    "vi": "Đang tải tiến độ…"
+  },
+  "Đang tải…": {
+    "en": "Loading...",
+    "vi": "Đang tải…"
+  },
+  "Đang đăng nhập…": {
+    "en": "Signing in...",
+    "vi": "Đang đăng nhập…"
+  },
+  "Điều hướng không gian tài liệu": {
+    "en": "Navigate document workspace",
+    "vi": "Điều hướng không gian tài liệu"
+  },
+  "Điều hướng kết quả tìm kiếm": {
+    "en": "Navigate search results",
+    "vi": "Điều hướng kết quả tìm kiếm"
+  },
+  "Điều hướng thư viện": {
+    "en": "Navigate library",
+    "vi": "Điều hướng thư viện"
+  },
+  "Đoạn trích được sắp xếp theo mức độ phù hợp. Mở nguồn để xem ngữ cảnh.": {
+    "en": "Snippets are sorted by relevance. Open the source to view context.",
+    "vi": "Đoạn trích được sắp xếp theo mức độ phù hợp. Mở nguồn để xem ngữ cảnh."
+  },
+  "Đây là bản đọc văn bản, mỗi slide tương ứng một trang. Hình ảnh và bố cục có thể khác tệp gốc.": {
+    "en": "This is a text reading view where each slide corresponds to a page. Images and layout may differ from the original file.",
+    "vi": "Đây là bản đọc văn bản, mỗi slide tương ứng một trang. Hình ảnh và bố cục có thể khác tệp gốc."
+  },
+  "Đây là bản đọc văn bản. Số trang theo bản đọc này có thể khác tệp Word gốc.": {
+    "en": "This is a text reading view. Page numbers in this reading view may differ from the original Word file.",
+    "vi": "Đây là bản đọc văn bản. Số trang theo bản đọc này có thể khác tệp Word gốc."
+  },
+  "Đã chuyển “{0}” {1}.": {
+    "en": "Moved “{0}” {1}.",
+    "vi": "Đã chuyển “{0}” {1}."
+  },
+  "Đã chọn các đoạn nguồn trong giới hạn tiết kiệm token. Kết quả chưa bao quát toàn bộ tài liệu.": {
+    "en": "Source excerpts selected within token-saving limits. Results do not cover the entire document.",
+    "vi": "Đã chọn các đoạn nguồn trong giới hạn tiết kiệm token. Kết quả chưa bao quát toàn bộ tài liệu."
+  },
+  "Đã dùng kết quả lưu sẵn, không gọi lại Gemini.": {
+    "en": "Used cached results, Gemini was not called again.",
+    "vi": "Đã dùng kết quả lưu sẵn, không gọi lại Gemini."
+  },
+  "Đã gửi PDF để tải xuống.": {
+    "en": "PDF sent for download.",
+    "vi": "Đã gửi PDF để tải xuống."
+  },
+  "Đã hết thời gian xử lý · Unverified": {
+    "en": "Processing timeout · Unverified",
+    "vi": "Đã hết thời gian xử lý · Chưa xác thực"
+  },
+  "Đã lưu nhãn người dùng cho “{0}”.": {
+    "en": "Saved user label for “{0}”.",
+    "vi": "Đã lưu nhãn người dùng cho “{0}”."
+  },
+  "Đã lưu nhãn người dùng.": {
+    "en": "Saved user label.",
+    "vi": "Đã lưu nhãn người dùng."
+  },
+  "Đã tạo thư mục “{0}”.": {
+    "en": "Created folder “{0}”.",
+    "vi": "Đã tạo thư mục “{0}”."
+  },
+  "Đã tới hạn lưu. Nguồn có thể đã được xóa; hãy mở tài liệu để kiểm tra khả dụng.": {
+    "en": "Save limit reached. Sources may have been deleted; open the document to check availability.",
+    "vi": "Đã tới hạn lưu. Nguồn có thể đã được xóa; hãy mở tài liệu để kiểm tra khả dụng."
+  },
+  "Đã xác nhận": {
+    "en": "Confirmed",
+    "vi": "Đã xác nhận"
+  },
+  "Đóng menu điều hướng": {
+    "en": "Close navigation menu",
+    "vi": "Đóng menu điều hướng"
+  },
+  "Đóng thư mục": {
+    "en": "Close folder",
+    "vi": "Đóng thư mục"
+  },
+  "Đăng nhập": {
+    "en": "Sign in",
+    "vi": "Đăng nhập"
+  },
+  "Đăng nhập để mở không gian tài liệu cá nhân.": {
+    "en": "Sign in to open your personal document workspace.",
+    "vi": "Đăng nhập để mở không gian tài liệu cá nhân."
+  },
+  "Đăng xuất": {
+    "en": "Sign out",
+    "vi": "Đăng xuất"
+  },
+  "Đường dẫn thư mục": {
+    "en": "Folder path",
+    "vi": "Đường dẫn thư mục"
+  },
+  "ĐỌC ÍT HƠN. HIỂU NHIỀU HƠN.": {
+    "en": "READ LESS. UNDERSTAND MORE.",
+    "vi": "ĐỌC ÍT HƠN. HIỂU NHIỀU HƠN."
+  },
+  "Đọc tài liệu": {
+    "en": "Read document",
+    "vi": "Đọc tài liệu"
+  },
+  "Đối chiếu thông tin ngay tại đoạn văn bản gốc.": {
+    "en": "Cross-reference information right in the original text.",
+    "vi": "Đối chiếu thông tin ngay tại đoạn văn bản gốc."
+  },
+  "Độ tin cậy:": {
+    "en": "Confidence:",
+    "vi": "Độ tin cậy:"
+  },
+  "điều bạn cần biết.": {
+    "en": "what you need to know.",
+    "vi": "điều bạn cần biết."
+  },
+  "Sai email hoặc mật khẩu.": {
+    "en": "Incorrect email or password.",
+    "vi": "Sai email hoặc mật khẩu."
+  },
+  "Slide": {
+    "en": "Slide",
+    "vi": "Trang chiếu"
+  },
+  "Không tìm thấy trang": {
+    "en": "Page not found",
+    "vi": "Không tìm thấy trang"
+  },
+  "Về trang chủ": {
+    "en": "Go to home page",
+    "vi": "Về trang chủ"
+  },
+  "Trang bạn yêu cầu không tồn tại.": {
+    "en": "The requested page does not exist.",
+    "vi": "Trang bạn yêu cầu không tồn tại."
+  },
+  "Gemini đang giới hạn lượt tìm theo ý nghĩa. Vui lòng thử lại sau {0} giây. Các đoạn đã lập chỉ mục được giữ lại; bạn có thể tìm bằng từ khóa trong lúc chờ.": {
+    "vi": "Gemini đang giới hạn lượt tìm theo ý nghĩa. Vui lòng thử lại sau {0} giây. Các đoạn đã lập chỉ mục được giữ lại; bạn có thể tìm bằng từ khóa trong lúc chờ.",
+    "en": "Gemini is limiting semantic searches. Please retry in {0} seconds. Indexed passages have been saved; you can use keyword search while waiting."
+  },
+  "Không thể tải thư mục. Vui lòng thử lại.": {
+    "vi": "Không thể tải thư mục. Vui lòng thử lại.",
+    "en": "Unable to load folders. Please try again."
+  },
+  "Email hoặc mật khẩu không đúng.": {
+    "vi": "Email hoặc mật khẩu không đúng.",
+    "en": "Incorrect email or password."
+  },
+  "Bản tóm tắt sẽ được tạo và lưu bằng ngôn ngữ đang chọn.": {
+    "vi": "Bản tóm tắt sẽ được tạo và lưu bằng ngôn ngữ đang chọn.",
+    "en": "The summary will be generated and saved in the selected language."
+  },
+  "Bullet processing exceeded the {0}-second target.": {
+    "en": "Bullet processing exceeded the {0}-second target.",
+    "vi": "Tóm tắt vượt quá giới hạn {0} giây."
+  },
+  "Processing exceeded {0} seconds (attempt {1}/{2}).": {
+    "en": "Processing exceeded {0} seconds (attempt {1}/{2}).",
+    "vi": "Xử lý vượt quá {0} giây (lần thử {1}/{2})."
+  },
+  "Processing timed out after {0} attempts ({1} seconds per attempt).": {
+    "en": "Processing timed out after {0} attempts ({1} seconds per attempt).",
+    "vi": "Xử lý hết thời gian sau {0} lần thử ({1} giây mỗi lần)."
+  },
+  "Processing timed out after {0} attempts.": {
+    "en": "Processing timed out after {0} attempts.",
+    "vi": "Xử lý hết thời gian sau {0} lần thử."
+  },
+  "Retrying after timeout.": {
+    "en": "Retrying after timeout.",
+    "vi": "Đang thử lại sau khi hết thời gian."
+  },
+  "Processing could not finish.": {
+    "en": "Processing could not finish.",
+    "vi": "Không thể hoàn tất xử lý."
+  },
+  "Office to PDF conversion failed.": {
+    "en": "Office to PDF conversion failed.",
+    "vi": "Không thể tạo bản đọc PDF cho tài liệu Office."
+  },
+  "Không thể phân tích tài liệu do định dạng không tương thích.": {
+    "en": "Unable to analyze the document because the format is incompatible.",
+    "vi": "Không thể phân tích tài liệu do định dạng không tương thích."
+  },
+  "Gemini đang giới hạn lượt tìm theo ý nghĩa. Vui lòng thử lại sau {0} giây.": {
+    "vi": "Gemini đang giới hạn lượt tìm theo ý nghĩa. Vui lòng thử lại sau {0} giây.",
+    "en": "Gemini is limiting semantic searches. Please retry in {0} seconds."
+  },
+  "Dịch vụ tìm theo ý nghĩa hiện không khả dụng. Vui lòng thử lại hoặc chọn Chứa từ khóa.": {
+    "vi": "Dịch vụ tìm theo ý nghĩa hiện không khả dụng. Vui lòng thử lại hoặc chọn Chứa từ khóa.",
+    "en": "Semantic search is unavailable. Please retry or choose keyword search."
+  }
+}

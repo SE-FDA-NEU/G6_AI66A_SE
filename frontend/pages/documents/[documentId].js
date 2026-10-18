@@ -1,3 +1,5 @@
+import { useI18n } from '../../lib/i18n';
+import { readLocale } from '../../lib/i18n';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -6,6 +8,7 @@ import DocumentMetadata from '../../components/DocumentMetadata';
 import DocumentLabelEditor from '../../components/DocumentLabelEditor';
 import DocumentExpiry from '../../components/DocumentExpiry';
 import usePageRefresh from '../../lib/use-page-refresh';
+import SavedDocumentSummary from '../../components/SavedDocumentSummary';
 
 export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData) {
   if (!evidenceId && rawStart == null && rawEnd == null) {
@@ -53,11 +56,11 @@ export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData)
   if (
     start == null ||
     end == null ||
-    isNaN(start) ||
-    isNaN(end) ||
+    !Number.isSafeInteger(start) ||
+    !Number.isSafeInteger(end) ||
     start < 0 ||
     end <= start ||
-    end > pageData.text.length
+    end > Array.from(pageData.text).length
   ) {
     return {
       requested: true,
@@ -67,7 +70,7 @@ export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData)
     };
   }
 
-  const quote = pageData.text.slice(start, end);
+  const quote = Array.from(pageData.text).slice(start, end).join('');
   const matchingPositions = Array.isArray(pageData.positions)
     ? pageData.positions.filter(pos => pos.start >= start && pos.end <= end)
     : [];
@@ -83,44 +86,6 @@ export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData)
   };
 }
 
-export function renderTextWithSearchHighlights(text, pageMatches, activeMatch) {
-  if (!pageMatches || pageMatches.length === 0) return text;
-  const sorted = [...pageMatches].sort((a, b) => a.start - b.start);
-  const result = [];
-  let currentIdx = 0;
-
-  sorted.forEach((m, idx) => {
-    if (m.start < currentIdx) return;
-    if (m.start > currentIdx) {
-      result.push(<span key={`text-${currentIdx}`}>{text.slice(currentIdx, m.start)}</span>);
-    }
-    const isActive = Boolean(
-      activeMatch &&
-      activeMatch.page === m.page &&
-      activeMatch.start === m.start &&
-      activeMatch.end === m.end
-    );
-    result.push(
-      <mark
-        key={`match-${m.page}-${m.start}-${idx}`}
-        className={`search-highlight ${isActive ? 'active-match' : 'other-match'}`}
-        data-testid="search-highlight"
-        data-is-active={isActive ? 'true' : 'false'}
-        data-start={m.start}
-        data-end={m.end}
-      >
-        {text.slice(m.start, m.end)}
-      </mark>
-    );
-    currentIdx = m.end;
-  });
-
-  if (currentIdx < text.length) {
-    result.push(<span key="text-tail">{text.slice(currentIdx)}</span>);
-  }
-  return result;
-}
-
 export default function Reader({
   documentId,
   initialPage,
@@ -131,6 +96,7 @@ export default function Reader({
   initialEnd,
   initialSearch = '',
 }) {
+  const { t, locale, errorText } = useI18n();
   const router = useRouter();
   const [data, setData] = useState(null);
   const [page, setPage] = useState(initialPage);
@@ -175,17 +141,17 @@ export default function Reader({
       }
       if (response.status === 403) {
         setErrorStatus(403);
-        setError('Bạn không có quyền truy cập tài liệu này (Access denied).');
+        setError(t("Bạn không có quyền truy cập tài liệu này (Access denied)."));
         return;
       }
       if (response.status === 404) {
         setErrorStatus(404);
-        setError('Không tìm thấy tài liệu.');
+        setError(t("Không tìm thấy tài liệu."));
         return;
       }
       if (response.status === 410) {
         setErrorStatus(410);
-        setError('Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này.');
+        setError(t("Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này."));
         return;
       }
       const payload = await response.json();
@@ -193,14 +159,14 @@ export default function Reader({
       if (!response.ok) {
         setNeedsPreparation(response.status === 409);
         setErrorStatus(response.status);
-        throw new Error(payload.detail?.message || payload.detail || 'Không thể mở tài liệu này.');
+        throw new Error(payload.detail?.message || payload.detail || t("Không thể mở tài liệu này."));
       }
       setData(payload);
       setNeedsPreparation(false);
       setError('');
     } catch (err) {
       if (err.name !== 'AbortError') {
-        setError(err.message || 'Lỗi khi tải tài liệu.');
+        setError(err.message || t("Lỗi khi tải tài liệu."));
       }
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -229,7 +195,7 @@ export default function Reader({
         if (response.status === 410) {
           setData(null); setNeedsPreparation(false); setErrorStatus(410);
         }
-        throw new Error(payload.detail?.message || payload.detail || 'Không thể chuẩn bị bản đọc.');
+        throw new Error(payload.detail?.message || payload.detail || t("Không thể chuẩn bị bản đọc."));
       }
       await load();
     } catch (err) {
@@ -262,7 +228,9 @@ export default function Reader({
 
     data.pages.forEach((p) => {
       const text = p.text || '';
-      const lowerText = text.toLowerCase();
+      const points = Array.from(text);
+      const offsets = [];
+      const lowerText = points.map((char, index) => { const folded = char.toLowerCase(); offsets.push(...Array(folded.length).fill(index)); return folded; }).join('');
       let idx = 0;
       while (idx < lowerText.length) {
         const matchPos = lowerText.indexOf(lowerQ, idx);
@@ -270,9 +238,9 @@ export default function Reader({
         found.push({
           matchIndex: found.length,
           page: p.page,
-          start: matchPos,
-          end: matchPos + lowerQ.length,
-          quote: text.slice(matchPos, matchPos + lowerQ.length),
+          start: offsets[matchPos],
+          end: offsets[matchPos + lowerQ.length - 1] + 1,
+          quote: points.slice(offsets[matchPos], offsets[matchPos + lowerQ.length - 1] + 1).join(''),
         });
         idx = matchPos + Math.max(1, lowerQ.length);
       }
@@ -284,9 +252,7 @@ export default function Reader({
     if (found.length > 0) {
       setActiveMatchIndex(0);
       const firstMatch = found[0];
-      if (firstMatch.page !== page) {
-        changePage(firstMatch.page, q);
-      }
+      changePage(firstMatch.page, q);
     } else {
       setActiveMatchIndex(-1);
     }
@@ -318,12 +284,15 @@ export default function Reader({
     setSearchMatches([]);
     setActiveMatchIndex(-1);
     setSearchPerformed(false);
+    const nextQuery = { ...router.query };
+    delete nextQuery.search;
+    router.replace({ pathname: '/documents/[documentId]', query: nextQuery }, undefined, { shallow: true, scroll: false });
   }
 
   // Auto-trigger search when data arrives or URL search query changes
   useEffect(() => {
     if (data?.pages) {
-      const q = String(router.query.search || initialSearch || '').trim();
+      const q = String(router.isReady ? router.query.search || '' : initialSearch).trim();
       if (q && (!searchPerformed || q !== searchQuery)) {
         setSearchInput(q);
         executeSearch(q);
@@ -336,7 +305,6 @@ export default function Reader({
 
   function changePage(next, activeSearchOverride) {
     if (data?.page_count && (next < 1 || next > data.page_count)) return;
-    setPage(next);
     const nextQuery = { ...router.query, documentId, page: next };
     if (currentReturnJobId) nextQuery.job = currentReturnJobId;
     const qToKeep = activeSearchOverride !== undefined ? activeSearchOverride : searchQuery;
@@ -348,56 +316,71 @@ export default function Reader({
     );
   }
 
-  const pageName = data?.page_kind === 'slide' ? 'Slide' : 'Trang';
+  const pageName = data?.page_kind === 'slide' ? t('Slide') : t("Trang");
   const isInvalidPage = Boolean(
     (rawPageParam != null && (!/^\d+$/.test(rawPageParam) || Number(rawPageParam) < 1)) ||
     (data && (page < 1 || page > data.page_count))
   );
 
   const currentPage = data?.pages?.find(item => item.page === page);
-  const pdfUrl = data ? `/api${data.reader_url}#page=${page}` : '';
+
 
   // Resolve citation evidence highlight for the current page
   const evidenceId = router.query.evidence || initialEvidenceId || null;
   const rawStart = router.query.start !== undefined ? router.query.start : initialStart;
   const rawEnd = router.query.end !== undefined ? router.query.end : initialEnd;
-  const highlightInfo = resolveCitationHighlight(evidenceId, rawStart, rawEnd, currentPage);
+  const highlightInfo = !evidenceId && page !== initialPage ? { requested: false } : resolveCitationHighlight(evidenceId, rawStart, rawEnd, currentPage);
 
   // Active search match and matches on current page
   const activeSearchMatch = activeMatchIndex >= 0 && activeMatchIndex < searchMatches.length
     ? searchMatches[activeMatchIndex]
     : null;
-  const currentPageMatches = searchMatches.filter(m => m.page === page);
+  const pdfParams = new URLSearchParams();
+  const visibleMatch = activeSearchMatch?.page === page ? activeSearchMatch : null;
+  if (searchPerformed && searchQuery && searchMatches.some(match => match.page === page)) {
+    pdfParams.set('highlight_page', String(page)); pdfParams.set('q', searchQuery);
+  }
+  const span = visibleMatch || (highlightInfo.status === 'precise' ? highlightInfo : null);
+  if (span) {
+    pdfParams.set('highlight_page', String(page));
+    pdfParams.set('start', String(span.start)); pdfParams.set('end', String(span.end));
+  }
+  const hasHighlightGeometry = (currentPage?.positions || []).some(position => Array.isArray(position.bbox) && position.bbox.length === 4
+    && (!span || (position.start < span.end && position.end > span.start)));
+  const pdfUrl = data ? `/api${data.reader_url}${pdfParams.size ? `&${pdfParams}` : ''}#page=${page}` : '';
 
   return (
     <>
       <Head>
-        <title>DocuMind · Đọc tài liệu</title>
+        <title>{t("DocuMind · Đọc tài liệu")}</title>
       </Head>
       <main className="workspace reader-page">
         <header>
-          <a href="/workspace" className="brand">DocuMind.</a>
+          <a href="/workspace" className="brand">{t("DocuMind.")}</a>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             {currentReturnJobId && (
               <a
                 href={`/results/${currentReturnJobId}`}
                 className="btn return-job-link"
-                aria-label={`Back to Results · Quay lại tác vụ #${currentReturnJobId}`}
-              >
-                Back to Results
-              </a>
+                aria-label={t("Back to Results · Quay lại tác vụ #{0}", currentReturnJobId)}
+              >{t("Back to Results")}</a>
             )}
             <a
               href="/workspace"
               className="btn return-workspace-link"
-              aria-label="Back to Workspace · Về thư viện"
-            >
-              Back to Workspace
-            </a>
+              aria-label={t("Back to Workspace · Về thư viện")}
+            >{t("Back to Workspace")}</a>
           </div>
         </header>
 
-        <h1>Đọc tài liệu</h1>
+        <h1>{t("Đọc tài liệu")}</h1>
+        {data?.reader_layout === 'text' && (
+          <p role="note">
+            {data.file_format === 'DOCX'
+              ? t("Đây là bản đọc văn bản. Số trang theo bản đọc này có thể khác tệp Word gốc.")
+              : t("Đây là bản đọc văn bản, mỗi slide tương ứng một trang. Hình ảnh và bố cục có thể khác tệp gốc.")}
+          </p>
+        )}
 
         {/* Document Metadata (US10) */}
         {!error && data && (
@@ -412,7 +395,7 @@ export default function Reader({
           />
           <DocumentExpiry expiresAt={data.expires_at} />
           <DocumentLabelEditor key={documentId} documentId={documentId} document={data}
-            onUnavailable={() => { setData(null); setNeedsPreparation(false); setErrorStatus(410); setError('Nguồn đã hết hạn và không còn khả dụng.'); }}
+            onUnavailable={() => { setData(null); setNeedsPreparation(false); setErrorStatus(410); setError(t("Nguồn đã hết hạn và không còn khả dụng.")); }}
             onSaved={saved => setData(current => ({
             ...current, user_label: saved.user_label, review_state: saved.review_state,
             last_accessed_at: saved.last_accessed_at, expires_at: saved.expires_at,
@@ -422,45 +405,45 @@ export default function Reader({
 
         {/* Loading state */}
         {loading && !error && !busy && (
-          <p role="status" className="reader-loading">Đang mở tài liệu…</p>
+          <p role="status" className="reader-loading">{t("Đang mở tài liệu…")}</p>
         )}
 
         {/* Missing state (404) */}
         {errorStatus === 404 && (
           <div className="reader-error error-box" role="alert">
-            <p>Không tìm thấy tài liệu.</p>
-            <a href="/workspace" className="btn">Về thư viện</a>
+            <p>{t("Không tìm thấy tài liệu.")}</p>
+            <a href="/workspace" className="btn">{t("Về thư viện")}</a>
           </div>
         )}
 
         {/* Access denied state (403) */}
         {errorStatus === 403 && (
           <div className="reader-error error-box" role="alert">
-            <p>Bạn không có quyền truy cập tài liệu này (Access denied).</p>
-            <a href="/workspace" className="btn">Về thư viện</a>
+            <p>{t("Bạn không có quyền truy cập tài liệu này (Access denied).")}</p>
+            <a href="/workspace" className="btn">{t("Về thư viện")}</a>
           </div>
         )}
 
         {/* Generic or conversion errors */}
         {errorStatus === 410 && <div className="reader-error error-box" role="alert">
-          <p>Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này.</p>
-          <a className="btn" href="/workspace">Về thư viện</a>
+          <p>{t("Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này.")}</p>
+          <a className="btn" href="/workspace">{t("Về thư viện")}</a>
         </div>}
         {error && errorStatus !== 404 && errorStatus !== 403 && errorStatus !== 410 && (
-          <p role="alert" className="error-box">{error}</p>
+          <p role="alert" className="error-box">{errorText(error)}</p>
         )}
 
         {needsPreparation && (
           <button className="btn" disabled={busy} onClick={prepare}>
-            {busy ? 'Đang chuyển đổi…' : 'Chuẩn bị bản đọc'}
+            {busy ? t("Đang chuyển đổi…") : t("Chuẩn bị bản đọc")}
           </button>
         )}
 
         {/* Invalid page state */}
         {!error && data && isInvalidPage && (
           <div className="reader-invalid-page error-box" role="alert">
-            <p>Trang nguồn không tồn tại trong bản đọc này (Tài liệu có {data.page_count} {pageName.toLowerCase()}).</p>
-            <button className="btn" onClick={() => changePage(1)}>Về trang 1</button>
+            <p>{t("Trang nguồn không tồn tại trong bản đọc này (Tài liệu có") + " "}{data.page_count} {pageName.toLowerCase()}).</p>
+            <button className="btn" onClick={() => changePage(1)}>{t("Về trang 1")}</button>
           </div>
         )}
 
@@ -472,13 +455,11 @@ export default function Reader({
                 className="btn"
                 disabled={page <= 1}
                 onClick={() => changePage(page - 1)}
-              >
-                Trước
-              </button>
+              >{t("Trước")}</button>
               <label>
                 {pageName}
                 <select
-                  aria-label="Chọn trang nguồn"
+                  aria-label={t("Chọn trang nguồn")}
                   value={page}
                   onChange={event => changePage(Number(event.target.value))}
                 >
@@ -496,16 +477,12 @@ export default function Reader({
                 className="btn"
                 disabled={page >= data.page_count}
                 onClick={() => changePage(page + 1)}
-              >
-                Sau
-              </button>
-              <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn">
-                Mở bản PDF
-              </a>
+              >{t("Sau")}</button>
+              <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn">{t("Mở bản PDF")}</a>
             </div>
 
             {/* In-Document Search Bar (US04) */}
-            <div className="reader-search-bar" role="search" aria-label="Tìm kiếm trong tài liệu">
+            <div className="reader-search-bar" role="search" aria-label={t("Tìm kiếm trong tài liệu")}>
               <form
                 className="reader-search-form"
                 onSubmit={(e) => {
@@ -518,7 +495,7 @@ export default function Reader({
                     id="reader-search-input"
                     data-testid="reader-search-input"
                     type="search"
-                    placeholder="Tìm kiếm trong tài liệu (ví dụ: inflation causes)..."
+                    placeholder={t("Tìm kiếm trong tài liệu (ví dụ: inflation causes)...")}
                     value={searchInput}
                     onChange={(e) => {
                       setSearchInput(e.target.value);
@@ -526,65 +503,55 @@ export default function Reader({
                         clearSearch();
                       }
                     }}
-                    aria-label="Tìm kiếm trong văn bản tài liệu"
+                    aria-label={t("Tìm kiếm trong văn bản tài liệu")}
                   />
                   <button
                     type="submit"
                     className="btn btn-search"
                     data-testid="reader-search-button"
-                    aria-label="Tìm"
-                  >
-                    Tìm
-                  </button>
+                    aria-label={t("Tìm")}
+                  >{t("Tìm")}</button>
                   {searchInput && (
                     <button
                       type="button"
                       className="btn btn-clear-search"
                       data-testid="reader-search-clear"
                       onClick={clearSearch}
-                      aria-label="Xóa tìm kiếm"
-                    >
-                      Xóa
-                    </button>
+                      aria-label={t("Xóa tìm kiếm")}
+                    >{t("Xóa")}</button>
                   )}
                 </div>
               </form>
 
               {/* Match Counter & Navigation */}
               {searchPerformed && searchMatches.length > 0 && (
-                <div className="reader-search-nav" aria-label="Điều hướng kết quả tìm kiếm">
+                <div className="reader-search-nav" aria-label={t("Điều hướng kết quả tìm kiếm")}>
                   <span className="search-match-count" data-testid="search-match-count">
-                    {activeMatchIndex + 1}/{searchMatches.length} kết quả
-                  </span>
+                    {activeMatchIndex + 1}/{searchMatches.length}{" " + t("kết quả")}</span>
                   <div className="search-nav-buttons">
                     <button
                       type="button"
                       className="btn btn-nav-match prev-match-btn"
                       data-testid="prev-match-btn"
                       onClick={goToPrevMatch}
-                      aria-label="Kết quả trước"
-                      title="Kết quả trước"
-                    >
-                      Trước
-                    </button>
+                      aria-label={t("Kết quả trước")}
+                      title={t("Kết quả trước")}
+                    >{t("Trước")}</button>
                     <button
                       type="button"
                       className="btn btn-nav-match next-match-btn"
                       data-testid="next-match-btn"
                       onClick={goToNextMatch}
-                      aria-label="Kết quả tiếp theo"
-                      title="Kết quả tiếp theo"
-                    >
-                      Sau
-                    </button>
+                      aria-label={t("Kết quả tiếp theo")}
+                      title={t("Kết quả tiếp theo")}
+                    >{t("Sau")}</button>
                   </div>
                 </div>
               )}
 
               {/* No results state */}
               {searchPerformed && searchMatches.length === 0 && (
-                <p className="search-no-results" role="status" data-testid="search-no-results">
-                  Không tìm thấy kết quả phù hợp cho "{searchQuery}".
+                <p className="search-no-results" role="status" data-testid="search-no-results">{t("Không tìm thấy kết quả phù hợp cho \"")}{searchQuery}".
                 </p>
               )}
             </div>
@@ -592,77 +559,22 @@ export default function Reader({
             {/* Fallback notice for scanned pages or unresolved evidence spans */}
             {highlightInfo.requested && highlightInfo.status === 'fallback' && (
               <div className="highlight-fallback-notice" role="status">
-                <p className="fallback-message">Exact highlight not available for this passage.</p>
+                <p className="fallback-message">{t("Exact highlight not available for this passage.")}</p>
               </div>
             )}
 
-            {/* Highlighted passage card for active search result */}
-            {activeSearchMatch && activeSearchMatch.page === page && (
-              <div className="search-match-card highlighted-passage-card" role="region" aria-label="Đoạn văn bản tìm kiếm được chọn">
-                <div className="highlighted-passage-header">
-                  <strong>Kết quả tìm kiếm ({activeMatchIndex + 1}/{searchMatches.length}) — {pageName} {page}:</strong>
-                  <span className="search-match-badge" data-testid="search-match-badge">
-                    Vị trí: {activeSearchMatch.start} - {activeSearchMatch.end}
-                  </span>
-                </div>
-                <p className="highlighted-passage-quote">"{activeSearchMatch.quote}"</p>
-              </div>
-            )}
+            {(span || pdfParams.size > 0) && hasHighlightGeometry && <p className="reader-highlight-note" role="status">{t("Kết quả được tô sáng trực tiếp trên tài liệu; vị trí đang chọn có màu cam.")}</p>}
 
-            {/* Highlighted passage card when citation resolved and no active search on current page */}
-            {(!activeSearchMatch || activeSearchMatch.page !== page) && highlightInfo.status === 'precise' && (
-              <div className="highlighted-passage-card" role="region" aria-label="Đoạn trích dẫn được tô sáng">
-                <div className="highlighted-passage-header">
-                  <strong>Đoạn trích dẫn bằng chứng (#{highlightInfo.evidenceId}):</strong>
-                  {highlightInfo.matchingPositions?.length > 0 && (
-                    <span className="stored-positions-tag" data-positions-count={highlightInfo.matchingPositions.length}>
-                      {highlightInfo.matchingPositions.length} vị trí tọa độ
-                    </span>
-                  )}
-                </div>
-                <p className="highlighted-passage-quote">"{highlightInfo.quote}"</p>
-              </div>
-            )}
+            {(span || pdfParams.size > 0) && !hasHighlightGeometry && <p role="status" className="highlight-fallback-notice">{t("Trang này chưa có đủ tọa độ chữ để tô sáng trực tiếp. Bạn vẫn có thể xem tài liệu và bản tóm tắt bên dưới.")}</p>}
 
             <iframe
               className="reader-pdf"
               src={pdfUrl}
-              title={`Bản đọc PDF — ${pageName} ${page}`}
+              title={t("Bản đọc PDF — {0} {1}", pageName, page)}
             />
 
-            {/* Text layer preview where available */}
-            {currentPage?.text ? (
-              <div className="reader-text-layer" aria-label="Lớp chữ trang nguồn">
-                <div className="text-layer-header">
-                  <strong>Lớp chữ {pageName.toLowerCase()} {page}:</strong>
-                </div>
-                {currentPageMatches.length > 0 ? (
-                  <p className="text-layer-snippet text-layer-rendered">
-                    {renderTextWithSearchHighlights(currentPage.text, currentPageMatches, activeSearchMatch)}
-                  </p>
-                ) : highlightInfo.status === 'precise' ? (
-                  <p className="text-layer-snippet text-layer-rendered">
-                    <span className="text-before">{currentPage.text.slice(0, highlightInfo.start)}</span>
-                    <mark
-                      className="citation-highlight"
-                      data-evidence-id={highlightInfo.evidenceId}
-                      data-start={highlightInfo.start}
-                      data-end={highlightInfo.end}
-                      data-positions-count={highlightInfo.matchingPositions?.length || 0}
-                    >
-                      {highlightInfo.quote}
-                    </mark>
-                    <span className="text-after">{currentPage.text.slice(highlightInfo.end)}</span>
-                  </p>
-                ) : (
-                  <p className="text-layer-snippet">{currentPage.text}</p>
-                )}
-              </div>
-            ) : (
-              <p role="status" className="text-layer-empty">
-                Trang này không có lớp chữ để highlight chính xác.
-              </p>
-            )}
+            <SavedDocumentSummary key={documentId} documentId={documentId} jobId={currentReturnJobId} readerVersion={data.reader_version}/>
+
           </>
         )}
 
@@ -694,6 +606,7 @@ export async function getServerSideProps({ req, res, params, query }) {
   const initialSearch = query.search && typeof query.search === 'string' ? String(query.search).trim() : '';
   return {
     props: {
+      initialLocale: readLocale(req.headers.cookie),
       documentId: params.documentId,
       initialPage: Number.isSafeInteger(page) && page > 0 ? page : 1,
       rawPageParam,

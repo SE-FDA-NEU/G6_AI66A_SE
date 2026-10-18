@@ -133,3 +133,22 @@ def test_semantic_search_rejects_weak_neighbors_and_embeds_only_filtered_authori
         assert client.get('/search', params={'q': 'fees', 'mode': 'semantic', 'label': 'Unknown'}).json()['hits'] == []
     finally:
         app.dependency_overrides.pop(get_search_embedder, None)
+
+
+def test_cross_language_semantic_scores_below_old_cutoff_keep_only_the_closest_band(client, add_document):
+    relevant = add_document('Education and teaching students at school.')
+    add_document('Weather and sea observations.')
+    class Embedder:
+        model_key = 'cross-language-test:2'
+        def embed(self, texts, *, task):
+            if task == 'RETRIEVAL_QUERY':
+                return [[1., 0.]]
+            scores = [0.6426 if 'Education' in text else 0.6139 for text in texts]
+            return [[score, (1 - score * score) ** .5] for score in scores]
+    app.dependency_overrides[get_search_embedder] = lambda: Embedder()
+    try:
+        result = client.get('/search', params={'q': 'giáo dục', 'mode': 'semantic'})
+        assert result.status_code == 200
+        assert [hit['document_id'] for hit in result.json()['hits']] == [relevant]
+    finally:
+        app.dependency_overrides.pop(get_search_embedder, None)

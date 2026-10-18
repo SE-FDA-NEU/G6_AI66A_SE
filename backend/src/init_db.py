@@ -8,7 +8,6 @@ BACKEND_DIR = os.path.dirname(CURRENT_DIR)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-from sqlalchemy import create_engine, text
 from app.core.config import settings
 from app.db.database import Base, engine, SessionLocal
 from app.models import (
@@ -27,30 +26,9 @@ from app.core.security import get_password_hash
 
 
 def create_database_and_tables():
-    """Tạo database MySQL nếu chưa có và tự động sinh toàn bộ bảng theo models."""
-    print("🚀 [1/2] Bắt đầu khởi tạo Database và bảng...")
-    
-    # 1. Tách chuỗi kết nối để lấy base url (không có tên database)
-    db_url = settings.DATABASE_URL
-    base_url = db_url.rsplit("/", 1)[0]
-    db_name = db_url.rsplit("/", 1)[1]
-    
-    # 2. Kết nối tạm vào MySQL Server để tạo Database nếu chưa tồn tại
-    temp_engine = create_engine(base_url)
-    with temp_engine.connect() as conn:
-        print(f"   -> Kiểm tra và tạo database '{db_name}'...")
-        conn.execute(
-            text(
-                f"CREATE DATABASE IF NOT EXISTS {db_name} "
-                f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-            )
-        )
-    temp_engine.dispose()
-
-    # 3. Tạo schema các bảng dựa trên SQLAlchemy Base metadata
-    print("   -> Đang đồng bộ cấu trúc các bảng (schema)...")
-    Base.metadata.create_all(bind=engine)
-    print("   ✅ Đã khởi tạo cấu trúc Database thành công!")
+    """Use the same database preparation as run.py before optional demo seeding."""
+    from app.db.bootstrap import main as prepare_database
+    prepare_database()
 
 
 # 10 mẫu Document đa dạng về format (PDF, DOCX, PPTX), kích thước và trạng thái

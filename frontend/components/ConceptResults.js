@@ -1,18 +1,20 @@
+import { useI18n } from '../lib/i18n';
 import { ClaimEvidence } from './CitationBadge';
 
 export function ConceptResults({ concepts, limitation, documentName, documentId, jobId, pageKind }) {
+  const { t, locale, errorText } = useI18n();
   const hasConcepts = Array.isArray(concepts) && concepts.length > 0;
 
   return (
-    <section className="analysis-section analysis-concepts" aria-label="Khái niệm chính">
-      <h4>Khái niệm chính</h4>
+    <section className="analysis-section analysis-concepts" aria-label={t("Khái niệm chính")}>
+      <h4>{t("Khái niệm chính")}</h4>
       {limitation ? (
         <div className="concept-limitation" data-testid="concept-limitation">
           <p>{limitation}</p>
         </div>
       ) : !hasConcepts ? (
         <div className="concept-limitation concept-empty-state" data-testid="concept-limitation">
-          <p>Tài liệu không có đủ nội dung để rút ra các khái niệm chính.</p>
+          <p>{t("Tài liệu không có đủ nội dung để rút ra các khái niệm chính.")}</p>
         </div>
       ) : null}
       {hasConcepts && (

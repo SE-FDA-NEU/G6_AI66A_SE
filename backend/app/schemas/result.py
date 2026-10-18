@@ -130,6 +130,7 @@ class ReaderMetadata(Payload):
 
 
 class DocumentResult(Payload):
+    language: Literal["en", "vi"] | None = None
     schema_version: Literal[1] = 1
     document_id: int
     original_filename: str
@@ -143,5 +144,6 @@ class DocumentResult(Payload):
 
 
 class JobResultData(Payload):
+    language: Literal["en", "vi"] | None = None
     schema_version: Literal[1] = 1
     documents: dict[str, DocumentResult]

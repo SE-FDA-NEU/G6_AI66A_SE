@@ -1,3 +1,5 @@
+import { translate } from '../lib/i18n-core';
+import { useI18n } from '../lib/i18n';
 /**
  * CitationBadge and ClaimEvidence shared components.
  * 
@@ -44,7 +46,7 @@ export function buildCitationHref(source, jobId) {
   return `/documents/${source.document_id}?${params.toString()}`;
 }
 
-export function formatCitationText(source, documentName, currentDocumentId, pageKind = 'page') {
+export function formatCitationText(source, documentName, currentDocumentId, pageKind = 'page', locale = 'en') {
   let docId = currentDocumentId;
   let kind = pageKind;
   if (typeof currentDocumentId === 'string' && (currentDocumentId === 'page' || currentDocumentId === 'slide')) {
@@ -54,19 +56,20 @@ export function formatCitationText(source, documentName, currentDocumentId, page
   let docName = source.doc_name;
   if (!docName) {
     if (docId && source.document_id !== docId) {
-      docName = `Document #${source.document_id}`;
+      docName = translate(locale, 'Document #{0}', source.document_id);
     } else {
-      docName = documentName || `Document #${source.document_id}`;
+      docName = documentName || translate(locale, 'Document #{0}', source.document_id);
     }
   }
-  const pageLabel = kind === 'slide' ? 'slide' : 'page';
+  const pageLabel = translate(locale, kind === 'slide' ? 'slide' : 'page');
   return `${docName} — ${pageLabel} ${source.page}`;
 }
 
 export function CitationBadge({ source, documentName, currentDocumentId, jobId, pageKind = 'page' }) {
+  const { locale } = useI18n();
   if (!isUsableSource(source)) return <UnverifiedBadge />;
   const href = buildCitationHref(source, jobId);
-  const text = formatCitationText(source, documentName, currentDocumentId, pageKind);
+  const text = formatCitationText(source, documentName, currentDocumentId, pageKind, locale);
 
   return (
     <a
@@ -83,17 +86,19 @@ export function CitationBadge({ source, documentName, currentDocumentId, jobId, 
 }
 
 export function UnverifiedBadge({ text = 'Unverified', note = 'Cần kiểm tra' }) {
+  const { t, locale, errorText } = useI18n();
   return (
-    <span className="unverified-badge analysis-unverified" role="status" aria-label="Khẳng định chưa được xác thực">
-      {text}{note ? ` · ${note}` : ''}
+    <span className="unverified-badge analysis-unverified" role="status" aria-label={t("Khẳng định chưa được xác thực")}>
+      {t(text)}{note ? ` · ${t(note)}` : ''}
     </span>
   );
 }
 
 export function ClaimSources({ claim, documentName, documentId, jobId, pageKind = 'page', missingNote }) {
+  const { t, locale, errorText } = useI18n();
   const { sources, unverified } = claimVerification(claim);
   return <div className="claim-citations">
-    {unverified && <UnverifiedBadge note={!sources.length && missingNote ? missingNote : 'Cần kiểm tra'} />}
+    {unverified && <UnverifiedBadge note={!sources.length && missingNote ? missingNote : t("Cần kiểm tra")} />}
     {sources.length > 0 && <div className="evidence-badges">
       {sources.map((source, index) => <CitationBadge key={index} source={source} documentName={documentName}
         currentDocumentId={documentId} jobId={jobId} pageKind={pageKind} />)}
@@ -110,12 +115,13 @@ export function ClaimEvidence({
   className = '',
   showEvidence = true,
 }) {
+  const { t, locale, errorText } = useI18n();
   const { hasText, unverified } = claimVerification(claim);
 
   if (!hasText) {
     return (
       <div className={`analysis-claim ${className}`}>
-        <UnverifiedBadge text="Không có thông tin · Unverified" note="" />
+        <UnverifiedBadge text={t("Không có thông tin · Unverified")} note="" />
       </div>
     );
   }

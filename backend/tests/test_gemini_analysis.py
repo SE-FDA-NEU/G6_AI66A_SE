@@ -249,23 +249,33 @@ def test_inflight_gemini_request_is_cancelled_before_retry(document, api):
     assert not list(settings.STORAGE_DIR.rglob('*.json'))
 
 
-def test_real_upload_job_saves_gemini_result_and_citations_without_repeat_on_reload(client, session_factory, tmp_path, api):
+@pytest.mark.parametrize('language', ['en', 'vi'])
+def test_real_upload_job_saves_gemini_result_and_citations_without_repeat_on_reload(client, session_factory, tmp_path, api, language):
     state, calls = api
     state['response'] = response('table')
     source = make_pdf(tmp_path / 'contract.pdf', [b'BT /F1 12 Tf 72 720 Td (Late fee 0.05% per day.) Tj ET'])
-    uploaded = client.post('/upload', data={'mode': 'table'}, files=[('files', ('contract.pdf', source.read_bytes(), 'application/pdf'))])
+    uploaded = client.post('/upload', data={'mode': 'table', 'language': language}, files=[('files', ('contract.pdf', source.read_bytes(), 'application/pdf'))])
     job_id = int(uploaded.json()['jobId'])
     processing.process_job(job_id, session_factory)
     saved = client.get(f'/jobs/{job_id}').json()
     assert saved['status'] == 'completed' and saved['completed_count'] == 1
     file = saved['job_files'][0]
     result = saved['result_data']['documents'][str(file['document_id'])]
+    assert saved['result_data']['language'] == language and result['language'] == language
     assert result['analysis_status'] == 'completed' and result['analysis_metadata']['provider'] == 'gemini'
     assert result['output']['penalty']['evidence'][0]['quote'] == 'Late fee 0.05% per day.'
     assert result['label']['ai_label'] == 'Hợp đồng' and len(saved['citations']) == 1
     assert client.get(result['reader']['url']).status_code == 200
     processing.process_job(job_id, session_factory)
     assert client.get(f'/jobs/{job_id}').json() == saved and len(calls) == 1
+
+    # Viewing either UI language reads exactly the saved content, without new model requests.
+    for ui_language in ('en', 'vi'):
+        headers = {'X-DocuMind-Language': ui_language}
+        assert client.get(f'/jobs/{job_id}', headers=headers).json() == saved
+        summary = client.get(f"/documents/{file['document_id']}/summary", headers=headers).json()
+        assert summary['document'] == result
+    assert len(calls) == 1
 
 
 def test_quota_failure_updates_correct_file_without_false_success(client, session_factory, tmp_path, api):
@@ -277,6 +287,21 @@ def test_quota_failure_updates_correct_file_without_false_success(client, sessio
     processing.process_job(job_id, session_factory)
     saved = client.get(f'/jobs/{job_id}').json()
     assert saved['status'] == saved['job_files'][0]['status'] == 'failed'
-    assert saved['completed_count'] == 0 and saved['result_data'] is None and saved['citations'] == []
+    assert saved['completed_count'] == 0 and saved['result_data']['language'] == 'vi' and saved['result_data']['documents'] == {} and saved['citations'] == []
     assert 'gemini_quota_exceeded' in saved['job_files'][0]['error_message']
     assert saved['job_files'][0]['attempt_count'] == 1 and len(calls) == 1
+
+
+@pytest.mark.parametrize('language', ['en', 'vi'])
+def test_selected_language_controls_prompt_fallback_and_cache(document, api, language):
+    state, calls = api
+    state['response'] = response()
+    source = replace(document, language=language)
+    result = asyncio.run(processing.process_document(source, JobMode.BULLET))
+    prompt = json.loads(calls[0].content)['systemInstruction']['parts'][0]['text']
+    assert ('in English' if language == 'en' else 'in Vietnamese') in prompt
+    assert ('The document' if language == 'en' else 'Tài liệu') in result.output.limitation
+    asyncio.run(processing.process_document(source, JobMode.BULLET))
+    assert len(calls) == 1
+    asyncio.run(processing.process_document(replace(source, language='vi' if language == 'en' else 'en'), JobMode.BULLET))
+    assert len(calls) == 2

@@ -18,9 +18,10 @@ test('list pagination requests server pages, retains badges and provides documen
     return route.fulfill({ json: docs.slice(skip, skip + Number(params.get('limit'))) });
   });
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   const rows = page.getByTestId('workspace-document-row');
   await expect(rows).toHaveCount(10);
-  await expect(rows.first().getByTestId('document-ai-label')).toContainText('Contract');
+  await expect(rows.first().getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Contract');
   await expect(rows.first().getByTestId('document-ai-confidence')).toContainText('90%');
   const pagination = page.getByRole('navigation', { name: 'Phân trang tài liệu' });
   await expect(pagination.getByRole('button', { name: 'Trang trước' })).toBeDisabled();
@@ -49,6 +50,7 @@ test('search preserves server ranking, sends filters and paginates independently
     return route.fulfill({ json: { query: params.get('q'), total_hits: 11, hits } });
   });
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('payment penalty');
   await page.getByLabel('Kiểu tìm kiếm').selectOption('semantic');
   await page.getByLabel('Lọc theo nhãn').fill('Contract');
@@ -81,6 +83,7 @@ test('list and search distinguish loading, failures, retry and empty responses',
     return route.fulfill({ json: [] });
   });
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   await expect(page.getByText('Đang tải danh sách tài liệu…')).toBeVisible();
   await expect.poll(() => typeof releaseList).toBe('function');
   releaseList();
@@ -121,6 +124,7 @@ test('invalid search response is actionable and a cleared pending search cannot 
     return route.fulfill({ json: { query, total_hits: 1, hits: [searchHit({ snippet: query })] } });
   });
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   const input = page.getByLabel('Tìm kiếm trong tài liệu', { exact: true });
   await input.fill('!!!');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
@@ -167,6 +171,7 @@ for (const endpoint of ['documents', 'search']) {
     });
     await page.goto('/workspace');
     if (endpoint === 'search') {
+      await page.getByText('Tìm trong nội dung tài liệu', { exact: true }).click();
       await expect(page.getByRole('button', { name: 'Tìm kiếm', exact: true })).toBeDisabled();
       await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('contract');
       await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
@@ -196,18 +201,42 @@ test('real APIs find a document outside the visible list and open its page 6 wit
     if (index === 0) target = job.job_files[0].document_id;
   }
   await page.goto('/workspace');
+  for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
   await expect(page.getByTestId('workspace-document-row')).toHaveCount(10);
   await expect(page.locator(`[data-testid="workspace-document-row"][data-document-id="${target}"]`)).toHaveCount(0);
   await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('workspace unique overdue penalty');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
   await expect(page.locator('.search-hit-card')).toHaveCount(1);
   await expect(page.locator('.search-snippet')).toHaveText(clause);
-  await page.getByRole('link', { name: 'workspace-0.pdf — page 6', exact: true }).click();
+  await page.getByRole('link', { name: 'workspace-0.pdf — trang 6', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/documents/${target}\\?page=6&`));
   await expect(page.getByText('Trang 6/6', { exact: true })).toBeVisible();
-  await expect(page.locator('.citation-highlight')).toHaveText(clause);
-  await expect(page.getByTitle('Bản đọc PDF — Trang 6')).toHaveAttribute('src', /#page=6$/);
+  await expect(page.locator('.reader-pdf')).toHaveAttribute('src', /highlight_page=6&start=\d+&end=\d+#page=6$/);
+  await expect(page.getByTitle('Bản đọc PDF — Trang 6')).toHaveAttribute('src', /highlight_page=6&start=\d+&end=\d+#page=6$/);
   await page.reload();
   await expect(page.getByText('Trang 6/6', { exact: true })).toBeVisible();
-  await expect(page.locator('.citation-highlight')).toHaveText(clause);
+  await expect(page.locator('.reader-pdf')).toHaveAttribute('src', /highlight_page=6&start=\d+&end=\d+#page=6$/);
+});
+
+test('semantic quota explains the wait and retry preserves query, mode and filters', async ({ page }) => {
+  await page.route('**/api/folders?*', route => route.fulfill({ json: [] }));
+  await page.route('**/api/documents?*', route => route.fulfill({ json: [] }));
+  let attempts = 0;
+  await page.route('**/api/search?*', route => {
+    const params = new URL(route.request().url()).searchParams;
+    expect(params.get('q')).toBe('giáo dục');
+    expect(params.get('mode')).toBe('semantic');
+    if (++attempts === 1) return route.fulfill({ status: 503, json: { detail: {
+      code: 'embedding_rate_limited', message: 'Gemini đang giới hạn lượt tìm theo ý nghĩa. Vui lòng thử lại sau 12 giây.',
+    } } });
+    return route.fulfill({ json: { query: 'giáo dục', total_hits: 1, hits: [searchHit({ snippet: 'Nhà trường đào tạo học sinh.' })] } });
+  });
+  await page.goto('/workspace');
+  await page.getByText('Tìm trong nội dung tài liệu', { exact: true }).click();
+  await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('giáo dục');
+  await page.getByLabel('Kiểu tìm kiếm').selectOption('semantic');
+  await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
+  await expect(page.locator('.workspace-search').getByRole('alert')).toContainText('12 giây');
+  await page.getByRole('button', { name: 'Thử lại tìm kiếm', exact: true }).click();
+  await expect(page.locator('.search-snippet')).toContainText('đào tạo học sinh');
 });

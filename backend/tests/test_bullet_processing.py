@@ -104,7 +104,7 @@ def test_inclusive_word_limit_is_enforced_before_persistence(client, session_fac
         output = next(iter(saved['result_data']['documents'].values()))['output']
         assert len(output['bullets'][0]['text'].split()) + len(output['limitation'].split()) == 1000
     else:
-        assert saved['result_data'] is None and saved['citations'] == []
+        assert saved['result_data']['documents'] == {} and saved['citations'] == []
         assert 'invalid_result' in saved['job_files'][0]['error_message']
 
 
@@ -163,7 +163,7 @@ def test_180_second_target_is_shared_across_retries_and_cancels_inflight_work(cl
     # Subtracting monotonic clock values can round the upper bound by a few ns.
     assert budgets[-1] < budgets[0] <= .12 + 1e-8
     assert saved['job_files'][0]['error_message']
-    assert saved['result_data'] is None and saved['citations'] == []
+    assert saved['result_data']['documents'] == {} and saved['citations'] == []
 
 
 def test_expired_queue_target_does_not_start_a_model_call(client, session_factory, bullet_job):
@@ -191,4 +191,4 @@ def test_late_result_is_not_committed_as_success(client, session_factory, bullet
 
     processing.process_job(job_id, session_factory, late)
     saved = client.get(f'/jobs/{job_id}').json()
-    assert saved['status'] == 'failed' and saved['result_data'] is None
+    assert saved['status'] == 'failed' and saved['result_data']['documents'] == {}

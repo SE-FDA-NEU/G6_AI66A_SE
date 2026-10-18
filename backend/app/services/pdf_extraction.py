@@ -35,7 +35,17 @@ def _extract_page(page):
             offset += 1  # Newline between extracted lines.
         text_parts.append(text)
         cursor = 0
+        seen_glyphs = set()
         for char in line['chars']:
+            # pdfplumber's text map emits one entry per Unicode code point.
+            # A single PDF glyph can map to several points (e.g. "fi"), so
+            # extract_text_lines returns the SAME glyph object repeatedly.
+            # Store its whole span once; distinct glyph objects remain distinct,
+            # even when their text or bounding boxes happen to be identical.
+            identity = id(char)
+            if identity in seen_glyphs:
+                continue
+            seen_glyphs.add(identity)
             value = char['text']
             if not value:
                 continue

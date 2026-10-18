@@ -5,6 +5,41 @@
 
 ---
 
+## Chạy local bằng `run.py`
+
+Cài Python 3.11+, Node.js 20.9+ kèm npm, và bật MySQL local. Sao chép `backend/.env.example` thành `backend/.env`, điền tài khoản/mật khẩu MySQL và `SECRET_KEY`. Từ thư mục gốc dự án:
+
+```bash
+python3 run.py
+# Windows: python run.py
+```
+
+Launcher tự tạo `backend/.venv` nếu thiếu, đối chiếu phiên bản trong `backend/requirements.txt`, cài gói thiếu/sai phiên bản và kiểm tra dependency. Frontend chưa cài sẽ chạy `npm ci`. Không cần kích hoạt venv trước.
+
+Trước khi bật server, launcher kết nối MySQL theo `backend/.env`, tạo database nếu chưa có và so danh sách bảng với models hiện tại: `users`, `folders`, `documents`, `jobs`, `job_files`, `citations`. Bảng thiếu được tạo; bảng thừa được bỏ sau khi đã ghi xong bản sao lưu cấu trúc và dữ liệu của các bảng hiện có tại `backend/data/backups/schema-*.sql`. Các bảng ứng dụng đang có được giữ nguyên dữ liệu. Lần chạy tiếp theo chỉ kiểm tra nếu danh sách bảng đã đúng. Đây là đồng bộ **danh sách bảng**; không tự sửa/xóa cột trong các bảng đang có.
+
+Nếu MySQL chưa bật, cấu hình sai, không có quyền tạo/xóa bảng, sao lưu thất bại hoặc bảng cần giữ đang tham chiếu bảng thừa, chương trình báo lỗi và không bật server. MySQL DDL có thể commit từng lệnh; khi thay đổi schema gặp lỗi, dùng đường dẫn backup được báo để phục hồi. Hãy dừng server trước khi chạy lại launcher. `run.py` không tự thêm tài khoản demo; database mới cần seed nếu muốn đăng nhập bằng tài khoản mẫu.
+
+```bash
+python3 run.py --no-browser       # chạy server, không tự mở trình duyệt
+python3 run.py --setup-only       # chỉ chuẩn bị dependencies/database rồi thoát
+python3 run.py --setup-only --dev # cài thêm requirements-dev.txt để chạy backend tests
+# Tùy chọn dữ liệu mẫu, sau khi chuẩn bị database:
+backend/.venv/bin/python backend/src/init_db.py --acceptance
+```
+
+Địa chỉ giao diện: **http://127.0.0.1:8000**; API/Swagger: **http://127.0.0.1:8001/docs**. Ctrl+C dừng cả hai server.
+
+Bản sao lưu SQL chứa dữ liệu tài khoản/tài liệu, được tạo với quyền hạn chế và không đưa vào Git. Để khôi phục, dừng ứng dụng, chọn đúng database trong lệnh sau, thay tên tệp bằng backup thực tế:
+
+```bash
+mysql -h localhost -P 3306 -u root -p documind_db < backend/data/backups/schema-<timestamp>.sql
+```
+
+Các bước bên dưới vẫn dùng được khi muốn cài hoặc chạy backend/frontend riêng.
+
+---
+
 ## 1. Prerequisites
 
 No pre-installed software is assumed. A fresh machine requires the following tools:
@@ -403,3 +438,25 @@ Run the complete backend suite from the repository root:
 ```
 
 `test_upload_jobs.py` verifies saved bytes, transaction rollback, safe storage paths, job/file ownership, modes, enqueue/worker failures and the response arriving while a real background worker is blocked. Existing #66 validation tests remain included.
+
+## Đọc PDF/DOCX/PPTX trên máy local
+
+Cài lại runtime dependencies sau khi cập nhật code:
+
+```bash
+backend/.venv/bin/python -m pip install -r backend/requirements.txt
+python3 run.py
+```
+
+Không cần cài ứng dụng Office hoặc dịch vụ chuyển đổi bên ngoài. PDF giữ nguyên trang gốc. DOCX được đọc bằng python-docx và tạo PDF văn bản bằng ReportLab; số trang là trang của **bản đọc**, có thể khác trang Word. PPTX dùng python-pptx, tạo đúng một trang đọc mỗi slide, gồm slide ẩn/trống và không đưa speaker notes vào nội dung. Bảng và văn bản được giữ cho tìm kiếm/dẫn nguồn; ảnh và bố cục Office gốc không được tái tạo. Tệp gốc vẫn tải được.
+
+Toàn bộ offsets/vị trí highlight được trích từ chính PDF reader đã lưu, không gán số đoạn văn thành số trang. PDF có glyph nhiều ký tự như `fi` được ánh xạ một lần cho mỗi glyph. PDF scan vẫn cần OCR ngoài phạm vi hiện tại.
+
+Các lượt upload đã báo lỗi cần tải lại tệp hoặc dùng thao tác thử lại hiện có sau khi restart server. Không xóa tài liệu hoặc database để áp dụng bản sửa.
+
+
+### Chọn ngôn ngữ tóm tắt
+
+Chọn **Tiếng Việt** hoặc **English** ở góc dưới bên phải trước khi bấm tải lên. Tác vụ sẽ tạo tóm tắt trực tiếp bằng ngôn ngữ đó và lưu vào MySQL (`jobs.result_data.language` và `jobs.result_data.documents.<document_id>.output`). Đổi ngôn ngữ giao diện sau đó không dịch lại hay tạo lại tóm tắt, không gọi thêm AI cho việc dịch. Các bản tóm tắt đã có giữ nguyên nội dung. API upload nhận form `language=vi|en`, mặc định `vi`; không cần migration database.
+
+Để kiểm tra: tải tài liệu khi chọn English, mở lại kết quả và bản tóm tắt dưới PDF, sau đó chuyển giao diện sang tiếng Việt. Nút và tiêu đề chuyển tiếng Việt, còn bản tóm tắt vừa tạo vẫn giữ tiếng Anh. Làm tương tự với tài liệu mới khi chọn tiếng Việt.

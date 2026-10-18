@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -28,13 +29,14 @@ async def upload_file(
         json_schema_extra={"items": {"type": "string", "format": "binary"}},
     ),
     mode: JobMode = Form(JobMode.BULLET),
+    language: Literal["en", "vi"] = Form("vi"),
     db: Session = Depends(get_db),
     queue=Depends(get_job_queue),
 ):
     validated = await validate_uploads(files or [])
     try:
         job_id = await run_in_threadpool(save_upload_job, db, user_id, files,
-                                        validated, mode, settings.STORAGE_DIR)
+                                        validated, mode, settings.STORAGE_DIR, language)
     except HTTPException:
         raise
     except Exception:

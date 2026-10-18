@@ -147,3 +147,19 @@ def test_folder_and_move_endpoints_require_authentication(client, filed_document
                         json={'folder_id': None}).status_code == 401
     assert client.get('/folders', headers=headers(99999)).status_code == 401
     assert client.post('/folders', headers=headers(99999), json={'name': 'Ghost'}).status_code == 401
+
+
+def test_filename_search_is_literal_owner_scoped_and_combines_with_folder_filters(client, session_factory, filed_documents):
+    ids = filed_documents
+    with session_factory() as db:
+        own = db.get(Document, ids['own'])
+        own.original_filename = 'Budget_100%.pdf'
+        db.get(Document, ids['peer']).original_filename = own.original_filename
+        db.commit()
+    assert [d['id'] for d in client.get('/documents', params={'filename': '100%'}).json()] == [ids['own']]
+    assert client.get('/documents', params={'filename': 'Supplier agreement'}).json() == []
+    assert client.get('/documents', params={'filename': 'Budget_', 'folder_id': ids['second']}).json() == []
+    assert client.get('/documents', params={'filename': '100%', 'unassigned': True}).json() == []
+    assert client.patch(f"/documents/{ids['own']}/folder", json={'folder_id': None}).status_code == 200
+    assert [d['id'] for d in client.get('/documents', params={'filename': 'budget_', 'unassigned': True}).json()] == [ids['own']]
+    assert client.get('/documents', params={'filename': 'x' * 501}).status_code == 422

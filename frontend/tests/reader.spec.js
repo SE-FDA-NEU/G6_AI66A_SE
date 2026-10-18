@@ -23,6 +23,7 @@ function pdfFixture() {
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/documents/*/summary*', route => route.fulfill({ json: { document: null } }));
   const response = await page.request.post('/auth/login', { form: { username: 'reader@example.com', password: user.password } });
   expect(response.status()).toBe(200);
 });
@@ -57,7 +58,7 @@ test('reader displays the pinned backend PDF and navigates real source pages', a
   await expect(page.getByText('Trang 3/3', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Trước', exact: true }).click();
   await expect(page.getByTitle('Bản đọc PDF — Trang 2')).toHaveAttribute('src', `/api${pages.reader_url}#page=2`);
-  await expect(page.getByText('Trang này không có lớp chữ để highlight chính xác.')).toBeVisible();
+  await expect(page.locator('.reader-text-layer')).toHaveCount(0);
   await expect(page).toHaveURL(`/documents/${id}?page=2`);
   await page.reload();
   await expect(page.getByTitle('Bản đọc PDF — Trang 2')).toHaveAttribute('src', `/api${pages.reader_url}#page=2`);
@@ -75,10 +76,10 @@ test('PPTX references are labelled as slides and target the same PDF page', asyn
   } }));
   await page.route('**/api/documents/77/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
   await page.goto('/documents/77?page=2');
-  await expect(page.getByText('Slide 2/3', { exact: true })).toBeVisible();
-  await expect(page.getByTitle('Bản đọc PDF — Slide 2')).toHaveAttribute('src', `/api/documents/77/reader.pdf?version=${version}#page=2`);
+  await expect(page.getByText('Trang chiếu 2/3', { exact: true })).toBeVisible();
+  await expect(page.getByTitle('Bản đọc PDF — Trang chiếu 2')).toHaveAttribute('src', `/api/documents/77/reader.pdf?version=${version}#page=2`);
   await page.getByRole('combobox', { name: 'Chọn trang nguồn' }).selectOption('3');
-  await expect(page.getByTitle('Bản đọc PDF — Slide 3')).toHaveAttribute('src', `/api/documents/77/reader.pdf?version=${version}#page=3`);
+  await expect(page.getByTitle('Bản đọc PDF — Trang chiếu 3')).toHaveAttribute('src', `/api/documents/77/reader.pdf?version=${version}#page=3`);
 });
 
 test('conversion failure is shown explicitly without fabricated reader pages', async ({ page }) => {
@@ -88,9 +89,9 @@ test('conversion failure is shown explicitly without fabricated reader pages', a
     json: { detail: { code: 'conversion_failed', message: 'Office to PDF conversion failed.' } } }));
   await page.goto('/documents/77');
   await page.getByRole('button', { name: 'Chuẩn bị bản đọc' }).click();
-  await expect(page.locator('.reader-page').getByRole('alert')).toContainText('Office to PDF conversion failed.');
+  await expect(page.locator('.reader-page').getByRole('alert')).toContainText('Không thể tạo bản đọc PDF cho tài liệu Office.');
   await expect(page.locator('iframe')).toHaveCount(0);
-  await expect(page.getByRole('combobox')).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Chọn trang nguồn' })).toHaveCount(0);
 });
 
 function mockContract24() {
@@ -122,8 +123,8 @@ test('page-12 direct link in a 24-page contract and browser history navigation',
   const frame = page.getByTitle('Bản đọc PDF — Trang 12');
   await expect(frame).toHaveAttribute('src', `/api${contract.reader_url}#page=12`);
 
-  // Verify text layer for page 12
-  await expect(page.getByText(/Điều khoản hợp đồng trang 12/)).toBeVisible();
+  await expect(page.locator('.reader-text-layer')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Bản tóm tắt đã lưu', exact: true })).toBeVisible();
 
   // Both Previous and Next buttons are enabled on page 12
   await expect(page.getByRole('button', { name: 'Trước', exact: true })).toBeEnabled();
@@ -136,7 +137,7 @@ test('page-12 direct link in a 24-page contract and browser history navigation',
   await expect(page.getByTitle('Bản đọc PDF — Trang 13')).toBeVisible();
 
   // Page 13 has no text layer in our mock
-  await expect(page.getByText('Trang này không có lớp chữ để highlight chính xác.')).toBeVisible();
+  await expect(page.locator('.reader-text-layer')).toHaveCount(0);
 
   // 3. Browser Back navigation
   await page.goBack();
@@ -168,7 +169,7 @@ test('access-denied document state shows 403 message and library link without if
     json: { detail: 'Access denied' },
   }));
   await page.goto('/documents/888');
-  await expect(page.locator('.reader-page .error-box')).toContainText('Access denied');
+  await expect(page.locator('.reader-page .error-box')).toContainText('Bạn không có quyền truy cập tài liệu này');
   await expect(page.locator('iframe')).toHaveCount(0);
   await expect(page.locator('.reader-error').getByRole('link', { name: 'Về thư viện' })).toBeVisible();
 });
@@ -232,25 +233,11 @@ test('precise highlighting resolves evidence passage using stored positions and 
 
   // Page 3 is loaded correctly
   await expect(page.getByText('Trang 3/5', { exact: true })).toBeVisible();
-  await expect(page.getByTitle('Bản đọc PDF — Trang 3')).toHaveAttribute('src', `/api${docData.reader_url}#page=3`);
+  await expect(page.getByTitle('Bản đọc PDF — Trang 3')).toHaveAttribute('src', `/api${docData.reader_url}&highlight_page=3&start=${occ2Start}&end=${occ2End}#page=3`);
 
-  // Highlighted passage card is displayed with the exact quote and stored positions tag
-  const card = page.locator('.highlighted-passage-card');
-  await expect(card).toBeVisible();
-  await expect(card).toContainText(`55-3-${occ2Start}-${occ2End}`);
-  await expect(card).toContainText(repeatedPhrase);
-  await expect(page.locator('.stored-positions-tag')).toBeVisible();
-
-  // Highlight inside the text layer
-  const mark = page.locator('mark.citation-highlight');
-  await expect(mark).toHaveCount(1);
-  await expect(mark).toHaveText(repeatedPhrase);
-  await expect(mark).toHaveAttribute('data-start', String(occ2Start));
-  await expect(mark).toHaveAttribute('data-end', String(occ2End));
-
-  // The text before the mark contains the first occurrence, confirming occurrence 1 was NOT highlighted
-  const textBefore = page.locator('.text-layer-rendered .text-before');
-  await expect(textBefore).toContainText(`Khoản 1 quy định: ${repeatedPhrase}`);
+  await expect(page.locator('.reader-highlight-note')).toBeVisible();
+  await expect(page.locator('.reader-text-layer')).toHaveCount(0);
+  await expect(page.locator('.reader-pdf')).toHaveAttribute('src', new RegExp(`highlight_page=3&start=${occ2Start}&end=${occ2End}#page=3$`));
 
   // Fallback notice should NOT be present for precise matches
   await expect(page.locator('.highlight-fallback-notice')).toHaveCount(0);
@@ -284,10 +271,10 @@ test('scanned page fallback still opens the correct page and displays exact high
   // Fallback notice is displayed with exact required text
   const fallbackNotice = page.locator('.highlight-fallback-notice');
   await expect(fallbackNotice).toBeVisible();
-  await expect(fallbackNotice).toContainText('Exact highlight not available for this passage.');
+  await expect(fallbackNotice).toContainText('Không có điểm nổi bật chính xác cho đoạn văn này.');
 
   // Text layer informs that no text layer is available
-  await expect(page.getByText('Trang này không có lớp chữ để highlight chính xác.')).toBeVisible();
+  await expect(page.locator('.reader-text-layer')).toHaveCount(0);
 
   // Navigation controls still work normally
   await expect(page.getByRole('button', { name: 'Trước', exact: true })).toBeEnabled();
@@ -322,16 +309,17 @@ test('unresolved span fallback still opens the correct page and displays exact h
   // Fallback notice is displayed with exact required text
   const fallbackNotice = page.locator('.highlight-fallback-notice');
   await expect(fallbackNotice).toBeVisible();
-  await expect(fallbackNotice).toContainText('Exact highlight not available for this passage.');
+  await expect(fallbackNotice).toContainText('Không có điểm nổi bật chính xác cho đoạn văn này.');
 
   // No <mark> element is rendered
   await expect(page.locator('mark.citation-highlight')).toHaveCount(0);
 
   // Text layer snippet is rendered normally as plain text
-  await expect(page.locator('.text-layer-snippet')).toHaveText('Đoạn văn bản mẫu trang 1 ngắn gọn.');
+  await expect(page.locator('.reader-text-layer')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Bản tóm tắt đã lưu', exact: true })).toBeVisible();
 });
 
-test('originating job ID displays Back to Results, survives reader refresh and page navigation, and returns to /results/:jobId with saved results', async ({ page }) => {
+test('originating job ID displays Về kết quả, survives reader refresh and page navigation, and returns to /results/:jobId with saved results', async ({ page }) => {
   const version = '7'.repeat(64); // Persisted reader versions are hexadecimal SHA-256 digests.
   const jobId = 105;
   const docId = 88;
@@ -403,8 +391,8 @@ test('originating job ID displays Back to Results, survives reader refresh and p
   await expect(page).toHaveURL(new RegExp(`/documents/${docId}.*job=${jobId}`));
   await expect(page.getByText('Trang 2/3', { exact: true })).toBeVisible();
 
-  // "Back to Results" link is displayed and points to /results/105
-  const backToResults = page.getByRole('link', { name: 'Back to Results' });
+  // "Về kết quả" link is displayed and points to /results/105
+  const backToResults = page.getByRole('link', { name: 'Về kết quả' });
   await expect(backToResults).toBeVisible();
   await expect(backToResults).toHaveAttribute('href', `/results/${jobId}`);
 
@@ -414,19 +402,19 @@ test('originating job ID displays Back to Results, survives reader refresh and p
   await expect(backToResults).toBeVisible();
   await expect(backToResults).toHaveAttribute('href', `/results/${jobId}`);
 
-  // Step 3: Reader refresh retains Back to Results button and return job ID
+  // Step 3: Reader refresh retains Về kết quả button and return job ID
   await page.reload();
   await expect(page.getByText('Trang 3/3', { exact: true })).toBeVisible();
-  const backAfterReload = page.getByRole('link', { name: 'Back to Results' });
+  const backAfterReload = page.getByRole('link', { name: 'Về kết quả' });
   await expect(backAfterReload).toBeVisible();
   await expect(backAfterReload).toHaveAttribute('href', `/results/${jobId}`);
 
-  // Step 4: Click Back to Results and return to the same /results/:jobId with saved results
+  // Step 4: Click Về kết quả and return to the same /results/:jobId with saved results
   await backAfterReload.click();
   await expect(page).toHaveURL(`/results/${jobId}`);
   await expect(page.getByText('TÁC VỤ #105')).toBeVisible();
   await expect(page.getByText('1.500.000.000 VNĐ')).toBeVisible();
-  await expect(page.getByRole('status', { name: 'Trạng thái job' })).toHaveText('Completed');
+  await expect(page.getByRole('status', { name: 'Trạng thái tác vụ' })).toHaveText('Hoàn tất');
 });
 
 test('document opened from workspace provides workspace return path and preserves it across refresh', async ({ page }) => {
@@ -451,15 +439,15 @@ test('document opened from workspace provides workspace return path and preserve
   // Step 1: Open document directly without originating job ID (workspace entry path)
   await page.goto(`/documents/${docId}`);
 
-  // "Back to Results" is NOT displayed
+  // "Về kết quả" is NOT displayed
   await expect(page.locator('.return-job-link')).toHaveCount(0);
 
-  // "Back to Workspace" return link is displayed and points to /workspace
+  // "Về thư viện" return link is displayed and points to /workspace
   const workspaceReturn = page.locator('.return-workspace-link');
   await expect(workspaceReturn).toBeVisible();
   await expect(workspaceReturn).toHaveAttribute('href', '/workspace');
 
-  // Step 2: Reader refresh retains workspace return path without inventing Back to Results
+  // Step 2: Reader refresh retains workspace return path without inventing Về kết quả
   await page.reload();
   await expect(page.locator('.return-job-link')).toHaveCount(0);
   const workspaceReturnAfterReload = page.locator('.return-workspace-link');
@@ -473,3 +461,48 @@ test('document opened from workspace provides workspace return path and preserve
 });
 
 
+
+test('saved summary replaces the text preview below the PDF and stays while paging', async ({ page }) => {
+  const version = 'a'.repeat(64);
+  const reader = { page_count: 2, page_kind: 'page', reader_version: version,
+    reader_url: `/documents/55/reader.pdf?version=${version}`, pages: [{ page: 1, text: 'Original text.' }, { page: 2, text: 'Second page.' }] };
+  await page.route('**/api/documents/55/pages', route => route.fulfill({ json: reader }));
+  await page.route('**/api/documents/55/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+  let loads = 0;
+  await page.route('**/api/documents/55/summary*', route => {
+    loads++;
+    return route.fulfill({ json: { job_id: 99, mode: 'bullet', document: {
+      schema_version: 1, document_id: 55, original_filename: 'Saved.pdf', analysis_status: 'completed',
+      reader: { version, page_kind: 'page' }, warnings: [], output: { type: 'bullet',
+        bullets: [{ text: 'Previously saved key finding.', unverified: true, evidence: [] }], actions: [] },
+    } } });
+  });
+  await page.goto('/documents/55?page=1');
+  const summary = page.getByRole('region', { name: 'Bản tóm tắt đã lưu', exact: true });
+  await expect(summary).toContainText('Previously saved key finding.');
+  await expect(page.locator('.reader-text-layer')).toHaveCount(0);
+  expect(await summary.evaluate(element => element.getBoundingClientRect().top > document.querySelector('.reader-pdf').getBoundingClientRect().bottom)).toBe(true);
+  await page.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(page.getByText('Trang 2/2', { exact: true })).toBeVisible();
+  await expect(summary).toContainText('Previously saved key finding.');
+  await expect(summary.getByRole('link', { name: 'Xem tác vụ #99', exact: true })).toHaveAttribute('href', '/results/99');
+  expect(loads).toBe(1);
+});
+
+test('saved summary failure retries separately and empty summary keeps the reader usable', async ({ page }) => {
+  const version = 'b'.repeat(64);
+  await page.route('**/api/documents/55/pages', route => route.fulfill({ json: {
+    page_count: 1, page_kind: 'page', reader_version: version,
+    reader_url: `/documents/55/reader.pdf?version=${version}`, pages: [{ page: 1, text: 'Source text.' }],
+  } }));
+  await page.route('**/api/documents/55/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+  let attempt = 0;
+  await page.route('**/api/documents/55/summary*', route => ++attempt === 1
+    ? route.fulfill({ status: 503, json: { detail: 'Unavailable' } }) : route.fulfill({ json: { document: null } }));
+  await page.goto('/documents/55?page=1');
+  const summary = page.getByRole('region', { name: 'Bản tóm tắt đã lưu', exact: true });
+  await expect(summary.getByRole('alert')).toContainText('Không thể tải bản tóm tắt');
+  await expect(page.locator('.reader-pdf')).toBeVisible();
+  await summary.getByRole('button', { name: 'Thử lại bản tóm tắt', exact: true }).click();
+  await expect(summary).toContainText('Tài liệu chưa có bản tóm tắt đã lưu.');
+});

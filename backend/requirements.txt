@@ -1,12 +1,31 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-pymysql
-pydantic-settings
-python-jose[cryptography]
-passlib[bcrypt]
-bcrypt<4.0.0
-python-multipart
+# Python 3.11+; versions verified together for the local FastAPI/MySQL app.
+# Install: python -m pip install -r backend/requirements.txt
+
+# API and configuration
+fastapi==0.141.1
+starlette==1.7.0
+uvicorn[standard]==0.53.0
+pydantic==2.13.5
+email-validator==2.3.0
+pydantic-settings==2.15.0
+python-dotenv==1.2.3
+python-multipart==0.0.32
+
+# Local MySQL
+SQLAlchemy==2.0.54
+PyMySQL==1.2.3
+
+# Authentication; tested compatible passlib/bcrypt versions.
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+bcrypt==3.2.2
+
+# Gemini HTTP client
+httpx==0.28.1
+
+# Native PDF/DOCX/PPTX reading and PDF export; no LibreOffice.
 pdfplumber==0.11.9
-httpx>=0.28,<1
+pypdf==6.19.0
 reportlab==4.5.1
+python-docx==1.2.0
+python-pptx==1.0.2

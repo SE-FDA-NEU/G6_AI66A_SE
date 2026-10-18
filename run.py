@@ -2,6 +2,7 @@
 """Start DocuMind and open its UI: python run.py (Windows/macOS/Linux)."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import shutil
@@ -20,16 +21,79 @@ API_URL = 'http://127.0.0.1:8001'
 WINDOWS = os.name == 'nt'
 
 
+def backend_python():
+    return ROOT / 'backend/.venv' / ('Scripts/python.exe' if WINDOWS else 'bin/python')
+
+
+def run_checked(command, *, directory=ROOT):
+    try:
+        subprocess.run(command, cwd=directory, check=True,
+                       env={**os.environ, 'PYTHONIOENCODING': 'utf-8'})
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise RuntimeError('Bước chuẩn bị thất bại. Xem thông báo phía trên rồi chạy lại run.py.') from error
+
+
+def ensure_backend_dependencies(development=False):
+    python = backend_python()
+    if not python.is_file():
+        if sys.version_info < (3, 11):
+            raise RuntimeError('Cần Python 3.11 trở lên để tạo backend/.venv.')
+        print('Đang tạo backend/.venv…', flush=True)
+        run_checked([sys.executable, '-m', 'venv', str(ROOT / 'backend/.venv')])
+    probe = subprocess.run([str(python), '-c',
+                            'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'], check=False)
+    if probe.returncode:
+        raise RuntimeError('backend/.venv cần Python 3.11 trở lên. Hãy tạo lại venv bằng Python mới.')
+    requirements = ROOT / 'backend' / ('requirements-dev.txt' if development else 'requirements.txt')
+    # All direct requirements are pinned. Check recursively without importing any
+    # third-party package, so this also works in a newly created virtualenv.
+    checker = r"""
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
+import sys
+
+def check(path):
+    for raw in path.read_text(encoding='utf-8').splitlines():
+        line = raw.split('#', 1)[0].strip()
+        if not line:
+            continue
+        if line.startswith('-r '):
+            if not check(path.parent / line[3:].strip()):
+                return False
+            continue
+        name, pin = line.split('==', 1)
+        try:
+            if version(name.split('[', 1)[0]) != pin:
+                return False
+        except PackageNotFoundError:
+            return False
+    return True
+sys.exit(0 if check(Path(sys.argv[1])) else 1)
+"""
+    checked = subprocess.run([str(python), '-c', checker, str(requirements)], check=False)
+    # Checking top-level pins also needs to catch missing/conflicting transitive
+    # packages and extras (e.g. cryptography, uvicorn reload dependencies).
+    dependencies = subprocess.run([str(python), '-m', 'pip', 'check'],
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+    extras = subprocess.run([str(python), '-c', 'import cryptography, watchfiles, httptools, websockets, dotenv, yaml; '
+                            'import sys; '
+                            'exec("import uvloop" if sys.platform != "win32" and sys.implementation.name == "cpython" else "")'],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    if checked.returncode or dependencies.returncode or extras.returncode:
+        print(f'Đang cài/đồng bộ {requirements.relative_to(ROOT)}…', flush=True)
+        run_checked([str(python), '-m', 'pip', 'install', '--disable-pip-version-check', '-r', str(requirements)])
+    run_checked([str(python), '-m', 'pip', 'check'])
+    return python
+
+
 def server_commands():
-    python = ROOT / 'backend/.venv' / ('Scripts/python.exe' if WINDOWS else 'bin/python')
+    python = backend_python()
     node = shutil.which('node')
     next_cli = ROOT / 'frontend/node_modules/next/dist/bin/next'
     if not python.is_file():
-        raise RuntimeError('Thiếu backend/.venv. Hãy cài backend theo docs/SETUP.md trước.')
+        raise RuntimeError('Không tìm thấy Python của backend sau bước cài đặt.')
     if not node or not next_cli.is_file():
         raise RuntimeError('Cần Node.js và dependencies frontend. Chạy npm ci trong thư mục frontend.')
-    if not (ROOT / 'backend/.env').is_file():
-        raise RuntimeError('Thiếu backend/.env. Hãy cấu hình theo docs/SETUP.md trước.')
     # Invoke Node directly: npm.cmd cannot be launched like an executable on Windows.
     return [
         ('backend', [str(python), '-m', 'uvicorn', 'app.main:app',
@@ -37,6 +101,31 @@ def server_commands():
         ('frontend', [node, str(next_cli), 'dev', '--hostname', '127.0.0.1', '--port', '8000'],
          {'BACKEND_ORIGIN': API_URL}),
     ]
+
+
+def prepare_local(development=False):
+    if not (ROOT / 'backend/.env').is_file():
+        raise RuntimeError('Thiếu backend/.env. Sao chép backend/.env.example và điền cấu hình MySQL trước.')
+    node = shutil.which('node')
+    npm = shutil.which('npm.cmd' if WINDOWS else 'npm')
+    if not node or not npm:
+        raise RuntimeError('Cần Node.js 20.9 trở lên và npm để chạy frontend.')
+    result = subprocess.run([node, '-p', 'JSON.stringify(process.versions.node)'],
+                            capture_output=True, text=True, check=False)
+    if result.returncode:
+        raise RuntimeError('Không đọc được phiên bản Node.js.')
+    version = tuple(int(part) for part in json.loads(result.stdout).split('.')[:2])
+    if version < (20, 9):
+        raise RuntimeError('Cần Node.js 20.9 trở lên để chạy Next.js.')
+    python = ensure_backend_dependencies(development)
+    if not (ROOT / 'frontend/node_modules/next/dist/bin/next').is_file():
+        print('Đang cài frontend bằng npm ci…', flush=True)
+        # npm.cmd is a Windows command script; use cmd.exe explicitly.
+        command = ([os.environ.get('COMSPEC', 'cmd.exe'), '/d', '/c', npm, 'ci']
+                   if WINDOWS else [npm, 'ci'])
+        run_checked(command, directory=ROOT / 'frontend')
+    print('Đang kiểm tra database MySQL và các bảng…', flush=True)
+    run_checked([str(python), '-m', 'app.db.bootstrap'], directory=ROOT / 'backend')
 
 
 def wait_ready(children, timeout=120):
@@ -90,15 +179,11 @@ def stop_servers(children):
 def main():
     parser = argparse.ArgumentParser(description='Khởi động DocuMind và tự mở giao diện.')
     parser.add_argument('--no-browser', action='store_true', help='Chạy server mà không tự mở trình duyệt')
+    parser.add_argument('--setup-only', action='store_true', help='Cài dependencies và đồng bộ database rồi thoát')
+    parser.add_argument('--dev', action='store_true', help='Cài thêm requirements-dev.txt để chạy kiểm thử backend')
     args = parser.parse_args()
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
-    try:
-        commands = server_commands()
-    except RuntimeError as error:
-        print(error, file=sys.stderr)
-        return 1
-
     for port in (8000, 8001):
         with socket.socket() as sock:
             try:
@@ -106,6 +191,19 @@ def main():
             except OSError:
                 print(f'Cổng {port} đang được dùng. Dừng server cũ trước khi chạy lại.', file=sys.stderr)
                 return 1
+
+    try:
+        prepare_local(args.dev)
+        if args.setup_only:
+            print('Đã chuẩn bị xong môi trường và database.', flush=True)
+            return 0
+        commands = server_commands()
+    except KeyboardInterrupt:
+        print('\nĐã dừng bước chuẩn bị.', flush=True)
+        return 0
+    except (OSError, RuntimeError, ValueError) as error:
+        print(f'Không thể chuẩn bị DocuMind: {error}', file=sys.stderr)
+        return 1
 
     children = []
 
@@ -117,7 +215,7 @@ def main():
     try:
         options = ({'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
                    if WINDOWS else {'start_new_session': True})
-        print('Đang khởi động DocuMind… MySQL cần được bật để đăng nhập.', flush=True)
+        print('Database đã sẵn sàng. Đang khởi động DocuMind…', flush=True)
         for directory, command, env in commands:
             children.append(subprocess.Popen(
                 command, cwd=ROOT / directory,

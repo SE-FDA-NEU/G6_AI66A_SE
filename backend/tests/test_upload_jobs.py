@@ -197,7 +197,7 @@ def test_default_worker_reports_invalid_pdf_extraction(client, session_factory):
         job = db.get(Job, int(response.json()['jobId']))
         assert job.mode == JobMode.BULLET
         assert job.status == JobStatus.FAILED
-        assert job.completed_count == 0 and job.result_data is None
+        assert job.completed_count == 0 and job.result_data == {'schema_version': 1, 'language': 'vi', 'documents': {}}
         assert 'invalid_rendered_pdf' in job.job_files[0].error_message
 
 
@@ -206,3 +206,28 @@ def test_closed_queue_rejects_new_work(client, session_factory):
     client.portal.call(queue.close)
     with pytest.raises(RuntimeError, match='shutting down'):
         client.portal.call(queue.enqueue, 123)
+
+
+@pytest.mark.parametrize('language', ['en', 'vi'])
+def test_upload_language_is_saved_before_enqueue_and_passed_to_worker(client, session_factory, job_queue, language):
+    from app.services.processing import process_job
+    response = client.post('/upload', files=parts('language.pdf'), data={'language': language})
+    assert response.status_code == 202
+    job_id = int(response.json()['jobId'])
+    with session_factory() as db:
+        assert db.get(Job, job_id).result_data['language'] == language
+    seen = []
+    async def processor(source, mode):
+        seen.append(source.language)
+        return {'text': 'Saved summary'}
+    process_job(job_id, session_factory, processor=processor)
+    assert seen == [language]
+    result = client.get(f'/jobs/{job_id}', headers={'X-DocuMind-Language': 'vi' if language == 'en' else 'en'})
+    assert result.json()['result_data']['language'] == language
+    with session_factory() as db:
+        assert db.get(Job, job_id).result_data['language'] == language
+
+
+def test_invalid_summary_language_does_not_create_upload(client, session_factory, job_queue):
+    assert client.post('/upload', files=parts('a.pdf'), data={'language': 'fr'}).status_code == 422
+    assert_empty(session_factory, job_queue)

@@ -1,3 +1,4 @@
+import { useI18n } from '../lib/i18n';
 /**
  * Reusable Document Metadata UI (US10 / BR06 / BR07)
  * Displays AI classification label, confidence score, Needs review state,
@@ -20,6 +21,7 @@ export function DocumentMetadata({
   document,
   className = '',
 }) {
+  const { t, locale, errorText } = useI18n();
   const label = aiLabel !== undefined ? aiLabel : (document?.ai_label ?? document?.label?.ai_label);
   const confidence = aiConfidence !== undefined
     ? aiConfidence
@@ -44,18 +46,16 @@ export function DocumentMetadata({
     <div
       className={`document-metadata ${className}`.trim()}
       data-testid="document-metadata"
-      aria-label="Thông tin phân loại tài liệu (AI Metadata)"
+      aria-label={t("Thông tin phân loại tài liệu (AI Metadata)")}
     >
       {/* AI Label */}
       {label ? (
-        <span className="metadata-badge metadata-ai-label" data-testid="document-ai-label">
-          <span className="metadata-badge-prefix">Nhãn AI:</span>{' '}
+        <span className="metadata-badge metadata-ai-label" data-testid="document-ai-label" data-original-label={label || ''}>
+          <span className="metadata-badge-prefix">{t("Nhãn AI:")}</span>{' '}
           <strong>{label}</strong>
         </span>
       ) : (
-        <span className="metadata-badge metadata-ai-label metadata-empty" data-testid="document-ai-label">
-          Chưa có nhãn AI
-        </span>
+        <span className="metadata-badge metadata-ai-label metadata-empty" data-testid="document-ai-label" data-original-label={label || ''}>{t("Chưa có nhãn AI")}</span>
       )}
 
       {/* AI Confidence (Distinct from factual verification) */}
@@ -66,7 +66,7 @@ export function DocumentMetadata({
           data-confidence-percent={percent}
           data-confidence-level={isHighConfidence ? 'high' : 'low'}
         >
-          <span className="metadata-badge-prefix">Độ tin cậy:</span>{' '}
+          <span className="metadata-badge-prefix">{t("Độ tin cậy:")}</span>{' '}
           <strong>{percent}%</strong>
         </span>
       )}
@@ -77,24 +77,20 @@ export function DocumentMetadata({
           className="metadata-badge metadata-review-state review-confirmed"
           data-testid="document-review-state"
           data-state="confirmed"
-        >
-          Đã xác nhận
-        </span>
+        >{t("Đã xác nhận")}</span>
       ) : isLowConfidence ? (
         <span
           className="metadata-badge metadata-review-state review-needs-review"
           data-testid="document-review-state"
           data-state="needs_review"
-        >
-          Needs review · Cần kiểm tra
-        </span>
+        >{t("Needs review · Cần kiểm tra")}</span>
       ) : (
         <span
           className="metadata-badge metadata-review-state review-suggestion"
           data-testid="document-review-state"
           data-state="needs_review"
         >
-          {isHighConfidence ? 'Gợi ý độ tin cậy cao' : 'Nhãn AI · Chưa có điểm tin cậy'}
+          {isHighConfidence ? t("Gợi ý độ tin cậy cao") : t("Nhãn AI · Chưa có điểm tin cậy")}
         </span>
       )}
 
@@ -104,25 +100,25 @@ export function DocumentMetadata({
         data-testid="document-folder-placement"
         data-folder-id={folder != null ? folder : 'unassigned'}
       >
-        <span className="metadata-badge-prefix">Thư mục:</span>{' '}
+        <span className="metadata-badge-prefix">{t("Thư mục:")}</span>{' '}
         {folderName ? (
           folderName
         ) : folder != null ? (
           `#${folder}`
         ) : (
-          'Chưa phân thư mục (Unassigned)'
+          t("Chưa phân thư mục (Unassigned)")
         )}
       </span>}
 
       {/* User label if previously assigned */}
       {userLab && (
         <span className="metadata-badge metadata-user-label" data-testid="document-user-label">
-          <span className="metadata-badge-prefix">Nhãn người dùng:</span>{' '}
+          <span className="metadata-badge-prefix">{t("Nhãn người dùng:")}</span>{' '}
           <strong>{userLab}</strong>
         </span>
       )}
       {userLab && <span className="metadata-badge metadata-human-decision" data-testid="document-user-decision">
-        {isConfirmed ? (userLab === label ? 'Người dùng đã xác nhận gợi ý AI' : 'Người dùng đã chỉnh sửa và xác nhận') : 'Bản nháp của người dùng · Chưa xác nhận'}
+        {isConfirmed ? (userLab === label ? t("Người dùng đã xác nhận gợi ý AI") : t("Người dùng đã chỉnh sửa và xác nhận")) : t("Bản nháp của người dùng · Chưa xác nhận")}
       </span>}
     </div>
   );

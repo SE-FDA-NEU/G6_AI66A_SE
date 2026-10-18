@@ -61,6 +61,7 @@ function mockMacroeconomicsDocument() {
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/documents/*/summary*', route => route.fulfill({ json: { document: null } }));
   const login = await page.request.post('/auth/login', { form: { username: user.email, password: user.password } });
   expect(login.status()).toBe(200);
 });
@@ -94,16 +95,10 @@ test.describe('In-Document Reader Search (US04)', () => {
     await expect(matchCount).toBeVisible();
     await expect(matchCount).toContainText('1/1 kết quả');
 
-    // 3. Highlighted passage card on page 12
-    const matchCard = page.locator('.search-match-card');
-    await expect(matchCard).toBeVisible();
-    await expect(matchCard).toContainText('Kết quả tìm kiếm (1/1) — Trang 12');
-    await expect(matchCard).toContainText('inflation causes');
+    await expect(page.locator('.reader-text-layer')).toHaveCount(0);
+    const viewer = page.getByTitle('Bản đọc PDF — Trang 12');
+    await expect(viewer).toHaveAttribute('src', /highlight_page=12&q=inflation\+causes&start=23&end=39#page=12$/);
 
-    // 4. Passage highlight in text layer
-    const highlightedSpan = page.locator('.reader-text-layer mark.search-highlight.active-match');
-    await expect(highlightedSpan).toBeVisible();
-    await expect(highlightedSpan).toHaveText('inflation causes');
   });
 
   test('repeated matches support moving between occurrences across pages with active highlight', async ({ page }) => {
@@ -128,27 +123,23 @@ test.describe('In-Document Reader Search (US04)', () => {
     const countBadge = page.getByTestId('search-match-count');
     await expect(countBadge).toContainText('1/3 kết quả');
 
-    // Page 2 text layer has 2 search-highlight marks, with the first one active
-    const page2Highlights = page.locator('.reader-text-layer mark.search-highlight');
-    await expect(page2Highlights).toHaveCount(2);
-    await expect(page2Highlights.first()).toHaveClass(/active-match/);
-    await expect(page2Highlights.nth(1)).toHaveClass(/other-match/);
+    const viewer = page.locator('.reader-pdf');
+    const first = docData.pages[1].text.indexOf('lạm phát');
+    const second = docData.pages[1].text.lastIndexOf('lạm phát');
+    await expect(viewer).toHaveAttribute('src', new RegExp(`start=${first}&end=${first + 8}#page=2$`));
 
     // Click Next (Sau) -> Match 2: Still on page 2, active highlight shifts to second occurrence
     await page.getByTestId('next-match-btn').click();
     await expect(countBadge).toContainText('2/3 kết quả');
     await expect(page.getByText('Trang 2/24', { exact: true })).toBeVisible();
-    await expect(page2Highlights.first()).toHaveClass(/other-match/);
-    await expect(page2Highlights.nth(1)).toHaveClass(/active-match/);
+    await expect(viewer).toHaveAttribute('src', new RegExp(`start=${second}&end=${second + 8}#page=2$`));
 
     // Click Next (Sau) -> Match 3: Jumps across pages to page 12!
     await page.getByTestId('next-match-btn').click();
     await expect(countBadge).toContainText('3/3 kết quả');
     await expect(page).toHaveURL(/page=12/);
     await expect(page.getByText('Trang 12/24', { exact: true })).toBeVisible();
-    const page12Highlight = page.locator('.reader-text-layer mark.search-highlight.active-match');
-    await expect(page12Highlight).toBeVisible();
-    await expect(page12Highlight).toHaveText('lạm phát');
+    await expect(viewer).toHaveAttribute('src', /highlight_page=12&.*#page=12$/);
 
     // Click Prev (Trước) -> Moves back to Match 2 on page 2
     await page.getByTestId('prev-match-btn').click();
@@ -159,7 +150,7 @@ test.describe('In-Document Reader Search (US04)', () => {
     // Click Prev (Trước) -> Moves back to Match 1 on page 2
     await page.getByTestId('prev-match-btn').click();
     await expect(countBadge).toContainText('1/3 kết quả');
-    await expect(page2Highlights.first()).toHaveClass(/active-match/);
+    await expect(viewer).toHaveAttribute('src', new RegExp(`start=${first}&end=${first + 8}#page=2$`));
   });
 
   test('empty query and clearing search reset search state and highlights', async ({ page }) => {
@@ -187,7 +178,8 @@ test.describe('In-Document Reader Search (US04)', () => {
     await expect(searchInput).toHaveValue('');
     await expect(page.getByTestId('search-match-count')).toHaveCount(0);
     await expect(page.locator('.search-match-card')).toHaveCount(0);
-    await expect(page.locator('.reader-text-layer mark.search-highlight')).toHaveCount(0);
+    await expect(page.locator('.reader-text-layer')).toHaveCount(0);
+    await expect(page.locator('.reader-pdf')).not.toHaveAttribute('src', /highlight_page=/);
   });
 
   test('no-results state displays clear message without breaking reader', async ({ page }) => {
@@ -210,7 +202,8 @@ test.describe('In-Document Reader Search (US04)', () => {
     await expect(noResultsMsg).toBeVisible();
     await expect(noResultsMsg).toContainText('Không tìm thấy kết quả phù hợp');
     await expect(page.getByTestId('search-match-count')).toHaveCount(0);
-    await expect(page.locator('.reader-text-layer mark.search-highlight')).toHaveCount(0);
+    await expect(page.locator('.reader-text-layer')).toHaveCount(0);
+    await expect(page.locator('.reader-pdf')).not.toHaveAttribute('src', /highlight_page=/);
 
     // Verify reader remains functional on current page
     await expect(page.getByText('Trang 1/24', { exact: true })).toBeVisible();
@@ -231,7 +224,7 @@ test.describe('In-Document Reader Search (US04)', () => {
     await expect(page).toHaveURL(/page=12/);
     await expect(page.getByText('Trang 12/24', { exact: true })).toBeVisible();
     await expect(page.getByTestId('search-match-count')).toContainText('1/1 kết quả');
-    await expect(page.locator('.reader-text-layer mark.search-highlight.active-match')).toHaveText('inflation causes');
+    await expect(page.locator('.reader-pdf')).toHaveAttribute('src', /highlight_page=12&q=inflation\+causes&start=/);
   });
 
   test('documented page text endpoint provides authorized text layer for reader search', async ({ page }) => {
@@ -263,3 +256,21 @@ test.describe('In-Document Reader Search (US04)', () => {
   });
 });
 
+
+
+test('PDF highlight offsets use Unicode code points after an emoji and same-page searches survive refresh', async ({ page }) => {
+  const version = 'd'.repeat(64);
+  await page.route('**/api/documents/99/pages', route => route.fulfill({ json: {
+    page_count: 1, page_kind: 'page', reader_version: version,
+    reader_url: `/documents/99/reader.pdf?version=${version}`,
+    pages: [{ page: 1, text: '🙂 Payment terms', positions: [{ start: 2, end: 9, bbox: [72, 80, 120, 95] }] }],
+  } }));
+  await page.route('**/api/documents/99/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
+  await page.goto('/documents/99?page=1');
+  await page.getByTestId('reader-search-input').fill('Payment');
+  await page.getByTestId('reader-search-button').click();
+  await expect(page).toHaveURL(/search=Payment/);
+  await expect(page.locator('.reader-pdf')).toHaveAttribute('src', /start=2&end=9#page=1$/);
+  await page.reload();
+  await expect(page.locator('.reader-pdf')).toHaveAttribute('src', /start=2&end=9#page=1$/);
+});

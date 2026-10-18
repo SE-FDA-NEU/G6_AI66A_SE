@@ -165,7 +165,7 @@ def test_failed_requests_do_not_renew(client, session_factory, retained_document
     elif failure in ('bad_range', 'outside_range'):
         response = client.get(base + '/file', headers={'Range': 'bytes=invalid' if failure == 'bad_range' else 'bytes=99999999-'})
     elif failure == 'conversion':
-        def fail(*args):
+        def fail(*args, **kwargs):
             raise ReaderConversionError('conversion_failed', 'No reader produced.')
         monkeypatch.setattr('app.api.document.extract_document_for_reader', fail)
         response = client.post(base + '/reader')
@@ -202,7 +202,7 @@ def test_comparison_pdf_download_renews_only_its_source_documents_after_success(
     if operation == 'foreign':
         client.headers['Authorization'] = f"Bearer {create_access_token({'sub': '124'})}"
     if operation == 'render_failure':
-        def fail(*args):
+        def fail(*args, **kwargs):
             raise RuntimeError('PDF generation failed.')
         monkeypatch.setattr('app.api.job.render_table_pdf', fail)
         with pytest.raises(RuntimeError, match='PDF generation failed'):

@@ -36,7 +36,7 @@ test('real workspace confirmation at 79/80 and reader edits persist after reload
   await row.getByRole('link').click();
   await page.getByRole('combobox', { name: 'Chọn trang nguồn', exact: true }).selectOption('2');
   const metadata = page.locator('.reader-document-metadata');
-  await expect(metadata.getByTestId('document-ai-label')).toContainText('Macroeconomics');
+  await expect(metadata.getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Macroeconomics');
   await expect(metadata.getByTestId('document-user-label')).toContainText('My reviewed classification');
   await page.getByRole('button', { name: 'Chỉnh sửa nhãn', exact: true }).click();
   await page.getByLabel('Nhãn người dùng', { exact: true }).fill('Reader classification');
@@ -88,7 +88,7 @@ test('pending/error preserves the draft and metadata; retry saves only human fie
   release();
   await expect(row.getByRole('alert')).toContainText('Không thể lưu nhãn');
   await expect(input).toHaveValue('My correction');
-  await expect(row.getByTestId('document-ai-label')).toContainText('Macroeconomics');
+  await expect(row.getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Macroeconomics');
   await expect(row.getByTestId('document-folder-placement')).toContainText('Economics 101');
   await row.getByRole('button', { name: 'Lưu nhãn', exact: true }).click();
   await expect(row.getByTestId('document-user-label')).toContainText('My correction');
@@ -117,5 +117,5 @@ test('reader save failure keeps the source page, draft and original suggestion w
   await expect(page.getByLabel('Nhãn người dùng', { exact: true })).toHaveValue('My draft');
   await expect(page.getByTestId('document-review-state')).not.toContainText('Đã xác nhận');
   await expect(page.getByText('Trang 2/2', { exact: true })).toBeVisible();
-  await expect(page.getByTestId('document-ai-label')).toContainText('Macroeconomics');
+  await expect(page.getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Macroeconomics');
 });

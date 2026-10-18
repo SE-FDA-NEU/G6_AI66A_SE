@@ -1,3 +1,5 @@
+import { useI18n } from '../../lib/i18n';
+import { readLocale } from '../../lib/i18n';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { getSession } from '../../lib/session';
@@ -13,10 +15,12 @@ const labels = {
 const terminal = new Set(['completed', 'failed', 'timed_out']);
 
 function Badge({ status }) {
-  return <span className={`job-badge job-${status}`}>{labels[status] || 'Unknown'}</span>;
+  const { t, locale, errorText } = useI18n();
+  return <span className={`job-badge job-${status}`}>{t(labels[status] || 'Unknown')}</span>;
 }
 
 export default function Results({ jobId }) {
+  const { t, locale, errorText } = useI18n();
   const [job, setJob] = useState(null);
   const [error, setError] = useState('');
   const [revision, setRevision] = useState(0);
@@ -41,12 +45,12 @@ export default function Results({ jobId }) {
         }
         if (response.status === 403 || response.status === 404) {
           setJob(null);
-          setError('Không tìm thấy tác vụ hoặc bạn không có quyền truy cập.');
+          setError(t("Không tìm thấy tác vụ hoặc bạn không có quyền truy cập."));
           return;
         }
         if (response.status === 410) {
           setJob(null);
-          setError('Nguồn đã hết hạn. Kết quả này không còn khả dụng.');
+          setError(t("Nguồn đã hết hạn. Kết quả này không còn khả dụng."));
           return;
         }
         if (!response.ok) throw new Error('Cannot fetch job');
@@ -58,7 +62,7 @@ export default function Results({ jobId }) {
         if (terminal.has(next.status)) return;
       } catch (err) {
         if (stopped || err.name === 'AbortError') return;
-        setError('Không thể cập nhật tiến độ. Hệ thống sẽ tự thử lại.');
+        setError(t("Không thể cập nhật tiến độ. Hệ thống sẽ tự thử lại."));
       }
       if (!stopped) timer = setTimeout(poll, 3000);
     }
@@ -75,40 +79,39 @@ export default function Results({ jobId }) {
   const completed = Math.min(total, Math.max(0, job?.completed_count || 0));
 
   return <>
-    <Head><title>DocuMind · Tiến độ xử lý</title></Head>
+    <Head><title>{t("DocuMind · Tiến độ xử lý")}</title></Head>
     <main className="workspace results-page">
-      <header><a href="/workspace" className="brand">DocuMind<span className="brand-dot">.</span></a>
-        <WorkspaceNavigation><a className="btn" href="/workspace">Về không gian tài liệu</a></WorkspaceNavigation></header>
+      <header><a href="/workspace" className="brand">{t("DocuMind")}<span className="brand-dot">.</span></a>
+        <WorkspaceNavigation><a className="btn" href="/workspace">{t("Về không gian tài liệu")}</a></WorkspaceNavigation></header>
       <section className="results-content">
-        <p className="eyebrow">TÁC VỤ #{jobId}</p>
-        <h1>Tiến độ xử lý</h1>
-        {!job && !error && <p role="status">Đang tải tiến độ…</p>}
-        {error && <p className="error-box" role="alert">{error}</p>}
+        <p className="eyebrow">{t("TÁC VỤ #")}{jobId}</p>
+        <h1>{t("Tiến độ xử lý")}</h1>
+        {!job && !error && <p role="status">{t("Đang tải tiến độ…")}</p>}
+        {error && <p className="error-box" role="alert">{errorText(error)}</p>}
+        {error && <button className="btn" onClick={() => setRevision(value => value + 1)}>{t("Thử lại bản tóm tắt")}</button>}
         {job && <>
-          <section className="job-progress-card" aria-label="Tiến độ tác vụ">
-            <div className="job-progress-heading"><h2>Trạng thái xử lý</h2>
-              <span aria-label="Trạng thái job" role="status"><Badge status={job.status} /></span></div>
-            <p className="job-count" aria-live="polite">{completed}/{total} tệp đã xử lý thành công</p>
-            <progress aria-label="Tiến độ xử lý" max={total || 1} value={completed}
-              aria-valuetext={`${completed}/${total} tệp đã xử lý thành công`} />
+          <section className="job-progress-card" aria-label={t("Tiến độ tác vụ")}>
+            <div className="job-progress-heading"><h2>{t("Trạng thái xử lý")}</h2>
+              <span aria-label={t("Trạng thái job")} role="status"><Badge status={job.status} /></span></div>
+            <p className="job-count" aria-live="polite">{completed}/{total}{" " + t("tệp đã xử lý thành công")}</p>
+            <progress aria-label={t("Tiến độ xử lý")} max={total || 1} value={completed}
+              aria-valuetext={t("{0}/{1} tệp đã xử lý thành công", completed, total)} />
             <p className="job-progress-note">{job.status === 'completed'
-              ? 'Tất cả tài liệu đã được xử lý xong.'
-              : job.status === 'failed' ? 'Tác vụ kết thúc với lỗi. Xem chi tiết từng tệp bên dưới.'
-              : job.status === 'timed_out' ? 'Tác vụ đã vượt quá thời gian xử lý cho phép.'
-              : 'Tiến độ tự cập nhật mỗi 3 giây. Bạn có thể quay lại trang này sau.'}</p>
+              ? t("Tất cả tài liệu đã được xử lý xong.")
+              : job.status === 'failed' ? t("Tác vụ kết thúc với lỗi. Xem chi tiết từng tệp bên dưới.")
+              : job.status === 'timed_out' ? t("Tác vụ đã vượt quá thời gian xử lý cho phép.")
+              : t("Tiến độ tự cập nhật mỗi 3 giây. Bạn có thể quay lại trang này sau.")}</p>
           </section>
-          <h2 className="job-files-heading">Trạng thái từng tệp</h2>
-          {job.job_files?.some(file => file.error_message?.includes('source_expired')) && <p className="error-box" role="alert">
-            Nguồn đã hết hạn và không còn khả dụng. Kết quả liên quan không thể hiển thị hoặc xuất PDF.
-          </p>}
-          {job.job_files?.length ? <ul className="job-files" aria-label="Trạng thái từng tệp">
+          <h2 className="job-files-heading">{t("Trạng thái từng tệp")}</h2>
+          {job.job_files?.some(file => file.error_message?.includes('source_expired')) && <p className="error-box" role="alert">{t("Nguồn đã hết hạn và không còn khả dụng. Kết quả liên quan không thể hiển thị hoặc xuất PDF.")}</p>}
+          {job.job_files?.length ? <ul className="job-files" aria-label={t("Trạng thái từng tệp")}>
             {job.job_files.map(file => <li key={file.id} className="job-file">
-              <div className="job-file-details"><strong>{file.original_filename || `Tài liệu #${file.document_id}`}</strong>
-                <p className="job-file-attempts">Lần thử {file.attempt_count}/3{file.timeout_seconds != null && ` · Giới hạn ${file.timeout_seconds} giây`}</p>
-                {file.error_message && <p className="job-file-error">{file.error_message}</p>}</div>
+              <div className="job-file-details"><strong>{file.original_filename || t("Tài liệu #{0}", file.document_id)}</strong>
+                <p className="job-file-attempts">{t("Lần thử") + " "}{file.attempt_count}/3{file.timeout_seconds != null && t(" · Giới hạn {0} giây", file.timeout_seconds)}</p>
+                {file.error_message && <p className="job-file-error">{errorText(file.error_message)}</p>}</div>
               <Badge status={file.status} />
             </li>)}
-          </ul> : <p className="muted">Chưa có thông tin tệp.</p>}
+          </ul> : <p className="muted">{t("Chưa có thông tin tệp.")}</p>}
           {job.mode === 'table' && <ExportTableButton job={job} jobId={jobId} />}
           <AnalysisResults data={job.result_data} jobId={jobId} mode={job.mode} jobFiles={job.job_files} />
         </>}
@@ -122,5 +125,5 @@ export async function getServerSideProps({ req, res, params }) {
   const user = await getSession(req);
   if (!user) return { redirect: { destination: '/', permanent: false } };
   if (!/^[1-9]\d*$/.test(params.jobId)) return { notFound: true };
-  return { props: { jobId: params.jobId } };
+  return { props: { jobId: params.jobId, initialLocale: readLocale(req.headers.cookie) } };
 }
