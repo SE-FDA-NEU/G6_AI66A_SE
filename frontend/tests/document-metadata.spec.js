@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { user } from './helpers';
+import { user, searchHit } from './helpers';
 
 function makePageData(overrides = {}) {
   const version = 'b'.repeat(64);
@@ -162,7 +162,7 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
       },
     ];
 
-    await page.route('**/api/documents', route => route.fulfill({ json: mockDocs }));
+    await page.route('**/api/documents?*', route => route.fulfill({ json: mockDocs }));
     await page.goto('/workspace');
 
     const rows = page.locator('.workspace-document-row');
@@ -185,17 +185,8 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
   });
 
   test('workspace search hits display metadata distinct from claim verification citations', async ({ page }) => {
-    await page.route('**/api/documents?search=*', route => route.fulfill({
-      json: [
-        {
-          id: 61,
-          original_filename: 'bao_cao_tai_chinh.pdf',
-          ai_label: 'Báo cáo',
-          ai_confidence: 0.76,
-          review_state: 'needs_review',
-          folder_id: null,
-        },
-      ],
+    await page.route('**/api/search?*', route => route.fulfill({
+      json: { query: 'tài chính', total_hits: 1, hits: [searchHit()] },
     }));
 
     await page.goto('/workspace');
@@ -208,8 +199,9 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     // Check DocumentMetadata inside search hit
     const hitMetadata = hitCard.locator('[data-testid="document-metadata"]');
     await expect(hitMetadata).toBeVisible();
-    await expect(hitMetadata.locator('[data-testid="document-ai-confidence"]')).toContainText('76%');
-    await expect(hitMetadata.locator('[data-testid="document-review-state"]')).toContainText('Needs review');
+    await expect(hitMetadata.locator('[data-testid="document-ai-label"]')).toContainText('Báo cáo');
+    await expect(hitMetadata.locator('[data-testid="document-ai-confidence"]')).toHaveCount(0);
+    await expect(hitMetadata.locator('[data-testid="document-review-state"]')).toContainText('Chưa có điểm tin cậy');
 
     // Check CitationBadge is distinct and separate
     const citationBadge = hitCard.locator('.citation-badge');
@@ -217,8 +209,8 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     await expect(citationBadge).toContainText('bao_cao_tai_chinh.pdf — page 1');
 
     // Crucial requirement: AI confidence is NOT a claim citation badge
-    const confidenceBadge = hitMetadata.locator('[data-testid="document-ai-confidence"]');
-    const isCitationBadge = await confidenceBadge.evaluate(el => el.classList.contains('citation-badge'));
+    const labelBadge = hitMetadata.locator('[data-testid="document-ai-label"]');
+    const isCitationBadge = await labelBadge.evaluate(el => el.classList.contains('citation-badge'));
     expect(isCitationBadge).toBe(false);
   });
 

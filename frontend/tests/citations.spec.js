@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { user } from './helpers';
+import { user, searchHit } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   const login = await page.request.post('/auth/login', {
@@ -318,14 +318,8 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
   });
 
   test('workspace search renders matching hits with citation badges', async ({ page }) => {
-    await page.route('**/api/documents?search=*', route => route.fulfill({
-      json: [
-        {
-          id: 61,
-          original_filename: 'bao_cao_tai_chinh.pdf',
-          ai_label: 'Báo cáo',
-        },
-      ],
+    await page.route('**/api/search?*', route => route.fulfill({
+      json: { query: 'tài chính', total_hits: 1, hits: [searchHit()] },
     }));
 
     await page.goto('/workspace');
@@ -337,7 +331,7 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
 
     // Verify search hit count and snippet
     await expect(page.getByText('Tìm thấy 1 kết quả')).toBeVisible();
-    await expect(page.locator('.search-snippet')).toContainText('bao_cao_tai_chinh.pdf');
+    await expect(page.locator('.search-snippet')).toContainText('1,200,000,000 VND');
 
     // Verify citation badge rendered in search results
     const searchCitation = page.getByRole('link', { name: 'bao_cao_tai_chinh.pdf — page 1', exact: true });

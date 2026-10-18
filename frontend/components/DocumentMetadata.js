@@ -93,7 +93,7 @@ export function DocumentMetadata({
           data-testid="document-review-state"
           data-state="needs_review"
         >
-          Gợi ý độ tin cậy cao
+          {isHighConfidence ? 'Gợi ý độ tin cậy cao' : 'Nhãn AI · Chưa có điểm tin cậy'}
         </span>
       )}
 
