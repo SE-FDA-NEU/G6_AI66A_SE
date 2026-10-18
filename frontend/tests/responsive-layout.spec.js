@@ -165,6 +165,40 @@ test('five comparison cards and source-reader controls fit 375px and menu expand
   await page.screenshot({ path: `test-results/${testInfo.project.name}-comparison-375.png`, fullPage: true });
 });
 
+test('Export Table pending, error and real PDF download work at 375px without overflow', async ({ page }) => {
+  const login = await page.request.post('/auth/login', { form: { username: 'export@example.com', password: user.password } });
+  expect(login.status()).toBe(200);
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  let attempts = 0;
+  await page.route('**/jobs/9002/export.pdf', async route => {
+    if (++attempts > 1) return route.continue();
+    await gate;
+    return route.fulfill({ status: 500, json: { detail: 'Unavailable' } });
+  });
+  await page.goto('/results/9002');
+  const button = page.getByRole('button', { name: 'Export Table', exact: true });
+  await expect(button).toBeEnabled();
+  expect((await button.boundingBox()).height).toBeGreaterThanOrEqual(44);
+  await button.tap();
+  try {
+    await expect(button).toBeDisabled();
+    await expect(page.getByText('Đang tạo và tải PDF…')).toBeVisible();
+    await expectNoOverflow(page);
+  } finally { release(); }
+  const error = page.getByRole('region', { name: 'Xuất bảng so sánh', exact: true }).getByRole('alert');
+  await expect(error).toContainText('Không thể xuất PDF');
+  await expectNoOverflow(page);
+  const downloading = page.waitForEvent('download');
+  await button.tap();
+  const downloaded = await downloading;
+  expect(downloaded.suggestedFilename()).toBe('comparison-9002.pdf');
+  expect(await downloaded.failure()).toBeNull();
+  await expect(error).toHaveCount(0);
+  await expect(button).toBeEnabled();
+  await expectNoOverflow(page);
+});
+
 test('progress, timeout errors, limitations and Unverified citations wrap at 375px', async ({ page }) => {
   await page.request.post('/auth/login', { form: { username: user.email, password: user.password } });
   const saved = resultJob();

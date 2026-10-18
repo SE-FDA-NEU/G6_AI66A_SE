@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getSession } from '../../lib/session';
 import AnalysisResults from '../../components/AnalysisResults';
 import WorkspaceNavigation from '../../components/WorkspaceNavigation';
+import ExportTableButton from '../../components/ExportTableButton';
 
 const labels = {
   pending: 'Pending', processing: 'Processing', completed: 'Completed',
@@ -96,6 +97,7 @@ export default function Results({ jobId }) {
               <Badge status={file.status} />
             </li>)}
           </ul> : <p className="muted">Chưa có thông tin tệp.</p>}
+          {job.mode === 'table' && <ExportTableButton job={job} jobId={jobId} />}
           <AnalysisResults data={job.result_data} jobId={jobId} mode={job.mode} jobFiles={job.job_files} />
         </>}
       </section>

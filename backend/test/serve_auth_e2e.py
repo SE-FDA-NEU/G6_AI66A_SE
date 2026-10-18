@@ -116,6 +116,51 @@ with TestSession() as db:
     db.add(completed_job)
     db.add(JobFile(job=completed_job, document=document, status=JobStatus.COMPLETED,
                    attempt_count=1, timeout_seconds=33))
+    # Dedicated saved comparison for browser download tests; no model or local DB.
+    export_owner = User(username='export_user', email='export@example.com',
+                        password_hash=get_password_hash('LocalIssueTest2026!'))
+    db.add(export_owner); db.flush()
+    export_job = Job(id=9002, owner_id=export_owner.id, mode=JobMode.TABLE,
+                     status=JobStatus.COMPLETED, file_count=5, completed_count=5,
+                     finished_at=datetime(2026, 1, 1))
+    export_rows = {}
+    db.add(export_job)
+    for index, amount in enumerate(['1,200,000,000 VND', '2,500,000,000 VND', '999,999.99 USD',
+                                    '0.00 VND', '750,000,000 VND']):
+        doc = Document(owner_id=export_owner.id, original_filename=f'Hợp đồng {index + 1}.pdf',
+                       storage_path=f'/fixture/export-{index + 1}.pdf', file_format=FileFormat.PDF,
+                       file_size_bytes=128, expires_at=datetime.utcnow() + timedelta(days=30))
+        db.add(doc); db.flush()
+        db.add(JobFile(job=export_job, document=doc, status=JobStatus.COMPLETED,
+                       attempt_count=1, timeout_seconds=60))
+
+        def export_claim(text, page):
+            return {'text': text, 'unverified': False, 'evidence': [{
+                'document_id': doc.id, 'page': page, 'start': 0, 'end': len(text),
+                'quote': text, 'reader_version': 'a' * 64,
+            }]}
+
+        output = {'type': 'table', 'value': export_claim(amount, 1),
+                  'payment_term': export_claim('Thanh toán trong 30 ngày', 2),
+                  'penalty': export_claim('0.05% per day', 3)}
+        if index == 4:
+            output['payment_term'] = {'text': None, 'unverified': True, 'evidence': []}
+        if index == 3:
+            output['penalty']['unverified'] = True
+            output['penalty']['verification_issues'] = ['unsupported_fact']
+        export_rows[str(doc.id)] = {
+            'schema_version': 1, 'document_id': doc.id, 'original_filename': doc.original_filename,
+            'mode': 'table', 'analysis_status': 'completed', 'warnings': [],
+            'reader': {'version': 'a' * 64, 'page_count': 3, 'page_kind': 'page',
+                       'url': f'/documents/{doc.id}/reader.pdf'},
+            'label': {'ai_label': 'Hợp đồng', 'ai_confidence': .9, 'review_state': 'needs_review',
+                      'confidence_level': 'high', 'user_label': None}, 'output': output,
+        }
+    export_job.result_data = {'schema_version': 1, 'documents': export_rows}
+    incomplete_export_job = Job(id=9003, owner_id=export_owner.id, mode=JobMode.TABLE,
+                                status=JobStatus.COMPLETED, file_count=5, completed_count=4,
+                                result_data={'schema_version': 1, 'documents': {}})
+    db.add(incomplete_export_job)
     db.commit()
 
 for document_id in review_document_ids:
