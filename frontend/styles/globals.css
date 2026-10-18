@@ -56,6 +56,8 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .reader-pdf { width: 100%; height: 75vh; border: 1px solid #dce4de; border-radius: 12px; background: #fff; }
 @media (max-width: 540px) { .reader-page header { flex-wrap: wrap; }.reader-page { padding: 20px; }.reader-pdf { height: 65vh; } }
 .results-content { max-width: 850px; margin: 60px auto; }
+.document-expiry { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 10px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.expiry-warning { color: #895b09; background: #fff3d8; border-radius: 6px; padding: 3px 8px; }
 .table-export { margin-top: 24px; overflow-wrap: anywhere; }
 .table-export .btn { max-width: 100%; }
 .table-export p { font-size: 13px; line-height: 1.7; }

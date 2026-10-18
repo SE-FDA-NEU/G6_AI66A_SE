@@ -3,6 +3,7 @@ import DocumentMetadata from './DocumentMetadata';
 import WorkspacePagination from './WorkspacePagination';
 import DocumentFolderMove from './DocumentFolderMove';
 import DocumentLabelEditor from './DocumentLabelEditor';
+import DocumentExpiry from './DocumentExpiry';
 
 const PAGE_SIZE = 10;
 
@@ -61,6 +62,7 @@ export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', fol
               <div className="document-row-main">
                 <a href={`/documents/${doc.id}?page=1`} className="document-row-title"><strong>{doc.original_filename}</strong></a>
                 <DocumentMetadata document={doc} folderName={folders.find(folder => folder.id === doc.folder_id)?.name} className="workspace-metadata-row" />
+                <DocumentExpiry expiresAt={doc.expires_at} />
               </div>
               <DocumentLabelEditor documentId={doc.id} document={doc} onSaved={onLabelSaved} />
               <DocumentFolderMove document={doc} folders={folders} foldersUnavailable={foldersUnavailable} onMoved={onMoved} />

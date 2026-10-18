@@ -113,6 +113,14 @@ def test_each_explicit_access_renews_from_the_new_access_not_the_old_expiry(
     assert timestamps(session_factory, doc_id) == (clock['now'], datetime(2026, 4, 25, 14, 30))
 
 
+def test_reader_returns_renewed_utc_metadata_for_march_1_access(client, retained_documents, clock):
+    clock['now'] = datetime(2026, 3, 1)
+    response = client.get(f"/documents/{retained_documents['own']}/pages")
+    assert response.status_code == 200
+    assert response.json()['last_accessed_at'] == '2026-03-01T00:00:00'
+    assert response.json()['expires_at'] == '2026-03-31T00:00:00'
+
+
 def test_workspace_search_and_job_polling_never_renew_documents(client, session_factory, retained_documents, clock):
     ids = retained_documents
     for _ in range(2):
