@@ -46,7 +46,10 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
   await expectNoOverflow(page);
   await page.route('**/api/documents*', route => new URL(route.request().url()).pathname === '/api/documents'
     ? route.fulfill({ json: [{ id: 51, original_filename: longName, ai_label: 'long-label-'.repeat(15),
-      ai_confidence: .9, review_state: 'needs_review', folder_id: null }] }) : route.continue());
+      ai_confidence: .9, review_state: 'needs_review', folder_id: 1 }] }) : route.continue());
+  await page.route('**/api/folders?*', route => route.fulfill({ json: [
+    { id: 1, name: 'Economics 101' }, { id: 2, name: 'Research-'.repeat(20) },
+  ] }));
   await page.route('**/api/search?*', route => route.fulfill({ json: { query: 'contract', total_hits: 1,
     hits: [searchHit({ doc_name: longName, snippet: 'long-source-text-'.repeat(30), ai_label: 'long-label-'.repeat(15) })] } }));
   await login(page);

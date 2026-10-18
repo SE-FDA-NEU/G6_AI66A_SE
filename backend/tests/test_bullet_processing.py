@@ -160,7 +160,8 @@ def test_180_second_target_is_shared_across_retries_and_cancels_inflight_work(cl
     saved = client.get(f'/jobs/{job_id}').json()
     assert saved['status'] == 'failed' and saved['completed_count'] == 0
     assert 1 <= len(cancelled) <= 3
-    assert budgets[-1] < budgets[0] <= .12
+    # Subtracting monotonic clock values can round the upper bound by a few ns.
+    assert budgets[-1] < budgets[0] <= .12 + 1e-8
     assert saved['job_files'][0]['error_message']
     assert saved['result_data'] is None and saved['citations'] == []
 

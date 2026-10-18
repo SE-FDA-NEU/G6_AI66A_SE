@@ -8,7 +8,6 @@ from app.models.document import Document
 from app.models.job import Job
 from app.models.job_file import JobFile
 from app.models.citation import Citation
-from app.models.search_index import SearchDocument, SearchPassage, SearchTerm
 
 __all__ = [
     "FileFormat",
@@ -21,7 +20,4 @@ __all__ = [
     "Job",
     "JobFile",
     "Citation",
-    "SearchDocument",
-    "SearchPassage",
-    "SearchTerm",
 ]

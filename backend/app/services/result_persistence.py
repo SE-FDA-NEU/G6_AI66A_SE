@@ -5,7 +5,6 @@ from app.models import Citation, Document, ReviewState
 from app.schemas.result import DocumentResult, LabelMetadata, ReaderMetadata
 from app.services.evidence import EvidenceValidator, claim_contexts, claims, parse_analysis
 from app.services.bullet_output import finalize_bullet_actions
-from app.services.search_index import sync_document_index
 from app.services.reader_extraction import ReaderConversionError, publish_pdf, reader_file, sha256
 
 
@@ -67,7 +66,6 @@ def save_analysis(db, job, document, prepared, raw_result):
 
     document.page_count = prepared.data['page_count']
     document.extracted_text = pages
-    sync_document_index(db, document)
     if result.label.ai_label is not None:
         document.ai_label = result.label.ai_label
         document.ai_confidence = result.label.ai_confidence

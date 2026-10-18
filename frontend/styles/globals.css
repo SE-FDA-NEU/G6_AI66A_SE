@@ -473,6 +473,21 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .workspace-metadata-row {
   margin: 4px 0 0;
 }
+.workspace-folders { margin: 28px 0; padding: 20px; border: 1px solid #dce4de; border-radius: 12px; background: #fff; }
+.workspace-folders select, .document-folder-move select { width: 100%; min-height: 48px; padding: 12px; border: 1px solid #dce4de; border-radius: 9px; background: #fcfdfc; color: #233b32; font: inherit; }
+.folder-create-form { margin-top: 20px; }
+.folder-create-controls, .folder-move-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.folder-create-controls input { flex: 1 1 200px; min-width: 0; }
+.document-folder-move { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; margin-top: 20px; }
+.document-folder-move label { min-width: 0; margin: 0; }
+.folder-destination { min-width: 0; }
+.document-folder-move select { display: block; margin-top: 8px; }
+.document-folder-move > p { grid-column: 1 / -1; margin: 0; }
+@media (max-width: 640px) {
+  .workspace-folders { padding: 16px; }
+  .document-folder-move { grid-template-columns: minmax(0, 1fr); }
+  .folder-create-controls input { flex-basis: 100%; }
+}
 
 /* Reader In-Document Search (US04) */
 .reader-search-bar {

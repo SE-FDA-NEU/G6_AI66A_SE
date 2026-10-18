@@ -32,7 +32,6 @@ class Document(Base):
     folder = relationship("Folder", back_populates="documents")
     job_files = relationship("JobFile", back_populates="document", cascade="all, delete-orphan")
     citations = relationship("Citation", back_populates="document", cascade="all, delete-orphan")
-    search_index = relationship('SearchDocument', back_populates='document', uselist=False, cascade='all, delete-orphan')
 
     __table_args__ = (
         Index("idx_documents_owner", "owner_id"),
