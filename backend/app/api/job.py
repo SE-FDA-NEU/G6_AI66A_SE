@@ -11,6 +11,7 @@ from app.models.jobstatus import JobStatus
 from app.schemas.job import JobResponse, JobDetailResponse
 from app.core.security import get_current_user_id
 from app.services.table_pdf import IncompleteTable, render_table_pdf, saved_table_rows
+from app.services.document_retention import download_retention_task
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
@@ -31,7 +32,8 @@ def export_table_pdf(
         rows = saved_table_rows(job)
     except IncompleteTable as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    return Response(render_table_pdf(job.id, rows), media_type='application/pdf', headers={
+    return Response(render_table_pdf(job.id, rows), media_type='application/pdf',
+                    background=download_retention_task(db, current_user_id, [row.document_id for row in rows]), headers={
         'Content-Disposition': f'attachment; filename="comparison-{job.id}.pdf"',
         'Cache-Control': 'private, no-store',
         'X-Content-Type-Options': 'nosniff',
