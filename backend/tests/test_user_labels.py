@@ -14,6 +14,11 @@ def snapshot(document):
     return {column.name: deepcopy(getattr(document, column.name)) for column in Document.__table__.columns}
 
 
+def label_metadata(data):
+    # Successful edits now renew retention (#141); all other metadata stays fixed.
+    return {key: value for key, value in data.items() if key not in ('last_accessed_at', 'expires_at')}
+
+
 @pytest.fixture
 def labelled_document(session_factory, tmp_path):
     source = make_pdf(tmp_path / 'label.pdf', [b'BT /F1 12 Tf 30 720 Td (Macroeconomics report.) Tj ET'])
@@ -45,8 +50,8 @@ def test_prediction_never_confirms_itself_and_confirm_only_snapshots_ai_label(cl
     assert confirmed.json()['user_label'] == 'Macroeconomics' and confirmed.json()['review_state'] == 'confirmed'
     assert confirmed.json()['ai_confidence'] == confidence
     with session_factory() as db:
-        assert snapshot(db.get(Document, document_id)) == {**before, 'user_label': 'Macroeconomics', 'review_state': ReviewState.CONFIRMED}
-    assert client.patch(f'/documents/{document_id}/label', json={'review_state': 'confirmed'}).json() == confirmed.json()
+        assert label_metadata(snapshot(db.get(Document, document_id))) == label_metadata({**before, 'user_label': 'Macroeconomics', 'review_state': ReviewState.CONFIRMED})
+    assert label_metadata(client.patch(f'/documents/{document_id}/label', json={'review_state': 'confirmed'}).json()) == label_metadata(confirmed.json())
 
 
 def test_manual_edit_and_partial_review_changes_persist_on_all_document_reads(client, session_factory, labelled_document):
@@ -64,7 +69,7 @@ def test_manual_edit_and_partial_review_changes_persist_on_all_document_reads(cl
     confirmed = client.patch(endpoint, json={'review_state': 'confirmed'})
     assert confirmed.json()['user_label'] == 'Edited draft'  # Existing human choice wins over the AI suggestion.
     with session_factory() as db:
-        assert snapshot(db.get(Document, document_id)) == {**before, 'user_label': 'Edited draft', 'review_state': ReviewState.CONFIRMED}
+        assert label_metadata(snapshot(db.get(Document, document_id))) == label_metadata({**before, 'user_label': 'Edited draft', 'review_state': ReviewState.CONFIRMED})
     for response in [client.get(f'/documents/{document_id}'), client.get('/documents'), client.get(f'/documents/{document_id}/pages')]:
         assert response.status_code == 200
         data = response.json()[0] if isinstance(response.json(), list) else response.json()
@@ -86,7 +91,7 @@ def test_clearing_human_decision_restores_needs_review_without_changing_ai_or_fo
     assert response.status_code == 200 and response.json()['user_label'] is None
     assert response.json()['review_state'] == 'needs_review'
     with session_factory() as db:
-        assert snapshot(db.get(Document, document_id)) == {**before, 'user_label': None, 'review_state': ReviewState.NEEDS_REVIEW}
+        assert label_metadata(snapshot(db.get(Document, document_id))) == label_metadata({**before, 'user_label': None, 'review_state': ReviewState.NEEDS_REVIEW})
 
 
 def test_no_ai_suggestion_requires_an_explicit_human_label_before_confirmation(client, session_factory, labelled_document):

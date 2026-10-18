@@ -95,7 +95,10 @@ def test_move_and_unfile_change_only_membership_and_existing_search_filters_see_
         assert moved.json()['user_label'] == 'Supplier agreement' and moved.json()['review_state'] == 'confirmed'
         with session_factory() as db:
             after = snapshot(db.get(Document, ids['own']))
-            assert after == {**before, 'folder_id': folder_id}
+            unchanged = set(before) - {'folder_id', 'last_accessed_at', 'expires_at'}
+            assert {key: after[key] for key in unchanged} == {key: before[key] for key in unchanged}
+            assert after['folder_id'] == folder_id
+            assert after['expires_at'] - after['last_accessed_at'] == timedelta(days=30)
         for candidate in [ids['first'], ids['second']]:
             listed = client.get('/documents', params={'folder_id': candidate}).json()
             assert [doc['id'] for doc in listed] == ([ids['own']] if folder_id == candidate else [])

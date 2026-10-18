@@ -1,8 +1,6 @@
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session, defer
 from sqlalchemy import cast, LargeBinary
@@ -15,6 +13,7 @@ from app.models.reviewstate import ReviewState
 from app.schemas.document import DocumentFolderUpdate, DocumentLabelUpdate, DocumentResponse
 from app.core.security import get_current_user_id
 from app.services.reader_extraction import extract_document_for_reader, reader_representation, ReaderConversionError
+from app.services.document_retention import renew_retention, download_retention_task, RetainedFileResponse
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -53,6 +52,7 @@ def update_document_label(document_id: int, payload: DocumentLabelUpdate,
         raise HTTPException(422, 'A label is required before confirmation.')
     document.user_label = chosen_label
     document.review_state = chosen_state
+    renew_retention(document)
     db.commit()
     db.refresh(document)
     return document
@@ -69,6 +69,7 @@ def move_document(document_id: int, payload: DocumentFolderUpdate,
         if folder.owner_id != user_id:
             raise HTTPException(403, 'Access denied')
     document.folder_id = payload.folder_id
+    renew_retention(document)
     db.commit()
     db.refresh(document)
     return document
@@ -88,6 +89,9 @@ def prepare_reader(document_id: int, user_id: int = Depends(get_current_user_id)
         result = extract_document_for_reader(owned_id, factory)
     except ReaderConversionError as error:
         raise reader_error(error, 503 if error.code == 'converter_unavailable' else 422)
+    document = owned_reader_document(db, owned_id, user_id)
+    renew_retention(document)
+    db.commit()
     return {'page_count': result['page_count']}
 
 
@@ -98,7 +102,7 @@ def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), 
         _, reference = reader_representation(document)
     except ReaderConversionError as error:
         raise reader_error(error)
-    return {
+    payload = {
         'page_count': document.page_count,
         'pages': [{key: value for key, value in page.items() if key != 'search'}
                   for page in document.extracted_text],
@@ -112,6 +116,9 @@ def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), 
         'folder_id': document.folder_id,
         'original_filename': document.original_filename,
     }
+    renew_retention(document)
+    db.commit()
+    return payload
 
 
 @router.get('/{document_id}/pages/{page}/text', summary="Get extracted text for a specific page")
@@ -130,12 +137,15 @@ def get_page_text(
         raise HTTPException(status_code=404, detail="Page text not available")
     for p in document.extracted_text:
         if isinstance(p, dict) and p.get('page') == page:
-            return {
+            payload = {
                 'document_id': document_id,
                 'page': page,
                 'text': p.get('text', ''),
                 'positions': p.get('positions', []),
             }
+            renew_retention(document)
+            db.commit()
+            return payload
     raise HTTPException(status_code=404, detail="Page not found")
 
 
@@ -149,7 +159,8 @@ def reader_pdf(document_id: int, version: str = Query(...), user_id: int = Depen
         raise reader_error(error)
     if version != reference['sha256']:
         raise HTTPException(409, 'Reader version changed. Reload the document before using page references.')
-    return FileResponse(path, media_type='application/pdf', filename='reader.pdf',
+    return RetainedFileResponse(path, media_type='application/pdf', filename='reader.pdf',
+                        on_success=download_retention_task(db, user_id, [document.id]),
                         content_disposition_type='inline', headers={'Cache-Control': 'no-store',
                                                                    'X-Reader-Version': version})
 
@@ -212,11 +223,6 @@ def get_document_file(
         media_type = mime_types.get(document.file_format, "application/octet-stream")
         filename = document.original_filename
 
-    # Update retention access timestamp (BR06)
-    document.last_accessed_at = datetime.utcnow()
-    document.expires_at = datetime.utcnow() + timedelta(days=30)
-    db.commit()
-
     headers = {
         "Cache-Control": "no-store",
         "X-Original-Filename": document.original_filename,
@@ -228,8 +234,9 @@ def get_document_file(
     if page is not None:
         headers["X-Initial-Page"] = str(page)
 
-    return FileResponse(
+    return RetainedFileResponse(
         file_path,
+        on_success=download_retention_task(db, current_user_id, [document.id]),
         media_type=media_type,
         filename=filename,
         content_disposition_type="inline",
@@ -337,8 +344,7 @@ def get_document_by_id(
         )
 
     # Update last accessed time and extend expires_at (BR06) only after ownership check.
-    document.last_accessed_at = datetime.utcnow()
-    document.expires_at = datetime.utcnow() + timedelta(days=30)
+    renew_retention(document)
     db.commit()
     db.refresh(document)
 
