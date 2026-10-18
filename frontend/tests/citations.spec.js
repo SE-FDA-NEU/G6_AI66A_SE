@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
-  test('renders valid evidence as "Document name — page X" and carries evidence ID and optional return job ID', async ({ page }) => {
+  test('renders valid evidence as "Document name — trang X" and carries evidence ID and optional return job ID', async ({ page }) => {
     const jobData = {
       id: 99,
       status: 'completed',
@@ -75,8 +75,8 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
 
     const analysisRegion = page.getByRole('region', { name: 'Kết quả phân tích AI' });
 
-    // 1. Verify badge text format: "Document name — page X"
-    const citationLink = analysisRegion.getByRole('link', { name: 'nda_agreement.pdf — page 3', exact: true });
+    // 1. Verify badge text format: "Document name — trang X"
+    const citationLink = analysisRegion.getByRole('link', { name: 'nda_agreement.pdf — trang 3', exact: true });
     await expect(citationLink).toBeVisible();
 
     // 2. Verify citation link carries document ID, page, offsets, evidence ID, and return job ID
@@ -90,14 +90,14 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     expect(parsedUrl.searchParams.get('job')).toBe('99');
 
     // Action citation link
-    const actionLink = analysisRegion.getByRole('link', { name: 'nda_agreement.pdf — page 4', exact: true });
+    const actionLink = analysisRegion.getByRole('link', { name: 'nda_agreement.pdf — trang 4', exact: true });
     await expect(actionLink).toBeVisible();
     const actionHref = await actionLink.getAttribute('href');
     expect(actionHref).toContain('evidence=25-4-50-70');
     expect(actionHref).toContain('job=99');
   });
 
-  test('unsupported claims show Unverified badge without any fake link', async ({ page }) => {
+  test('unsupported claims show Chưa xác thực badge without any fake link', async ({ page }) => {
     const jobData = {
       id: 101,
       status: 'completed',
@@ -145,12 +145,12 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
 
     const analysisRegion = page.getByRole('region', { name: 'Kết quả phân tích AI' });
 
-    // Verify Unverified text is displayed
+    // Verify Chưa xác thực text is displayed
     const unverifiedBadges = analysisRegion.locator('.unverified-badge');
     await expect(unverifiedBadges).toHaveCount(2);
-    await expect(unverifiedBadges.first()).toContainText('Unverified');
+    await expect(unverifiedBadges.first()).toContainText('Chưa xác thực');
 
-    // Crucial requirement: Unsupported claims show Unverified without a fake link
+    // Crucial requirement: Unsupported claims show Chưa xác thực without a fake link
     // Ensure that unverified badges are NOT <a> tags and do not contain links
     for (const badge of await unverifiedBadges.all()) {
       const tagName = await badge.evaluate(el => el.tagName.toLowerCase());
@@ -236,8 +236,8 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     const analysisRegion = page.getByRole('region', { name: 'Kết quả phân tích AI' });
 
     // Claim with 2 evidence sources renders 2 separate badges
-    const badgeDoc1 = analysisRegion.getByRole('link', { name: 'merger_terms.pdf — page 1', exact: true });
-    const badgeDoc2 = analysisRegion.getByRole('link', { name: 'Document #42 — page 5', exact: true });
+    const badgeDoc1 = analysisRegion.getByRole('link', { name: 'merger_terms.pdf — trang 1', exact: true });
+    const badgeDoc2 = analysisRegion.getByRole('link', { name: 'Tài liệu #42 — trang 5', exact: true });
 
     await expect(badgeDoc1).toBeVisible();
     await expect(badgeDoc2).toBeVisible();
@@ -254,10 +254,10 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     expect(href2).toContain('job=102');
 
     // Missing penalty cell shows unverified without fake link
-    await expect(analysisRegion.getByText('Không có thông tin · Unverified')).toBeVisible();
+    await expect(analysisRegion.getByText('Không có thông tin · Chưa xác thực')).toBeVisible();
   });
 
-  test('slide kind renders as "Document name — slide X"', async ({ page }) => {
+  test('slide kind renders as "Document name — trang chiếu X"', async ({ page }) => {
     const jobData = {
       id: 103,
       status: 'completed',
@@ -309,7 +309,7 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     await page.goto('/results/103');
 
     const analysisRegion = page.getByRole('region', { name: 'Kết quả phân tích AI' });
-    const slideBadge = analysisRegion.getByRole('link', { name: 'presentation.pptx — slide 4', exact: true });
+    const slideBadge = analysisRegion.getByRole('link', { name: 'presentation.pptx — trang chiếu 4', exact: true });
     await expect(slideBadge).toBeVisible();
     await expect(slideBadge).toHaveAttribute(
       'href',
@@ -323,6 +323,7 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     }));
 
     await page.goto('/workspace');
+    for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
 
     // Fill in search input
     const searchInput = page.getByLabel('Tìm kiếm trong tài liệu');
@@ -334,7 +335,7 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     await expect(page.locator('.search-snippet')).toContainText('1,200,000,000 VND');
 
     // Verify citation badge rendered in search results
-    const searchCitation = page.getByRole('link', { name: 'bao_cao_tai_chinh.pdf — page 1', exact: true });
+    const searchCitation = page.getByRole('link', { name: 'bao_cao_tai_chinh.pdf — trang 1', exact: true });
     await expect(searchCitation).toBeVisible();
     const href = await searchCitation.getAttribute('href');
     expect(href).toContain('/documents/61?page=1');

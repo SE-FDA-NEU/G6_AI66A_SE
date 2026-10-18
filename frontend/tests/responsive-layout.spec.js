@@ -72,6 +72,7 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
   await page.keyboard.press('Escape');
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(toggle).toBeFocused();
+  await page.getByText('Tìm trong nội dung tài liệu', { exact: true }).click();
   await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('contract');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).tap();
   await expect(page.getByRole('list', { name: 'Danh sách kết quả tìm kiếm' })).toBeVisible();
@@ -114,13 +115,13 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
   await expectNoOverflow(page);
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).tap();
   await expect(page).toHaveURL('/results/129');
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed');
-  await expect(page.getByRole('region', { name: 'Recommended actions', exact: true })).toHaveCount(5);
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');
+  await expect(page.getByRole('region', { name: 'Hành động đề xuất', exact: true })).toHaveCount(5);
   await expectNoOverflow(page);
   const citation = page.locator('.citation-badge').first();
   expect((await citation.boundingBox()).height).toBeGreaterThanOrEqual(44);
   await page.reload();
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');
   await expectNoOverflow(page);
   await page.screenshot({ path: `test-results/${testInfo.project.name}-bullet-375.png`, fullPage: true });
 });
@@ -159,13 +160,13 @@ test('five comparison cards and source-reader controls fit 375px and menu expand
   await page.getByRole('combobox', { name: 'Chọn trang nguồn' }).selectOption('4');
   await expect(page.getByText('Trang 4/15', { exact: true })).toBeVisible();
   await expectNoOverflow(page);
-  await page.getByRole('link', { name: /^Back to Results/ }).tap();
+  await page.getByRole('link', { name: /^Về kết quả/ }).tap();
   await expect(cards).toHaveCount(5);
   await expectNoOverflow(page);
   await page.screenshot({ path: `test-results/${testInfo.project.name}-comparison-375.png`, fullPage: true });
 });
 
-test('Export Table pending, error and real PDF download work at 375px without overflow', async ({ page }) => {
+test('Xuất bảng pending, error and real PDF download work at 375px without overflow', async ({ page }) => {
   const login = await page.request.post('/auth/login', { form: { username: 'export@example.com', password: user.password } });
   expect(login.status()).toBe(200);
   let release;
@@ -177,7 +178,7 @@ test('Export Table pending, error and real PDF download work at 375px without ov
     return route.fulfill({ status: 500, json: { detail: 'Unavailable' } });
   });
   await page.goto('/results/9002');
-  const button = page.getByRole('button', { name: 'Export Table', exact: true });
+  const button = page.getByRole('button', { name: 'Xuất bảng', exact: true });
   await expect(button).toBeEnabled();
   expect((await button.boundingBox()).height).toBeGreaterThanOrEqual(44);
   await button.tap();
@@ -218,7 +219,7 @@ test('seven-day expiry warnings and expired reader messages fit 375px', async ({
   await expectNoOverflow(page);
 });
 
-test('progress, timeout errors, limitations and Unverified citations wrap at 375px', async ({ page }) => {
+test('progress, timeout errors, limitations and Chưa xác thực citations wrap at 375px', async ({ page }) => {
   await page.request.post('/auth/login', { form: { username: user.email, password: user.password } });
   const saved = resultJob();
   saved.status = 'failed';
@@ -232,9 +233,9 @@ test('progress, timeout errors, limitations and Unverified citations wrap at 375
   first.output.bullets[0].unverified = true;
   await page.route('**/jobs/129', route => route.fulfill({ json: saved }));
   await page.goto('/results/129');
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Failed');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Thất bại');
   await expect(page.getByText('4/5 tệp đã xử lý thành công')).toBeVisible();
   await expect(page.getByTestId('action-limitation')).toHaveText(first.output.limitation);
-  await expect(page.getByText('Unverified · Cần kiểm tra', { exact: true })).toBeVisible();
+  await expect(page.getByText('Chưa xác thực · Cần kiểm tra', { exact: true })).toBeVisible();
   await expectNoOverflow(page);
 });

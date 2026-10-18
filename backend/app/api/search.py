@@ -36,6 +36,16 @@ def search_documents(q: str = Query(..., min_length=1, max_length=500,
                                  embedder=embedder if mode == 'semantic' else None)
         db.commit()
         return result
-    except (EmbeddingUnavailable, ValueError):
+    except EmbeddingUnavailable as error:
+        # Search only stages validated embedding caches; retain successful batches.
+        db.commit()
+        limited = error.code == 'embedding_rate_limited'
+        retry_after = error.retry_after or 60
+        message = (f'Gemini đang giới hạn lượt tìm theo ý nghĩa. Vui lòng thử lại sau {retry_after} giây. '
+                   'Các đoạn đã lập chỉ mục được giữ lại; bạn có thể tìm bằng từ khóa trong lúc chờ.'
+                   if limited else 'Dịch vụ tìm theo ý nghĩa hiện không khả dụng. Vui lòng thử lại hoặc chọn Chứa từ khóa.')
+        raise HTTPException(503, detail={'code': error.code, 'message': message},
+                            headers={'Retry-After': str(retry_after)} if limited else None) from None
+    except ValueError:
         db.rollback()
         raise HTTPException(503, 'Semantic search is temporarily unavailable.') from None

@@ -1,13 +1,16 @@
+import { useI18n } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import DocumentMetadata from './DocumentMetadata';
 import WorkspacePagination from './WorkspacePagination';
 import DocumentFolderMove from './DocumentFolderMove';
 import DocumentLabelEditor from './DocumentLabelEditor';
 import DocumentExpiry from './DocumentExpiry';
+import WorkspaceIcon from './WorkspaceIcon';
 
 const PAGE_SIZE = 10;
 
-export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', folders = [], foldersUnavailable = false, refreshKey = 0, onMoved, onLabelSaved }) {
+export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', folders = [], foldersUnavailable = false, refreshKey = 0, filename = '', onMoved, onLabelSaved }) {
+  const { t, locale, errorText } = useI18n();
   const [page, setPage] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [documents, setDocuments] = useState([]);
@@ -23,7 +26,9 @@ export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', fol
       try {
         // The list API returns an array, so one extra row identifies a next page.
         const params = new URLSearchParams({ skip: String(page * PAGE_SIZE), limit: String(PAGE_SIZE + 1) });
-        if (folderId) params.set('folder_id', folderId);
+        if (folderId === 'unassigned') params.set('unassigned', 'true');
+        else if (folderId) params.set('folder_id', folderId);
+        if (filename) params.set('filename', filename);
         if (aiLabel) params.set('label', aiLabel);
         const response = await fetch(`/api/documents?${params}`,
           { signal: controller.signal, cache: 'no-store' });
@@ -36,31 +41,32 @@ export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', fol
         setDocuments(data.slice(0, PAGE_SIZE));
         setHasNext(data.length > PAGE_SIZE);
       } catch {
-        if (!controller.signal.aborted) setError('Không thể tải danh sách tài liệu. Vui lòng thử lại.');
+        if (!controller.signal.aborted) setError(t("Không thể tải danh sách tài liệu. Vui lòng thử lại."));
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     }
     load();
     return () => controller.abort();
-  }, [page, attempt, folderId, aiLabel, refreshKey]);
+  }, [page, attempt, folderId, aiLabel, refreshKey, filename]);
 
   return (
-    <section className="workspace-documents" aria-label="Danh sách tài liệu" aria-busy={loading}>
-      <h2>Tài liệu của bạn</h2>
-      {loading && <p role="status" className="muted">Đang tải danh sách tài liệu…</p>}
-      {error && <div role="alert"><p className="error-box">{error}</p>
-        <button className="btn" onClick={() => setAttempt(value => value + 1)}>Thử lại danh sách</button></div>}
+    <section className="workspace-documents" aria-label={t("Danh sách tài liệu")} aria-busy={loading}>
+      <div className="section-heading"><h2>{t("Tài liệu của bạn")}</h2><span className="view-caption"><WorkspaceIcon name="grid" size={16}/>{" " + t("Dạng thẻ")}</span></div>
+      {loading && <p role="status" className="muted">{t("Đang tải danh sách tài liệu…")}</p>}
+      {error && <div role="alert"><p className="error-box">{errorText(error)}</p>
+        <button className="btn" onClick={() => setAttempt(value => value + 1)}>{t("Thử lại danh sách")}</button></div>}
       {!loading && !error && <>
         {documents.length === 0 ? <p className="muted">{page === 0
-          ? (aiLabel ? (folderId ? 'Không có tài liệu khớp đồng thời thư mục và nhãn AI đã chọn.' : 'Không có tài liệu khớp nhãn AI đã chọn.')
-            : folderId ? 'Thư mục này chưa có tài liệu.' : 'Chưa có tài liệu nào trong không gian làm việc. Tải tài liệu để bắt đầu.')
-          : 'Không còn tài liệu trên trang này. Hãy quay về trang trước.'}</p> : (
-          <ul className="workspace-document-list" aria-label="Danh sách tài liệu workspace">
+          ? (filename ? t("Không tìm thấy tệp có tên chứa “{0}”.", filename) : aiLabel ? (folderId ? t("Không có tài liệu khớp đồng thời thư mục và nhãn AI đã chọn.") : t("Không có tài liệu khớp nhãn AI đã chọn."))
+            : folderId ? t("Thư mục này chưa có tài liệu.") : t("Chưa có tài liệu nào trong không gian làm việc. Tải tài liệu để bắt đầu."))
+          : t("Không còn tài liệu trên trang này. Hãy quay về trang trước.")}</p> : (
+          <ul className="workspace-document-list" aria-label={t("Danh sách tài liệu workspace")}>
             {documents.map(doc => <li key={doc.id} className="workspace-document-row"
               data-testid="workspace-document-row" data-document-id={doc.id}>
               <div className="document-row-main">
-                <a href={`/documents/${doc.id}?page=1`} className="document-row-title"><strong>{doc.original_filename}</strong></a>
+                <a href={`/documents/${doc.id}?page=1`} className="document-row-title" aria-label={doc.original_filename}><span className={`file-cover file-cover-${doc.original_filename.split('.').pop().toLowerCase()}`}><WorkspaceIcon name="file" size={45}/><span>{doc.original_filename.split('.').pop().toUpperCase()}</span></span>
+                <strong>{doc.original_filename}</strong></a>
                 <DocumentMetadata document={doc} folderName={folders.find(folder => folder.id === doc.folder_id)?.name} className="workspace-metadata-row" />
                 <DocumentExpiry expiresAt={doc.expires_at} />
               </div>
@@ -70,7 +76,7 @@ export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', fol
           </ul>
         )}
       </>}
-      {(page > 0 || hasNext) && <WorkspacePagination label="Phân trang tài liệu" page={page}
+      {(page > 0 || hasNext) && <WorkspacePagination label={t("Phân trang tài liệu")} page={page}
         hasNext={hasNext && !error} busy={loading} onPage={setPage} />}
     </section>
   );

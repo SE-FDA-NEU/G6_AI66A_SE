@@ -31,6 +31,7 @@ __pycache__/
 venv/
 .venv/
 backend/data/uploads/
+backend/data/backups/
 env/
 .env
 

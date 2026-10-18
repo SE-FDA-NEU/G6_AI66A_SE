@@ -1,3 +1,4 @@
+import { useI18n } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import { CitationBadge } from './CitationBadge';
 import DocumentMetadata from './DocumentMetadata';
@@ -6,6 +7,7 @@ import WorkspacePagination from './WorkspacePagination';
 const PAGE_SIZE = 10;
 
 export function WorkspaceSearch({ jobId, folders = [], foldersUnavailable = false, refreshKey = 0 }) {
+  const { t, locale, errorText } = useI18n();
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState('content');
   const [label, setLabel] = useState('');
@@ -19,7 +21,7 @@ export function WorkspaceSearch({ jobId, folders = [], foldersUnavailable = fals
     const controller = new AbortController();
     if (!request) { setResult(null); setError(''); setLoading(false); return; }
     async function search() {
-      let failureMessage = 'Không thể tìm kiếm lúc này. Vui lòng thử lại.';
+      let failureMessage = t("Không thể tìm kiếm lúc này. Vui lòng thử lại.");
       setLoading(true);
       setError('');
       setResult(null);
@@ -31,7 +33,11 @@ export function WorkspaceSearch({ jobId, folders = [], foldersUnavailable = fals
         const response = await fetch(`/api/search?${params}`, { signal: controller.signal, cache: 'no-store' });
         if (response.status === 401) { window.location.assign('/'); return; }
         if (!response.ok) {
-          if (response.status === 422) failureMessage = 'Nhập từ khóa có chữ hoặc số và kiểm tra bộ lọc.';
+          if (response.status === 503) {
+            const failure = await response.json().catch(() => null);
+            if (['embedding_rate_limited', 'embedding_unavailable'].includes(failure?.detail?.code) && typeof failure.detail.message === 'string') failureMessage = failure.detail.message;
+          }
+          if (response.status === 422) failureMessage = t("Nhập từ khóa có chữ hoặc số và kiểm tra bộ lọc.");
           throw new Error();
         }
         const data = await response.json();
@@ -61,43 +67,43 @@ export function WorkspaceSearch({ jobId, folders = [], foldersUnavailable = fals
   }
 
   return (
-    <section className="workspace-search" aria-label="Tìm kiếm tài liệu">
+    <section className="workspace-search" aria-label={t("Tìm kiếm tài liệu")}>
       <form className="search-form" onSubmit={handleSearch} role="search">
-        <label htmlFor="workspace-search-input" className="search-label">Tìm kiếm trong tài liệu</label>
-        <p className="search-help" id="workspace-search-help">Tìm trong toàn bộ tài liệu đã lập chỉ mục, kể cả tài liệu ngoài trang danh sách hiện tại.</p>
+        <label htmlFor="workspace-search-input" className="search-label">{t("Tìm kiếm trong tài liệu")}</label>
+        <p className="search-help" id="workspace-search-help">{t("Bạn nhớ một câu hay ý trong tài liệu? Nhập từ khóa như “điều khoản thanh toán”. Kết quả là đoạn trích kèm trang nguồn, không phải tên tệp.")}</p>
         <div className="search-bar">
           <input id="workspace-search-input" type="search" maxLength={500}
-            placeholder="Nhập từ khóa, ví dụ: thanh toán, tiền phạt…" aria-describedby="workspace-search-help"
+            placeholder={t("Tìm nội dung, ví dụ: điều khoản thanh toán…")} aria-describedby="workspace-search-help"
             value={query} onChange={event => setQuery(event.target.value)} />
           <button type="submit" className="btn primary" disabled={loading || !query.trim()}>
-            {loading ? 'Đang tìm…' : 'Tìm kiếm'}
+            {loading ? t("Đang tìm…") : t("Tìm kiếm")}
           </button>
-          <button type="button" className="btn" onClick={clearSearch} disabled={!request && !query && !label && !folder}>Xóa tìm kiếm</button>
+          <button type="button" className="btn" onClick={clearSearch} disabled={!request && !query && !label && !folder}>{t("Xóa tìm kiếm")}</button>
         </div>
         <div className="workspace-search-filters">
-          <label>Kiểu tìm kiếm
-            <select value={mode} onChange={event => setMode(event.target.value)}>
-              <option value="content">Từ khóa</option><option value="semantic">Theo ý nghĩa</option>
+          <label>{t("Kiểu tìm kiếm")}<select value={mode} onChange={event => setMode(event.target.value)}>
+              <option value="content">{t("Chứa từ khóa")}</option><option value="semantic">{t("Nội dung có ý nghĩa tương tự")}</option>
             </select>
           </label>
-          <label>Lọc theo nhãn<input value={label} maxLength={100} placeholder="Tất cả nhãn" onChange={event => setLabel(event.target.value)} /></label>
-          <div><label htmlFor="search-folder-select">Thư mục tìm kiếm</label>
+          <label>{t("Lọc theo nhãn")}<input value={label} maxLength={100} placeholder={t("Tất cả nhãn")} onChange={event => setLabel(event.target.value)} /></label>
+          <div><label htmlFor="search-folder-select">{t("Thư mục tìm kiếm")}</label>
           <select id="search-folder-select" value={folder} disabled={foldersUnavailable} onChange={event => setFolder(event.target.value)}>
-            <option value="">Tất cả thư mục</option>
+            <option value="">{t("Toàn bộ thư viện")}</option>
             {folders.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select></div>
         </div>
       </form>
       <div aria-live="polite" aria-busy={loading}>
-        {loading && <p role="status">Đang tìm kiếm trong tài liệu…</p>}
-        {error && <div role="alert"><p className="error-box">{error}</p>
-          <button className="btn" onClick={() => setRequest({ ...request })}>Thử lại tìm kiếm</button></div>}
+        {loading && <p role="status">{t("Đang tìm kiếm trong tài liệu…")}</p>}
+        {loading && request?.mode === 'semantic' && <p className="search-help">{t("Lần đầu có thể lâu hơn vì cần lập chỉ mục nội dung. Những lần sau sẽ dùng lại chỉ mục đã lưu.")}</p>}
+        {error && <div role="alert"><p className="error-box">{errorText(error)}</p>
+          <button className="btn" onClick={() => setRequest({ ...request })}>{t("Thử lại tìm kiếm")}</button></div>}
         {result && request && <div className="search-results">
-          <p className="search-count">{result.total_hits > 0 ? `Tìm thấy ${result.total_hits} kết quả` : 'Không tìm thấy kết quả phù hợp'}{request && ` cho “${request.query}”`}</p>
-          {result.total_hits > 0 && result.hits.length === 0 && <p>Không còn kết quả trên trang này. Hãy quay về trang trước.</p>}
+          <p className="search-help">{t("Phạm vi:") + " "}{request.folder ? folders.find(item => String(item.id) === request.folder)?.name || t("Thư mục đã chọn") : t("Toàn bộ thư viện")}{" " + t("· Nội dung tài liệu đã lập chỉ mục")}</p><p className="search-count">{result.total_hits > 0 ? t("Tìm thấy {0} kết quả", result.total_hits) : t("Không tìm thấy kết quả phù hợp")}{request && ` cho “${request.query}”`}</p>
+          {result.total_hits > 0 && result.hits.length === 0 && <p>{t("Không còn kết quả trên trang này. Hãy quay về trang trước.")}</p>}
           {result.hits.length > 0 && <>
-            <p className="search-help">Đoạn trích được sắp xếp theo mức độ phù hợp. Mở nguồn để xem ngữ cảnh.</p>
-            <ol className="search-hit-list" start={request.page * PAGE_SIZE + 1} aria-label="Danh sách kết quả tìm kiếm">
+            <p className="search-help">{t("Đoạn trích được sắp xếp theo mức độ phù hợp. Mở nguồn để xem ngữ cảnh.")}</p>
+            <ol className="search-hit-list" start={request.page * PAGE_SIZE + 1} aria-label={t("Danh sách kết quả tìm kiếm")}>
               {result.hits.map((hit, index) => <li key={`${hit.document_id}-${hit.page}-${hit.start}-${index}`} className="search-hit-card">
                 <div className="search-hit-body">
                   <p className="search-hit-heading"><strong>{request.page * PAGE_SIZE + index + 1}. {hit.doc_name}</strong></p>
@@ -109,7 +115,7 @@ export function WorkspaceSearch({ jobId, folders = [], foldersUnavailable = fals
               </li>)}
             </ol>
           </>}
-          {(result.total_hits > PAGE_SIZE || request.page > 0) && <WorkspacePagination label="Phân trang tìm kiếm"
+          {(result.total_hits > PAGE_SIZE || request.page > 0) && <WorkspacePagination label={t("Phân trang tìm kiếm")}
             page={request.page} busy={loading} hasNext={(request.page + 1) * PAGE_SIZE < result.total_hits}
             onPage={page => setRequest({ ...request, page })} />}
         </div>}

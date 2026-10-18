@@ -1,6 +1,8 @@
+import { useI18n } from '../lib/i18n';
 import { useEffect, useId, useRef, useState } from 'react';
 
 export default function WorkspaceNavigation({ children }) {
+  const { t, locale, errorText } = useI18n();
   const [open, setOpen] = useState(false);
   const id = useId();
   const toggle = useRef(null);
@@ -25,9 +27,9 @@ export default function WorkspaceNavigation({ children }) {
     };
   }, [open]);
 
-  return <nav ref={navigation} className="workspace-navigation" aria-label="Điều hướng không gian tài liệu" data-open={open}>
+  return <nav ref={navigation} className="workspace-navigation" aria-label={t("Điều hướng không gian tài liệu")} data-open={open}>
     <button ref={toggle} type="button" className="btn navigation-toggle" aria-expanded={open} aria-controls={id}
-      aria-label={open ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'} onClick={() => setOpen(!open)}>Menu</button>
+      aria-label={open ? t("Đóng menu điều hướng") : t("Mở menu điều hướng")} onClick={() => setOpen(!open)}>{t("Menu")}</button>
     <div id={id} className="navigation-links" onClick={() => setOpen(false)}>{children}</div>
   </nav>;
 }

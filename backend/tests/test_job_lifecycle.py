@@ -88,7 +88,7 @@ def test_mock_timeout_is_observable_before_retry_and_never_counts_as_success(cli
         retrying = polled.json()
         assert retrying['status'] == 'processing'
         assert retrying['completed_count'] == 0
-        assert retrying['result_data'] is None and retrying['finished_at'] is None
+        assert retrying['result_data']['documents'] == {} and retrying['finished_at'] is None
         file = retrying['job_files'][0]
         assert file['status'] == 'timed_out'
         assert file['attempt_count'] == 1
@@ -101,5 +101,5 @@ def test_mock_timeout_is_observable_before_retry_and_never_counts_as_success(cli
     assert processor.await_count == len(timeout_logs) == 3
     assert failed['status'] == failed['job_files'][0]['status'] == 'failed'
     assert failed['job_files'][0]['attempt_count'] == 3
-    assert failed['completed_count'] == 0 and failed['result_data'] is None
+    assert failed['completed_count'] == 0 and failed['result_data']['documents'] == {}
     assert failed['finished_at'] is not None

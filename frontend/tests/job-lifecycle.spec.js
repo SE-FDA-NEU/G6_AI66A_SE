@@ -28,25 +28,25 @@ test('file timeout and retry exhaustion never show false completion', async ({ p
   });
 
   await page.goto('/results/77');
-  const badge = page.getByLabel('Trạng thái job');
+  const badge = page.getByLabel('Trạng thái tác vụ');
   const row = page.getByRole('list', { name: 'Trạng thái từng tệp' }).getByRole('listitem');
   const progress = page.getByRole('progressbar', { name: 'Tiến độ xử lý', exact: true });
-  await expect(badge).toHaveText('Processing');
+  await expect(badge).toHaveText('Đang xử lý');
   await page.clock.fastForward(3000);
-  await expect(row).toContainText('Timed out');
-  await expect(row).toContainText('Processing exceeded 75 seconds');
-  await expect(badge).toHaveText('Processing');
+  await expect(row).toContainText('Quá thời gian');
+  await expect(row).toContainText('Xử lý vượt quá 75 giây');
+  await expect(badge).toHaveText('Đang xử lý');
   await expect(progress).toHaveJSProperty('value', 0);
   await expect(page.getByText('0/1 tệp đã xử lý thành công')).toBeVisible();
-  await expect(page.getByText('Completed', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Hoàn tất', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Tất cả tài liệu đã được xử lý xong.')).toHaveCount(0);
 
   await page.clock.fastForward(3000);
-  await expect(badge).toHaveText('Failed');
+  await expect(badge).toHaveText('Thất bại');
   await expect(row).toContainText('Lần thử 3/3');
-  await expect(row).toContainText('Processing timed out after 3 attempts');
+  await expect(row).toContainText('Xử lý hết thời gian sau 3 lần thử');
   await expect(progress).toHaveJSProperty('value', 0);
-  await expect(page.getByText('Completed', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Hoàn tất', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Tất cả tài liệu đã được xử lý xong.')).toHaveCount(0);
   await page.clock.fastForward(15000);
   expect(polls).toBe(3);
@@ -65,13 +65,13 @@ test('revisit and reload a completed job URL preserve its real server status and
   });
   async function expectPersistedResults() {
     await expect(page).toHaveURL(url);
-    await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed');
+    await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');
     await expect(page.getByText(`${saved.completed_count}/${saved.file_count} tệp đã xử lý thành công`)).toBeVisible();
     const rows = page.getByRole('list', { name: 'Trạng thái từng tệp' }).getByRole('listitem');
     await expect(rows).toHaveCount(saved.job_files.length);
     for (const file of saved.job_files) {
       const row = rows.filter({ hasText: file.original_filename });
-      await expect(row).toContainText('Completed');
+      await expect(row).toContainText('Hoàn tất');
       await expect(row).toContainText(`Lần thử ${file.attempt_count}/3`);
     }
     const previous = polls;

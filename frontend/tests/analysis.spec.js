@@ -34,14 +34,14 @@ for (const mode of ['bullet', 'table', 'concept']) {
     await page.goto('/results/77');
     const analysis = page.getByRole('region', { name: 'Kết quả phân tích AI' });
     await expect(analysis.getByText('Phạt 0.05% mỗi ngày.', { exact: true })).toBeVisible();
-    await expect(analysis.getByRole('link', { name: 'contract.pdf — page 2', exact: true }))
+    await expect(analysis.getByRole('link', { name: 'contract.pdf — trang 2', exact: true }))
       .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10&evidence=17-2-0-10&job=77');
-    await expect(analysis.getByTestId('document-ai-label')).toContainText('Hợp đồng');
+    await expect(analysis.getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Hợp đồng');
     if (mode === 'bullet') {
-      await expect(analysis.getByText('Unverified · Cần kiểm tra')).toBeVisible();
-      await expect(analysis.getByRole('link', { name: 'contract.pdf — page 2' })).toHaveCount(1);
+      await expect(analysis.getByText('Chưa xác thực · Cần kiểm tra')).toBeVisible();
+      await expect(analysis.getByRole('link', { name: 'contract.pdf — trang 2' })).toHaveCount(1);
     }
-    if (mode === 'table') await expect(analysis.getByText('Không có thông tin · Unverified')).toHaveCount(2);
+    if (mode === 'table') await expect(analysis.getByText('Không có thông tin · Chưa xác thực')).toHaveCount(2);
     await page.reload();
     await expect(analysis.getByText('Phạt 0.05% mỗi ngày.', { exact: true })).toBeVisible();
   });
@@ -74,7 +74,7 @@ test('missing key is explained instead of displaying invented AI output', async 
   await expect(page.getByRole('heading', { name: 'Tóm tắt', exact: true })).toHaveCount(0);
 });
 
-test('same claim keeps separate source links, including passages for Unverified review', async ({ page }) => {
+test('same claim keeps separate source links, including passages for Chưa xác thực review', async ({ page }) => {
   const document = result('bullet');
   const claim = document.output.bullets[0];
   claim.unverified = true;
@@ -83,13 +83,13 @@ test('same claim keeps separate source links, including passages for Unverified 
   await page.route('**/jobs/77', route => route.fulfill({ json: job(document) }));
   await page.goto('/results/77');
   const region = page.getByRole('region', { name: 'Kết quả phân tích AI' });
-  await expect(region.getByRole('link', { name: 'contract.pdf — page 2', exact: true }))
+  await expect(region.getByRole('link', { name: 'contract.pdf — trang 2', exact: true }))
     .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10&evidence=17-2-0-10&job=77');
-  await expect(region.getByRole('link', { name: 'Document #18 — page 2', exact: true }))
+  await expect(region.getByRole('link', { name: 'Tài liệu #18 — trang 2', exact: true }))
     .toHaveAttribute('href', '/documents/18?page=2&start=20&end=30&evidence=18-2-20-30&job=77');
-  await expect(region.getByText('Unverified · Cần kiểm tra')).toHaveCount(2);
+  await expect(region.getByText('Chưa xác thực · Cần kiểm tra')).toHaveCount(2);
   await page.reload();
-  await expect(region.getByRole('link', { name: /— page 2/ })).toHaveCount(2);
+  await expect(region.getByRole('link', { name: /— trang 2/ })).toHaveCount(2);
 });
 
 function pdf() {
@@ -124,7 +124,7 @@ test('financial clause upload submits five contracts in one job through the real
   await expect(page.getByRole('status')).toContainText('5/5 tệp hợp lệ');
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).click();
   await expect(page).toHaveURL(/\/results\/\d+$/);
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed', { timeout: 15000 });
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất', { timeout: 15000 });
   await expect(page.getByText(/Thêm GEMINI_API_KEY/)).toHaveCount(5); // isolated backend never uses paid APIs
   const jobId = new URL(page.url()).pathname.split('/').pop();
   const saved = await (await page.request.get(`/jobs/${jobId}`)).json();
@@ -253,13 +253,13 @@ test.describe('AI Label Prediction and Confidence Boundary (US06 / US10)', () =>
 
       const labelPara = page.locator('.analysis-label');
       await expect(labelPara).toBeVisible();
-      await expect(labelPara.getByTestId('document-ai-label')).toContainText('Hợp đồng');
+      await expect(labelPara.getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Hợp đồng');
       await expect(labelPara.getByTestId('document-ai-confidence')).toContainText(`${Math.round(score * 100)}%`);
 
       if (needsReviewText) {
-        await expect(labelPara).toContainText('· Cần kiểm tra');
+        await expect(labelPara).toContainText('Cần kiểm tra');
       } else {
-        await expect(labelPara).not.toContainText('· Cần kiểm tra');
+        await expect(labelPara).not.toContainText('Cần kiểm tra');
       }
     });
   }
@@ -278,9 +278,9 @@ test.describe('AI Label Prediction and Confidence Boundary (US06 / US10)', () =>
 
     const labelPara = page.locator('.analysis-label');
     await expect(labelPara).toBeVisible();
-    await expect(labelPara.getByTestId('document-ai-label')).toContainText('Hợp đồng');
+    await expect(labelPara.getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Hợp đồng');
     await expect(labelPara.getByTestId('document-ai-confidence')).toContainText('87%');
     await expect(labelPara.getByTestId('document-user-label')).toContainText('Tài liệu pháp lý');
-    await expect(labelPara).not.toContainText('· Cần kiểm tra');
+    await expect(labelPara).not.toContainText('Cần kiểm tra');
   });
 });

@@ -33,6 +33,7 @@ class DocumentInput:
     file_format: object = None
     extracted_text: list | None = None
     owner_id: int | None = None
+    language: str = "vi"
 
 
 async def process_document(document, mode):
@@ -69,7 +70,8 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                 db.commit()
                 continue
             source = DocumentInput(document.id, document.storage_path, document.page_count,
-                                   document.file_format, document.extracted_text, document.owner_id)
+                                   document.file_format, document.extracted_text, document.owner_id,
+                                   (job.result_data or {}).get("language") or "vi")
             timeout = document_timeout(document.page_count)
             file.timeout_seconds = timeout
             loop = asyncio.get_running_loop()

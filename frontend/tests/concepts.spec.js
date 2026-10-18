@@ -63,7 +63,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Shared Upload Selector and Concept Submission (US04, BR04, BR05)', () => {
-  test('shared upload selector exposes Bullet Summary, Financial Clause Table and Concept Overview mapped to modes', async ({ page }) => {
+  test('shared upload selector exposes Tóm tắt điểm chính, Bảng điều khoản tài chính and Tổng quan khái niệm mapped to modes', async ({ page }) => {
     await page.goto('/upload');
 
     const selector = page.getByLabel('Kiểu phân tích');
@@ -73,20 +73,20 @@ test.describe('Shared Upload Selector and Concept Submission (US04, BR04, BR05)'
     expect(options.length).toBe(3);
 
     expect(await options[0].getAttribute('value')).toBe('bullet');
-    expect(await options[0].textContent()).toContain('Bullet Summary');
+    expect(await options[0].textContent()).toContain('Tóm tắt điểm chính');
 
     expect(await options[1].getAttribute('value')).toBe('table');
-    expect(await options[1].textContent()).toContain('Financial Clause Table');
+    expect(await options[1].textContent()).toContain('Bảng điều khoản tài chính');
 
     expect(await options[2].getAttribute('value')).toBe('concept');
-    expect(await options[2].textContent()).toContain('Concept Overview');
+    expect(await options[2].textContent()).toContain('Tổng quan khái niệm');
   });
 
   test('preserves concept selection when files are added, changed, or removed', async ({ page }) => {
     await page.goto('/upload');
 
     const selector = page.getByLabel('Kiểu phân tích');
-    // Select Concept Overview
+    // Select Tổng quan khái niệm
     await selector.selectOption('concept');
     await expect(selector).toHaveValue('concept');
 
@@ -204,17 +204,17 @@ test.describe('Concept Result Rendering and Source Navigation (BR04, BR05)', () 
     // Verify all 4 concepts are rendered
     await expect(page.getByRole('heading', { name: 'Demand-pull Inflation' })).toBeVisible();
     await expect(page.getByText('Demand-pull inflation occurs when aggregate demand outpaces supply.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'macroeconomics.pdf — page 1' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'macroeconomics.pdf — trang 1' })).toBeVisible();
 
     await expect(page.getByRole('heading', { name: 'Cost-push Inflation' })).toBeVisible();
     await expect(page.getByText('Cost-push inflation is driven by aggregate supply decreases.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'macroeconomics.pdf — page 2' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'macroeconomics.pdf — trang 2' })).toBeVisible();
 
     await expect(page.getByRole('heading', { name: 'Monetary Policy' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Fiscal Policy' })).toBeVisible();
 
     // Verify citation link format carries page, start, end, evidence and job id
-    const link = page.getByRole('link', { name: 'macroeconomics.pdf — page 1' });
+    const link = page.getByRole('link', { name: 'macroeconomics.pdf — trang 1' });
     await expect(link).toHaveAttribute('href', '/documents/88?page=1&start=0&end=68&evidence=88-1-0-68&job=99');
   });
 
@@ -259,7 +259,7 @@ test.describe('Concept Result Rendering and Source Navigation (BR04, BR05)', () 
     await page.goto('/results/99');
 
     // Click citation link
-    const citationLink = page.getByRole('link', { name: 'macroeconomics.pdf — page 2' });
+    const citationLink = page.getByRole('link', { name: 'macroeconomics.pdf — trang 2' });
     await expect(citationLink).toBeVisible();
     await citationLink.click();
 
@@ -267,8 +267,8 @@ test.describe('Concept Result Rendering and Source Navigation (BR04, BR05)', () 
     await expect(page).toHaveURL(/\/documents\/88\?page=2&start=10&end=78&evidence=88-2-10-78&job=99/);
     await expect(page.getByText('Trang 2/5')).toBeVisible();
 
-    // Verify Back to Results link is displayed and points to /results/99
-    const backBtn = page.getByRole('link', { name: 'Back to Results' });
+    // Verify Về kết quả link is displayed and points to /results/99
+    const backBtn = page.getByRole('link', { name: 'Về kết quả' });
     await expect(backBtn).toBeVisible();
     await expect(backBtn).toHaveAttribute('href', '/results/99');
   });

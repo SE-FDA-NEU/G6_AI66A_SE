@@ -26,7 +26,7 @@ for (const [name, sources] of [
   ['invalid offsets', [{ ...evidence(), start: 10, end: 10 }]], ['invalid document', [{ ...evidence(), document_id: -1 }]],
   ['blank quote', [{ ...evidence(), quote: '  ' }]], ['missing version', [{ ...evidence(), reader_version: undefined }]],
 ]) {
-  test(`summary ${name} evidence is Unverified with no fabricated source link despite a confirmed high-confidence label`, async ({ page }) => {
+  test(`summary ${name} evidence is Chưa xác thực with no fabricated source link despite a confirmed high-confidence label`, async ({ page }) => {
     const saved = savedJob('bullet', { bullets: [claim({ evidence: sources })], actions: [] });
     await page.route('**/jobs/138', route => route.fulfill({ json: saved }));
     async function check() {
@@ -48,7 +48,7 @@ for (const [name, sources] of [
   });
 }
 
-test('unsupported table fields and source groups share Unverified while preserving numbers and genuine review passages', async ({ page }) => {
+test('unsupported table fields and source groups share Chưa xác thực while preserving numbers and genuine review passages', async ({ page }) => {
   const saved = savedJob('table', { value: claim({ evidence: [] }), payment_term: null,
     penalty: claim({ text: '0.05% per day', evidence: [{ ...evidence(), page: null }] }) });
   await page.route('**/jobs/138', route => route.fulfill({ json: saved }));
@@ -74,14 +74,14 @@ test('mixed sources retain only real source references, and verification issues 
   await page.route('**/jobs/138', route => route.fulfill({ json: saved }));
   await page.goto('/results/138');
   for (const region of [page.getByRole('region', { name: 'Tóm tắt điểm chính', exact: true }),
-    page.getByRole('region', { name: 'Recommended actions', exact: true })]) {
+    page.getByRole('region', { name: 'Hành động đề xuất', exact: true })]) {
     await expect(region.locator('.unverified-badge')).toHaveCount(1);
     await expect(region.getByRole('link')).toHaveCount(1);
     await expect(region.getByRole('link')).toHaveAttribute('href', `/documents/51?page=6&start=0&end=${amount.length}&evidence=51-6-0-${amount.length}&job=138`);
   }
 });
 
-test('missing concept descriptions use the same Unverified state; low label confidence does not invalidate grounded facts', async ({ page }) => {
+test('missing concept descriptions use the same Chưa xác thực state; low label confidence does not invalidate grounded facts', async ({ page }) => {
   const saved = savedJob('concept', { concepts: [
     { name: 'Unsupported concept', description: null },
     { name: 'Grounded concept', description: claim() },
@@ -94,5 +94,5 @@ test('missing concept descriptions use the same Unverified state; low label conf
   const grounded = page.getByTestId('concept-card-1');
   await expect(grounded.getByRole('link')).toHaveCount(1);
   await expect(grounded.locator('.unverified-badge')).toHaveCount(0);
-  await expect(page.locator('.analysis-label').getByTestId('document-review-state')).toContainText('Needs review');
+  await expect(page.locator('.analysis-label').getByTestId('document-review-state')).toContainText('Cần kiểm tra');
 });

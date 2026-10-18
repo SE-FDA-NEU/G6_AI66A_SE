@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Header
 from fastapi.responses import Response
 from sqlalchemy.orm import Session, joinedload
 
@@ -22,6 +22,7 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
                                                409: {'description': 'Table is not complete'}})
 def export_table_pdf(
     job_id: int,
+    language: str | None = Header(None, alias='X-DocuMind-Language', pattern='^(en|vi)$'),
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -37,7 +38,7 @@ def export_table_pdf(
         rows = saved_table_rows(job)
     except IncompleteTable as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    return Response(render_table_pdf(job.id, rows), media_type='application/pdf',
+    return Response(render_table_pdf(job.id, rows, (job.result_data or {}).get('language') or language or 'vi'), media_type='application/pdf',
                     background=download_retention_task(db, current_user_id, [row.document_id for row in rows]), headers={
         'Content-Disposition': f'attachment; filename="comparison-{job.id}.pdf"',
         'Cache-Control': 'private, no-store',

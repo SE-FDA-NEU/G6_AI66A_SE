@@ -1,4 +1,10 @@
+# Includes all runtime dependencies above.
 -r requirements.txt
-pytest
-python-docx
-python-pptx
+
+# Backend tests and PDF highlight/rendering assertions.
+pytest==9.1.1
+pypdfium2==5.14.0
+pillow==12.3.0
+
+# Browser tests use frontend/package-lock.json, not pip:
+# cd frontend && npm ci && npx playwright install chromium webkit

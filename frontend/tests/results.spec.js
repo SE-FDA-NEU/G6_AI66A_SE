@@ -22,25 +22,25 @@ test('polls at 3 seconds, updates 3/5 progress and stops on completion', async (
   let requests = 0;
   await page.route('**/jobs/77', route => route.fulfill({ json: requests++ === 0 ? job() : job('completed', 5) }));
   await page.goto('/results/77');
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Processing');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Đang xử lý');
   await expect(page.getByText('3/5 tệp đã xử lý thành công')).toBeVisible();
   const progress = page.getByRole('progressbar', { name: 'Tiến độ xử lý', exact: true });
   await expect(progress).toHaveJSProperty('value', 3);
   await expect(progress).toHaveJSProperty('max', 5);
   const files = page.getByRole('list', { name: 'Trạng thái từng tệp' }).getByRole('listitem');
   await expect(files).toHaveCount(5);
-  await expect(files.nth(3)).toContainText('Processing');
-  await expect(files.nth(4)).toContainText('Pending');
+  await expect(files.nth(3)).toContainText('Đang xử lý');
+  await expect(files.nth(4)).toContainText('Đang chờ');
   await page.clock.fastForward(2000);
   expect(requests).toBe(1);
   await page.clock.fastForward(1000);
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');
   await expect(progress).toHaveJSProperty('value', 5);
   await page.clock.runFor(15000);
   expect(requests).toBe(2);
 });
 
-for (const [status, label] of [['completed', 'Completed'], ['failed', 'Failed'], ['timed_out', 'Timed out']]) {
+for (const [status, label] of [['completed', 'Hoàn tất'], ['failed', 'Thất bại'], ['timed_out', 'Quá thời gian']]) {
   test(`opening an already ${status} job fetches once and does not poll`, async ({ page }) => {
     let requests = 0;
     const snapshot = job(status, status === 'completed' ? 5 : 2);
@@ -48,8 +48,8 @@ for (const [status, label] of [['completed', 'Completed'], ['failed', 'Failed'],
     snapshot.job_files[4].error_message = status === 'completed' ? null : 'Processing could not finish.';
     await page.route('**/jobs/77', route => { requests++; return route.fulfill({ json: snapshot }); });
     await page.goto('/results/77');
-    await expect(page.getByLabel('Trạng thái job')).toHaveText(label);
-    if (status !== 'completed') await expect(page.getByText('Processing could not finish.')).toBeVisible();
+    await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText(label);
+    if (status !== 'completed') await expect(page.getByText('Không thể hoàn tất xử lý.')).toBeVisible();
     await page.clock.runFor(15000);
     expect(requests).toBe(1);
   });
@@ -63,12 +63,12 @@ test('pending job starts polling and shows per-file timeout and retry details', 
   retrying.job_files[0] = { ...retrying.job_files[0], status: 'timed_out', attempt_count: 2, error_message: 'Retrying after timeout.' };
   await page.route('**/jobs/77', route => route.fulfill({ json: requests++ === 0 ? pending : retrying }));
   await page.goto('/results/77');
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Pending');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Đang chờ');
   await page.clock.runFor(3000);
   const first = page.getByRole('list', { name: 'Trạng thái từng tệp' }).getByRole('listitem').first();
-  await expect(first).toContainText('Timed out');
+  await expect(first).toContainText('Quá thời gian');
   await expect(first).toContainText('Lần thử 2/3');
-  await expect(first).toContainText('Retrying after timeout.');
+  await expect(first).toContainText('Đang thử lại sau khi hết thời gian.');
   await page.clock.runFor(3000);
   await expect.poll(() => requests).toBe(3); // File timeout is not a terminal job.
 });
@@ -86,7 +86,7 @@ test('temporary fetch failure preserves progress and polling recovers', async ({
   await expect(page.locator('.results-content').getByRole('alert')).toContainText('Không thể cập nhật');
   await expect(page.getByText('3/5 tệp đã xử lý thành công')).toBeVisible();
   await page.clock.runFor(3000);
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');
   await expect(page.locator('.results-content').getByRole('alert')).toHaveCount(0);
 });
 
@@ -115,7 +115,7 @@ test('leaving results cancels polling', async ({ page }) => {
   let requests = 0;
   await page.route('**/jobs/77', route => { requests++; return route.fulfill({ json: job() }); });
   await page.goto('/results/77');
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Processing');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Đang xử lý');
   await page.getByRole('link', { name: 'Về không gian tài liệu' }).click();
   await expect(page).toHaveURL('/workspace');
   await page.clock.runFor(15000);
@@ -130,19 +130,19 @@ test('results layout fits mobile with long filenames and errors', async ({ page 
   snapshot.job_files[3].error_message = 'Processing timed out after 3 attempts (75 seconds per attempt).';
   await page.route('**/jobs/77', route => route.fulfill({ json: snapshot }));
   await page.goto('/results/77');
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Failed');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Thất bại');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/results-mobile.png', fullPage: true });
 });
 
-for (const [status, label] of [['failed', 'Failed'], ['timed_out', 'Timed out']]) {
+for (const [status, label] of [['failed', 'Thất bại'], ['timed_out', 'Quá thời gian']]) {
   test(`polling stops when a running job becomes ${status}`, async ({ page }) => {
     let requests = 0;
     await page.route('**/jobs/77', route => route.fulfill({ json: requests++ === 0 ? job() : job(status, 3) }));
     await page.goto('/results/77');
-    await expect(page.getByLabel('Trạng thái job')).toHaveText('Processing');
+    await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Đang xử lý');
     await page.clock.fastForward(3000);
-    await expect(page.getByLabel('Trạng thái job')).toHaveText(label);
+    await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText(label);
     await page.clock.fastForward(15000);
     expect(requests).toBe(2);
   });
@@ -157,12 +157,12 @@ test('slow requests do not create overlapping polling calls', async ({ page }) =
   await page.clock.fastForward(9000);
   expect(requests).toBe(1);
   await heldRoute.fulfill({ json: job('completed', 5) });
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');
 });
 
 test('loads completed job and filenames through the real backend proxy', async ({ page }) => {
   await page.goto('/results/9001');
-  await expect(page.getByLabel('Trạng thái job')).toHaveText('Completed');
+  await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');
   await expect(page.getByText('1/1 tệp đã xử lý thành công')).toBeVisible();
   await expect(page.getByText('private-playwright_user.pdf', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/results-desktop.png', fullPage: true });

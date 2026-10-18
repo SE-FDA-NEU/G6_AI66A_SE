@@ -1,5 +1,4 @@
 import hashlib
-import subprocess
 from datetime import datetime, timedelta
 
 import pytest
@@ -8,7 +7,6 @@ from pptx import Presentation
 from pptx.util import Inches
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.config import settings
 from app.core.security import create_access_token
 from app.models import Document, FileFormat
 from app.services import reader_extraction as reader
@@ -50,7 +48,7 @@ def save_document(factory, source, fmt):
 
 
 def fake_converter(source, fmt, output_dir):
-    # Tests conversion/storage failure paths independently of LibreOffice installation.
+    # Test publication/rollback independently of the native Office renderer.
     texts = ['DOCX page one alpha DOCX page one beta', 'DOCX page two gamma DOCX page two delta'] if fmt == FileFormat.DOCX else ['PPTX slide 1', 'PPTX slide 2', '']
     return make_pdf(output_dir / 'source.pdf', [
         f'BT /F1 12 Tf 72 720 Td ({text}) Tj ET'.encode() if text else b'' for text in texts
@@ -159,15 +157,12 @@ def test_reader_authorization_precedes_file_access(client, session_factory, sour
     assert client.get(f'/documents/{document_id}/{suffix}').status_code == 401
 
 
-def test_prepare_endpoint_reports_missing_converter_and_cannot_fallback_to_paragraphs(client, session_factory, sources, monkeypatch):
+def test_prepare_endpoint_needs_no_external_program(client, session_factory, sources, monkeypatch):
+    monkeypatch.setenv('PATH', '')
     document_id = save_document(session_factory, sources[FileFormat.DOCX], FileFormat.DOCX)
-    monkeypatch.setattr(settings, 'SOFFICE_BINARY', '/no/such/soffice')
     response = client.post(f'/documents/{document_id}/reader')
-    assert response.status_code == 503
-    assert response.json()['detail']['code'] == 'converter_unavailable'
-    assert client.get(f'/documents/{document_id}/pages').status_code == 409
-    with session_factory() as db:
-        assert db.get(Document, document_id).page_count is None
+    assert response.status_code == 200, response.text
+    assert client.get(f'/documents/{document_id}/pages').json()['page_count'] == 2
 
 
 def test_tampered_reader_pdf_is_not_served(client, session_factory, sources):
@@ -182,41 +177,16 @@ def test_tampered_reader_pdf_is_not_served(client, session_factory, sources):
     assert client.get(url).status_code == 200
 
 
-@pytest.mark.parametrize('returncode', [0, 1])
-def test_missing_converter_output_is_failure_even_with_zero_exit_code(tmp_path, monkeypatch, returncode):
-    monkeypatch.setattr(reader, 'find_soffice', lambda: 'test-soffice')
-    class FakeProcess:
-        def communicate(self, timeout):
-            return b'', b''
-    process = FakeProcess()
-    process.returncode = returncode
-    monkeypatch.setattr(reader.subprocess, 'Popen', lambda *a, **k: process)
+def test_corrupt_office_is_an_explicit_failure(tmp_path):
+    source = tmp_path / 'broken.docx'
+    source.write_bytes(b'not a document')
     with pytest.raises(reader.ReaderConversionError) as error:
-        reader.convert_office(tmp_path / 'broken.docx', FileFormat.DOCX, tmp_path)
+        reader.convert_office(source, FileFormat.DOCX, tmp_path)
     assert error.value.code == 'conversion_failed'
 
 
-def test_conversion_process_timeout_is_explicit_and_stops_the_process(tmp_path, monkeypatch):
-    monkeypatch.setattr(reader, 'find_soffice', lambda: 'test-soffice')
-    class FakeProcess:
-        def communicate(self, timeout):
-            raise subprocess.TimeoutExpired('test', timeout)
-    stopped = []
-    process = FakeProcess()
-    monkeypatch.setattr(reader.subprocess, 'Popen', lambda *a, **k: process)
-    monkeypatch.setattr(reader, '_stop_conversion', lambda child: stopped.append(child))
-    with pytest.raises(reader.ReaderConversionError) as error:
-        reader.convert_office(tmp_path / 'source.docx', FileFormat.DOCX, tmp_path)
-    assert error.value.code == 'conversion_timed_out'
-    assert stopped == [process]
-
-
 @pytest.mark.parametrize('fmt', [FileFormat.DOCX, FileFormat.PPTX])
-def test_real_libreoffice_source_pages_match_displayed_reader(client, session_factory, sources, fmt, tmp_path):
-    try:
-        reader.find_soffice()
-    except reader.ReaderConversionError:
-        pytest.skip('Install LibreOffice or set SOFFICE_BINARY to run the real converter integration test')
+def test_native_office_pages_match_displayed_reader(client, session_factory, sources, fmt, tmp_path):
     document_id = save_document(session_factory, sources[fmt], fmt)
     response = client.post(f'/documents/{document_id}/reader')
     assert response.status_code == 200, response.text
@@ -224,6 +194,8 @@ def test_real_libreoffice_source_pages_match_displayed_reader(client, session_fa
         doc = db.get(Document, document_id)
         result = {'page_count': doc.page_count, 'extracted_text': doc.extracted_text}
     metadata, _ = assert_reader_matches_api(client, document_id, result, tmp_path)
+    assert metadata['reader_layout'] == 'text'
+    assert metadata['file_format'] == fmt.value
     texts = [page['text'] for page in metadata['pages']]
     if fmt == FileFormat.DOCX:
         assert len(texts) == 2
@@ -236,3 +208,50 @@ def test_real_libreoffice_source_pages_match_displayed_reader(client, session_fa
         assert 'PPTX slide 2' in texts[1]  # Hidden slide retains physical slide number 2.
         assert texts[2] == ''
         assert all('SPEAKER NOTES' not in text for text in texts)
+
+
+def test_native_docx_preserves_vietnamese_tables_and_xml_characters(tmp_path):
+    source = tmp_path / 'vietnamese.docx'
+    document = WordDocument()
+    document.add_paragraph('Thông tin hợp đồng: giá trị 1.234.567 VND, phạt 0.05%.')
+    table = document.add_table(rows=2, cols=2)
+    table.cell(0,0).text = 'Thanh toán'
+    table.cell(0,1).text = '30 ngày'
+    table.cell(1,0).text = 'Ghi chú'
+    table.cell(1,1).text = 'Kiểm tra & đối chiếu <bản gốc>'
+    document.save(source)
+    result = extract_pdf(reader.convert_office(source, FileFormat.DOCX, tmp_path))
+    text = '\n'.join(p['text'] for p in result['extracted_text'])
+    for expected in ['Thông tin hợp đồng', '1.234.567 VND', '0.05%', 'Thanh toán', '30 ngày', 'Kiểm tra & đối chiếu <bản gốc>']:
+        assert expected in text
+    assert all(page['text'][position['start']:position['end']] == position['text']
+               for page in result['extracted_text'] for position in page['positions'])
+
+
+def test_native_docx_flows_long_content_without_dropping_paragraphs(tmp_path):
+    source = tmp_path / 'long.docx'
+    document = WordDocument()
+    for i in range(150):
+        document.add_paragraph(f'SOURCE-{i:03d}: A full original paragraph with payment conditions and source details.')
+    document.save(source)
+    result = extract_pdf(reader.convert_office(source, FileFormat.DOCX, tmp_path))
+    assert result['page_count'] > 1
+    text = '\n'.join(p['text'] for p in result['extracted_text'])
+    assert all(text.count(f'SOURCE-{i:03d}:') == 1 for i in range(150))
+
+
+def test_native_pptx_preserves_grouped_text_and_dense_slide_on_one_page(tmp_path):
+    source = tmp_path / 'grouped.pptx'
+    deck = Presentation()
+    slide = deck.slides.add_slide(deck.slide_layouts[6])
+    group = slide.shapes.add_group_shape()
+    group.shapes.add_textbox(Inches(1), Inches(1), Inches(3), Inches(1)).text = 'Điều khoản & nghĩa vụ <gốc>'
+    text_frame = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(7), Inches(3)).text_frame
+    for i in range(80):
+        text_frame.add_paragraph().text = f'ROW-{i:03d}: Original slide text with payment details.'
+    deck.save(source)
+    result = extract_pdf(reader.convert_office(source, FileFormat.PPTX, tmp_path))
+    assert result['page_count'] == 1
+    text = result['extracted_text'][0]['text']
+    assert 'Điều khoản & nghĩa vụ <gốc>' in text
+    assert all(text.count(f'ROW-{i:03d}:') == 1 for i in range(80))

@@ -262,3 +262,40 @@ def test_saved_pages_are_searchable_after_restart_with_only_design_tables(sessio
             assert result.total_hits == 1 and result.hits[0].page == 3
     finally:
         engine.dispose()
+
+
+def test_quota_keeps_completed_batches_and_retry_only_embeds_remaining_sources(client, session_factory, corpus, monkeypatch):
+    from app.services.search_embeddings import EmbeddingUnavailable
+    monkeypatch.setattr(index, 'CHUNK_SIZE', 40)
+    monkeypatch.setattr(index, 'CHUNK_OVERLAP', 10)
+
+    class Limited(SemanticEmbedder):
+        document_calls = 0
+        def embed(self, texts, *, task):
+            if task == 'RETRIEVAL_DOCUMENT':
+                self.document_calls += 1
+                if self.document_calls == 2:
+                    raise EmbeddingUnavailable(code='embedding_rate_limited', retry_after=12)
+            return super().embed(texts, task=task)
+
+    embedder = Limited()
+    app.dependency_overrides[get_search_embedder] = lambda: embedder
+    try:
+        response = client.get('/search?q=fees&mode=semantic')
+        assert response.status_code == 503
+        assert response.headers['Retry-After'] == '12'
+        assert response.json()['detail']['code'] == 'embedding_rate_limited'
+        assert '12 giây' in response.json()['detail']['message']
+        with session_factory() as db:
+            saved = sum(len(page.get('search', {}).get('passages', {}))
+                        for doc in db.query(Document).filter_by(owner_id=123) for page in doc.extracted_text)
+            assert saved == 50
+            assert all('search' not in page for page in db.get(Document, corpus[-1]).extracted_text)
+        assert client.get('/search?q=fees&mode=semantic').status_code == 200
+        # No text from the completed first batch is sent again on retry.
+        texts = [text for batch, task in embedder.calls if task == 'RETRIEVAL_DOCUMENT' for text in batch]
+        with session_factory() as db:
+            total = sum(len(index.document_passages(doc)) for doc in db.query(Document).filter_by(owner_id=123))
+        assert len(texts) == total
+    finally:
+        app.dependency_overrides.pop(get_search_embedder, None)

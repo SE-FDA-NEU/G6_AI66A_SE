@@ -300,7 +300,7 @@ def test_failed_result_commit_rolls_back_metadata_artifact_and_continues(client,
     failed = False
     def fail_first_result(db):
         nonlocal failed
-        if not failed and any(isinstance(item, Job) and item.result_data for item in db.dirty):
+        if not failed and any(isinstance(item, Job) and (item.result_data or {}).get('documents') for item in db.dirty):
             failed = True
             raise SQLAlchemyError('private database error')
         return original(db)
@@ -333,11 +333,6 @@ def test_textless_pdf_is_extracted_without_fabricated_content(client, session_fa
 
 @pytest.mark.parametrize('fmt', [FileFormat.DOCX, FileFormat.PPTX])
 def test_office_upload_pipeline_uses_actual_rendered_reader_pages(client, session_factory, sources, fmt):
-    from app.services.reader_extraction import find_soffice, ReaderConversionError
-    try:
-        find_soffice()
-    except ReaderConversionError:
-        pytest.skip('LibreOffice is required for the real conversion integration test')
     source = sources[fmt]
     response = client.post('/upload', files=[('files', (source.name, source.read_bytes(), 'application/octet-stream'))])
     job_id = int(response.json()['jobId'])
@@ -353,16 +348,16 @@ def test_office_upload_pipeline_uses_actual_rendered_reader_pages(client, sessio
     assert all(page['reader']['sha256'] == result['reader']['version'] for page in pages['pages'])
 
 
-def test_missing_converter_is_an_explicit_file_failure(client, session_factory, sources, monkeypatch, tmp_path):
-    monkeypatch.setattr(settings, 'SOFFICE_BINARY', str(tmp_path / 'missing-soffice.exe'))
+def test_native_office_pipeline_needs_no_external_program(client, session_factory, sources, monkeypatch, tmp_path):
+    monkeypatch.setenv('PATH', '')
     source = sources[FileFormat.DOCX]
     response = client.post('/upload', files=[('files', (source.name, source.read_bytes(), 'application/octet-stream'))])
     job_id = int(response.json()['jobId'])
     processing.process_job(job_id, session_factory)
     saved = client.get(f'/jobs/{job_id}').json()
-    assert saved['status'] == 'failed' and saved['completed_count'] == 0
-    assert 'converter_unavailable' in saved['job_files'][0]['error_message']
-    assert saved['job_files'][0]['attempt_count'] == 1 and saved['result_data'] is None
+    assert saved['status'] == 'completed' and saved['completed_count'] == 1
+    assert saved['job_files'][0]['error_message'] is None
+    assert saved['job_files'][0]['attempt_count'] == 1
 
 
 def test_results_and_reader_survive_database_engine_restart(client, session_factory, tmp_path):

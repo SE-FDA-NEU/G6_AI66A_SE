@@ -58,7 +58,7 @@ def test_always_timeout_retries_twice_and_persists_failure(client, session_facto
         assert file.status == job.status == JobStatus.FAILED
         assert file.attempt_count == 3 and file.timeout_seconds == 75
         assert '3 attempts' in file.error_message
-        assert job.completed_count == 0 and job.result_data is None
+        assert job.completed_count == 0 and job.result_data['documents'] == {}
         assert job.finished_at is not None
     for i in (1, 2, 3):
         assert f'job={job_id} document={ids[0]} attempt={i}/3 timeout=75s started' in caplog.text

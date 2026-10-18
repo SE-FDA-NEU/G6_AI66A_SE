@@ -9,7 +9,7 @@ from app.models import Document, FileFormat, Job, JobFile, JobStatus, User
 from app.core.upload_validation import READ_CHUNK_BYTES
 
 
-def save_upload_job(db, user_id, files, validated, mode, storage_root):
+def save_upload_job(db, user_id, files, validated, mode, storage_root, language="vi"):
     if db.get(User, user_id) is None:
         raise HTTPException(401, "Account no longer exists.")
     batch_dir = Path(storage_root).resolve() / str(user_id) / uuid4().hex
@@ -19,7 +19,8 @@ def save_upload_job(db, user_id, files, validated, mode, storage_root):
         created_directory = True
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         job = Job(owner_id=user_id, mode=mode, status=JobStatus.PENDING,
-                  file_count=len(files), completed_count=0)
+                  file_count=len(files), completed_count=0,
+                  result_data={"schema_version": 1, "language": language, "documents": {}})
         db.add(job)
         db.flush()
         for upload, metadata in zip(files, validated):

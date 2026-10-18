@@ -57,16 +57,18 @@ def save_analysis(db, job, document, prepared, raw_result):
     if result.analysis_status == 'not_configured' and (
             any(claim.text or claim.evidence for claim in all_claims) or result.label.ai_label is not None):
         raise InvalidAnalysisResult('An unconfigured analyzer cannot return generated content.')
+    language = (job.result_data or {}).get("language") or "vi"
     validator = EvidenceValidator(db, job, document, prepared)
     for claim, heading in claim_contexts(result.output):
         validator.validate(claim, heading)
     if any(claim.text and claim.unverified for claim in all_claims) and 'unverified_claims' not in result.warnings:
         result.warnings.append('unverified_claims')
     if result.output.type == 'bullet':
-        result.output = finalize_bullet_actions(result.output, result.warnings)
+        result.output = finalize_bullet_actions(result.output, result.warnings, language)
     if result.output.type == 'concept' and len(result.output.concepts) < 3:
         if not getattr(result.output, 'limitation', None):
-            result.output.limitation = 'Nội dung nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi.'
+            result.output.limitation = ('The source does not support an overview of 3-5 core concepts.' if language == 'en' else
+                              'Nội dung nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi.')
         if 'insufficient_concepts' not in result.warnings and 'no_text_layer' not in result.warnings:
             result.warnings.append('insufficient_concepts')
 
@@ -84,7 +86,7 @@ def save_analysis(db, job, document, prepared, raw_result):
         confidence_level=('unknown' if document.ai_confidence is None else
                           'high' if document.ai_confidence >= .8 else 'low'))
     payload = DocumentResult(
-        document_id=document.id, original_filename=document.original_filename, mode=job.mode.value,
+        document_id=document.id, original_filename=document.original_filename, mode=job.mode.value, language=language,
         analysis_status=result.analysis_status, label=label, output=result.output,
         reader=ReaderMetadata(version=reference['sha256'], page_count=document.page_count,
                               page_kind=reference['page_kind'],

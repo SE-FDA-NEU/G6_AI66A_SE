@@ -4,7 +4,6 @@ from pathlib import Path
 import signal
 import sys
 
-from app.core.config import settings
 from app.models import FileFormat
 from app.services.reader_extraction import ReaderConversionError, prepare_reader
 
@@ -12,10 +11,7 @@ from app.services.reader_extraction import ReaderConversionError, prepare_reader
 def main():
     work = Path(sys.argv[1])
     request = json.loads((work / 'request.json').read_text(encoding='utf-8'))
-    settings.SOFFICE_BINARY = request['soffice_binary']
-    settings.OFFICE_CONVERSION_TIMEOUT_SECONDS = request['conversion_timeout']
-    # POSIX cancellation unwinds convert_office, which kills its own process
-    # group. Windows cancellation kills the worker's entire tree with taskkill.
+    # Cancellation interrupts the Python renderer; the parent owns publication.
     def terminate(*_):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, terminate)

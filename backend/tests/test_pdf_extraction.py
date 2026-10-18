@@ -10,11 +10,14 @@ from app.services import pdf_extraction
 from app.services.pdf_extraction import PDFExtractionError, extract_document_pdf, extract_pdf
 
 
-def make_pdf(path, contents, rotation=0, cropbox=None):
+def make_pdf(path, contents, rotation=0, cropbox=None, to_unicode=None):
     """Generate deterministic native PDF objects without an extra test dependency."""
     objects = [b'<< /Type /Catalog /Pages 2 0 R >>', b'']
     objects.append(b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>')
     objects.append(b'<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length 3 >>\nstream\n\xff\x00\x00\nendstream')
+    if to_unicode is not None:
+        objects[2] = objects[2][:-2] + b' /ToUnicode 5 0 R >>'
+        objects.append(f'<< /Length {len(to_unicode)} >>\nstream\n'.encode() + to_unicode + b'\nendstream')
     kids = []
     for content in contents:
         page_id = len(objects) + 1
@@ -111,6 +114,29 @@ def test_accented_text_and_crop_geometry_are_not_normalized(tmp_path):
     assert page['cropbox'] == [36, 36, 576, 756]
     assert page['page_bbox'] == [0, 0, 612, 792]
     assert page['positions'][0]['bbox'][0] == pytest.approx(72)
+
+
+def test_multicodepoint_glyphs_map_once_without_removing_distinct_repeated_glyphs(tmp_path):
+    # One physical X glyph decodes to two Unicode characters through ToUnicode.
+    # pdfplumber returns the same char object twice in extract_text_lines().
+    cmap = b'''/CIDInit /ProcSet findresource begin
+12 dict begin begincmap
+/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def
+/CMapName /MultiUnicode def /CMapType 2 def
+1 begincodespacerange <00> <FF> endcodespacerange
+1 beginbfchar <58> <00660069> endbfchar
+endcmap CMapName currentdict /CMap defineresource pop end end'''
+    path = make_pdf(tmp_path / 'multicodepoint.pdf',
+                    [b'BT /F1 12 Tf 72 720 Td (X fine X) Tj ET'], to_unicode=cmap)
+    result = extract_pdf(path)
+    page = result['extracted_text'][0]
+    assert page['text'] == 'fi fine fi'
+    glyphs = [p for p in page['positions'] if p['text'] == 'fi']
+    assert [(p['start'], p['end']) for p in glyphs] == [(0, 2), (8, 10)]
+    assert glyphs[0]['bbox'] != glyphs[1]['bbox']
+    for position in page['positions']:
+        assert page['text'][position['start']:position['end']] == position['text']
+    assert result == extract_pdf(path)
 
 
 def save_document(session_factory, path, file_format=FileFormat.PDF):

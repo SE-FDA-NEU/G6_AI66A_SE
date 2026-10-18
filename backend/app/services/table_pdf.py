@@ -57,8 +57,13 @@ def saved_table_rows(job):
         raise IncompleteTable(message) from error
 
 
-def render_table_pdf(job_id, rows):
+def render_table_pdf(job_id, rows, language='vi'):
     """A4 landscape, embedded Vietnamese fonts, wrapped cells and repeated headers."""
+    en = language == 'en'
+    fields = tuple(zip(('value', 'payment_term', 'penalty'), ('Value', 'Payment', 'Penalty'))) if en else FIELDS
+    headers = ('Document', 'Value', 'Payment', 'Penalty', 'Sources (page)') if en else HEADERS
+    heading_text = 'Financial clause comparison' if en else 'So sánh điều khoản tài chính'
+    unverified_text = 'Unverified' if en else 'Chưa xác thực'
     body = ParagraphStyle('cell', fontName='Comparison', fontSize=9, leading=13,
                           splitLongWords=True, spaceAfter=3)
     heading = ParagraphStyle('header', parent=body, fontName='ComparisonBold',
@@ -81,11 +86,11 @@ def render_table_pdf(job_id, rows):
                 source.reader_version == target.reader.version and
                 source.page <= target.reader.page_count and source.quote.strip()]
 
-    data = [[paragraph(text, heading) for text in HEADERS]]
+    data = [[paragraph(text, heading) for text in headers]]
     for row in rows:
         cells = [paragraph(row.original_filename)]
         sources_cell = []
-        for field, label in FIELDS:
+        for field, label in fields:
             claim = getattr(row.output, field)
             has_text = bool(claim.text and claim.text.strip())
             sources = sources_for(claim) if has_text else []
@@ -93,24 +98,24 @@ def render_table_pdf(job_id, rows):
                           len(sources) != len(claim.evidence) or bool(claim.verification_issues))
             cell = []
             if unverified:
-                cell.append(paragraph('Unverified · Cần kiểm tra', note))
-            cell.append(paragraph(claim.text if has_text else 'Không có thông tin'))
+                cell.append(paragraph('Unverified · Review required' if en else 'Chưa xác thực · Cần kiểm tra', note))
+            cell.append(paragraph(claim.text if has_text else ('No information' if en else 'Không có thông tin')))
             cells.append(cell)
             sources_cell.append(paragraph(label + ':', note))
             if unverified:
-                sources_cell.append(paragraph('Unverified', note))
+                sources_cell.append(paragraph(unverified_text, note))
             for source in sources:
                 target = by_id[source.document_id]
-                kind = 'slide' if target.reader.page_kind == 'slide' else 'trang'
+                kind = ('slide' if en else 'trang chiếu') if target.reader.page_kind == 'slide' else ('page' if en else 'trang')
                 sources_cell.append(paragraph(f'{target.original_filename} — {kind} {source.page}', note))
             if not sources:
-                sources_cell.append(paragraph('Chưa có nguồn xác thực', note))
+                sources_cell.append(paragraph('No verified source' if en else 'Chưa có nguồn xác thực', note))
         data.append(cells + [sources_cell])
 
     output = BytesIO()
     pdf = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=14 * mm,
                             leftMargin=14 * mm, topMargin=14 * mm, bottomMargin=17 * mm,
-                            title=f'So sánh điều khoản tài chính — Job {job_id}',
+                            title=f'{heading_text} — {job_id}',
                             author='Document workspace')
     widths = [pdf.width * fraction for fraction in (.18, .16, .24, .18, .24)]
     table = Table(data, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=1,
@@ -130,11 +135,11 @@ def render_table_pdf(job_id, rows):
         canvas.saveState()
         canvas.setFont('Comparison', 8)
         canvas.setFillColor(colors.HexColor('#5b6472'))
-        canvas.drawString(14 * mm, 9 * mm, f'Job {job_id} · {len(rows)} tài liệu')
-        canvas.drawRightString(landscape(A4)[0] - 14 * mm, 9 * mm, f'Trang {canvas.getPageNumber()}')
+        canvas.drawString(14 * mm, 9 * mm, (f'Job {job_id} · {len(rows)} documents' if en else f'Tác vụ {job_id} · {len(rows)} tài liệu'))
+        canvas.drawRightString(landscape(A4)[0] - 14 * mm, 9 * mm, f'{"Page" if en else "Trang"} {canvas.getPageNumber()}')
         canvas.restoreState()
 
-    pdf.build([paragraph('So sánh điều khoản tài chính', title),
-               paragraph('Dữ liệu đã lưu · Unverified: thông tin cần kiểm tra với tài liệu gốc.', note),
+    pdf.build([paragraph(heading_text, title),
+               paragraph('Saved data · Unverified: check information against the original source.' if en else 'Dữ liệu đã lưu · Chưa xác thực: thông tin cần kiểm tra với tài liệu gốc.', note),
                Spacer(1, 5 * mm), table], onFirstPage=footer, onLaterPages=footer)
     return output.getvalue()

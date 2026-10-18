@@ -415,3 +415,44 @@ M1 defined file upload rules (BR01) but did not specify where accepted files wou
 
 **Change 2 — Created a dedicated `citations` table.**
 M1's BR05 required every verified fact to link to a source document and page, but the data model was not yet designed. Our initial approach was to embed citations inside the `result_data` JSON column of the `jobs` table. We extracted them into a separate `citations` table with `claim_text`, `page`, `text_span` and `unverified` columns so that the frontend can query individual citations directly and the database can enforce referential integrity between citations, jobs and documents.
+
+### Native Office reader (local)
+
+DOCX/PPTX reader artifacts are generated in Python with python-docx/python-pptx and ReportLab. No external Office application is invoked. DOCX pagination belongs to the generated text-reader PDF, not Word's print layout. PPTX preserves one page per slide, including hidden/blank slides; speaker notes are excluded. Text/tables are available for evidence; source images/styles/layout are not reproduced. The pages API marks these artifacts with `reader_layout: text`; native PDFs and existing immutable reader artifacts retain their original representation. Glyph offsets are always computed from the exact displayed reader PDF.
+
+### Thư viện tài liệu local
+
+Trang `/workspace` tổ chức theo thư mục: thanh bên để chuyển vị trí, các ô biểu tượng để mở thư mục và thẻ tệp để mở bản đọc. Đường dẫn `?folder=<id>` giữ vị trí khi tải lại hoặc dùng Back; `?folder=unassigned` là bộ lọc các tệp có `folder_id = null`, không phải một thư mục thật.
+
+Ô **Tìm theo tên tệp** lọc danh sách qua API trước khi phân trang, trong vị trí đang mở. Các ký tự `%` và `_` được tìm như ký tự trong tên tệp. Mục **Tìm trong nội dung tài liệu** mở khi cần, tìm đoạn trích đã lập chỉ mục trong toàn bộ thư viện hoặc thư mục được chọn riêng và dẫn tới trang nguồn. **Bộ lọc nhãn AI** là mục tùy chọn áp dụng cho danh sách thẻ. Các thao tác xác nhận/chỉnh sửa nhãn và chuyển thư mục vẫn độc lập trên từng thẻ.
+
+Ở màn hình nhỏ, nút **Mở thư mục** mở thanh điều hướng; chọn vị trí sẽ thu gọn thanh này. Không yêu cầu thay đổi database hay thêm dịch vụ ngoài để dùng giao diện.
+
+### Tìm theo ý nghĩa: embedding và quota
+
+Luồng hiện tại gọi Gemini `batchEmbedContents`, không chạy model embedding local. Mỗi `EmbedContentRequest` gửi trực tiếp `taskType` và `outputDimensionality` để dịch vụ trả đúng 768 chiều theo cấu hình. Khi kiểm tra, gửi hai trường bên trong `embedContentConfig` đã bị dịch vụ bỏ qua và trả 3072 chiều, gây lỗi kiểm tra vector.
+
+Chỉ mục được tạo khi tìm lần đầu và lưu trong JSON trang của tài liệu. Các lô tối đa 50 đoạn được kiểm tra trước khi lưu; nếu lô sau gặp giới hạn quota, các lô hợp lệ trước đó vẫn được commit dưới khóa nguồn hiện có. Lần thử tiếp theo chỉ gửi những đoạn còn thiếu. Không lưu vector lỗi. API trả mã `embedding_rate_limited` cùng `Retry-After` và thông báo tiếng Việt, thay vì gộp quota với kết quả tìm kiếm rỗng. Giao diện hiển thị thời gian cần chờ; tìm bằng từ khóa vẫn dùng được.
+
+Đối với truy vấn khác ngôn ngữ nguồn, ngưỡng cố định 0.65 có thể loại hết các đoạn đúng chủ đề (kiểm tra “giáo dục” với tài liệu tiếng Anh đạt khoảng 0.643). Bộ xếp hạng dùng sàn 0.60 và chỉ giữ các đoạn cách điểm cao nhất không quá 0.025; điểm cosine là tiêu chí xếp hạng, không phải xác suất câu trả lời đúng. Các kiểm tra bao gồm loại hàng xóm yếu, cách ly tài khoản và truy vấn tiếng Việt trên nguồn tiếng Anh.
+
+### Trang đọc: PDF tô sáng và bản tóm tắt đã lưu
+
+Phần trên của trang đọc tiếp tục hiển thị bản PDF nguồn (hoặc bản đọc Office hiện có). Tìm trong tài liệu và mở trích dẫn sẽ truyền trang, truy vấn và khoảng ký tự tới `GET /documents/{id}/reader.pdf`. Backend dùng tọa độ glyph đã trích xuất để vẽ màu vàng lên các kết quả và màu cam lên vị trí đang chọn. Bản PDF có màu được tạo trong bộ nhớ; tệp gốc và snapshot trên đĩa không bị sửa. Tọa độ được chuyển về cùng hướng trang trước khi ghép, kể cả PDF có Rotate hoặc CropBox. Nguồn quét không có tọa độ sẽ hiện thông báo không thể tô chính xác.
+
+Bên dưới PDF là **Bản tóm tắt đã lưu**, thay cho khối lớp chữ. `GET /documents/{id}/summary` lấy kết quả đã hoàn thành gần nhất trong `jobs.result_data` của đúng chủ tài liệu; nếu đi từ một tác vụ cụ thể thì lấy kết quả của tác vụ đó. Giao diện dùng lại phần trình bày bullet, concept hoặc bảng đã có và giữ các trích dẫn nguồn. Không gọi lại Gemini khi mở bản tóm tắt. Tài liệu chưa có kết quả, lỗi tải tóm tắt và kết quả khác phiên bản nguồn được thông báo riêng, không làm mất trình đọc.
+
+### Ngôn ngữ giao diện và kết quả AI
+
+Ứng dụng dùng bộ dịch React tương tự gettext: `frontend/lib/i18n.js` cung cấp `useI18n()` và `t(message, ...values)`, còn `frontend/locales/messages.json` chứa bản tiếng Anh/Việt. Biến trong thông báo dùng `{0}`, `{1}`. Bộ chọn **Ngôn ngữ** ở góc dưới bên phải cập nhật toàn bộ trang và lưu cookie `documind_language`; các trang SSR và thẻ HTML nhận đúng ngôn ngữ khi tải lại.
+
+Khi tải lên, frontend gửi `language=en|vi` cùng `files` và `mode`. Backend lưu ngôn ngữ vào cột JSON `jobs.result_data.language` trước khi đưa tác vụ vào hàng đợi. Worker dùng giá trị đã lưu để yêu cầu Gemini tóm tắt trực tiếp bằng ngôn ngữ đó; các giới hạn do server tạo cũng theo cùng ngôn ngữ. Kết quả mỗi tài liệu lưu `language` cùng `output` trong `jobs.result_data.documents`. Không cần thêm cột hay chạy migration database. Yêu cầu không có language mặc định tiếng Việt.
+
+Đổi ngôn ngữ giao diện chỉ đổi nút, tiêu đề, trạng thái và thông báo. Tóm tắt, nhãn AI đã lưu, trích dẫn, tên tệp và nội dung người dùng nhập giữ nguyên. Xem kết quả, tải lại trang và xuất PDF không gọi AI để dịch. Prompt và cache phân tích phân biệt ngôn ngữ, tránh dùng kết quả tiếng Việt cho tác vụ tiếng Anh. PDF của tác vụ mới dùng ngôn ngữ đã lưu; tác vụ cũ dùng ngôn ngữ giao diện cho tiêu đề PDF và giữ nguyên nội dung đã lưu.
+
+
+### Kiểm tra database trước khi chạy local
+
+`run.py` chuẩn bị môi trường rồi chạy `python -m app.db.bootstrap` bằng Python của backend trước khi tạo tiến trình API/frontend. Module dùng metadata models làm danh sách bảng chuẩn, tạo database MySQL chưa tồn tại, sao lưu SQL các bảng hiện có trước thay đổi, tạo bảng thiếu và bỏ bảng thừa. Bảng ứng dụng hiện có không được dựng lại hoặc tự xóa cột. MySQL named lock ngăn hai launcher đồng bộ cùng database đồng thời; khóa ngoại từ bảng cần giữ/database khác vào bảng thừa sẽ chặn việc xóa. `backend/src/init_db.py` dùng chung bước chuẩn bị này trước phần seed được gọi riêng.
+
+Các bản sao lưu nằm trong `backend/data/backups/` (ngoài Git). Tác vụ đồng bộ không seed, không reset dữ liệu/tài khoản và không truy cập Gemini.

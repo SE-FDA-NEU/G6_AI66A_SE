@@ -8,7 +8,6 @@ import subprocess
 import sys
 import tempfile
 
-from app.core.config import settings
 from app.services.reader_extraction import ReaderConversionError, reader_representation, sha256
 
 
@@ -55,12 +54,10 @@ async def prepare_document(document, on_page_count=None):
                                        'extracted_text': document.extracted_text}, path)
     except ReaderConversionError:
         pass
-    # LibreOffice creates deeply nested profile files: keep its work path short.
+    # Keep the cancellable Python extraction worker in an isolated workspace.
     work = tempfile.TemporaryDirectory(prefix='documind-job-')
     work_path = Path(work.name)
-    request = {'source': str(source.resolve()), 'format': document.file_format.value,
-               'soffice_binary': settings.SOFFICE_BINARY,
-               'conversion_timeout': settings.OFFICE_CONVERSION_TIMEOUT_SECONDS}
+    request = {'source': str(source.resolve()), 'format': document.file_format.value}
     process = None
     try:
         started = asyncio.get_running_loop().time()

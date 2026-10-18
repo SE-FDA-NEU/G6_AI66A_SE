@@ -22,9 +22,11 @@ from app.schemas.search import SearchHit, SearchResponse
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 120
 SNIPPET_SIZE = 360
-# A positive cosine alone also admits weak, unrelated neighbors. This conservative
-# cutoff permits an empty response rather than forcing a nearest-neighbor match.
-MIN_SEMANTIC_SCORE = 0.65
+# Cross-language retrieval can rank a relevant English passage below 0.65 for a
+# Vietnamese query. Keep a minimum floor and a narrow band around the best hit,
+# rather than admitting every weak neighbor when lowering the fixed threshold.
+MIN_SEMANTIC_SCORE = 0.60
+SEMANTIC_SCORE_WINDOW = 0.025
 
 
 def fold(text):
@@ -206,13 +208,17 @@ def search_passages(db, owner_id, query, *, mode='content', limit=20, offset=0, 
         for passage, snapshot, document in rows:
             passage.embedding = cached_embedding(passage, snapshot, document, embedder.model_key)
         missing = [passage for passage, _, _ in rows if passage.embedding is None]
-        if missing:
-            vectors = embedder.embed([passage.text for passage in missing], task='RETRIEVAL_DOCUMENT')
-            if len(vectors) != len(missing):
+        # Persist validated batches even if a later batch hits the provider quota.
+        # The API commits this progress on provider failure while source locks are held.
+        for begin in range(0, len(missing), 50):
+            batch = missing[begin:begin + 50]
+            vectors = embedder.embed([passage.text for passage in batch], task='RETRIEVAL_DOCUMENT')
+            if len(vectors) != len(batch):
                 raise ValueError('Embedding count does not match indexed passages.')
             validated = [normalized_vector(vector) for vector in vectors]
-            for passage, vector in zip(missing, validated):
+            for passage, vector in zip(batch, validated):
                 passage.embedding = vector
+            save_embeddings([row for row in rows if row[0].embedding is not None], embedder.model_key)
         vector = normalized_vector(embedder.embed([query], task='RETRIEVAL_QUERY')[0])
         for passage, snapshot, document in rows:
             stored = normalized_vector(passage.embedding)
@@ -221,6 +227,9 @@ def search_passages(db, owner_id, query, *, mode='content', limit=20, offset=0, 
             score = sum(left * right for left, right in zip(vector, stored))
             if score >= MIN_SEMANTIC_SCORE:
                 scored.append((score, passage, snapshot, document))
+        if scored:
+            cutoff = max(MIN_SEMANTIC_SCORE, max(score for score, *_ in scored) - SEMANTIC_SCORE_WINDOW)
+            scored = [row for row in scored if row[0] >= cutoff]
         save_embeddings(rows, embedder.model_key)
     elif mode == 'content':
         frequencies = [Counter(tokens(passage.text)) for passage, _, _ in rows]

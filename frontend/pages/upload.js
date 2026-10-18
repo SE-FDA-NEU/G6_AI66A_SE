@@ -1,3 +1,5 @@
+import { useI18n } from '../lib/i18n';
+import { readLocale } from '../lib/i18n';
 import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import { getSession } from '../lib/session';
@@ -6,6 +8,7 @@ import UploadModeSelector, { UPLOAD_MODES } from '../components/UploadModeSelect
 import WorkspaceNavigation from '../components/WorkspaceNavigation';
 
 export default function Upload() {
+  const { t, locale, errorText } = useI18n();
   const [entries, setEntries] = useState([]);
   const [ready, setReady] = useState(false);
   const [mode, setMode] = useState('bullet');
@@ -61,6 +64,7 @@ export default function Upload() {
     const body = new FormData();
     accepted.forEach(entry => body.append('files', entry.file));
     body.append('mode', mode);
+    body.append('language', locale);
     try {
       const response = await fetch('/api/upload', { method: 'POST', credentials: 'same-origin', body });
       if (response.status === 401) { window.location.assign('/'); return; }
@@ -69,27 +73,28 @@ export default function Upload() {
       if (!/^[1-9]\d*$/.test(String(result.jobId))) throw new Error('Invalid job');
       window.location.assign(`/results/${result.jobId}`);
     } catch {
-      setError('Không thể gửi tài liệu. Kiểm tra kết nối và thử lại.');
+      setError(t("Không thể gửi tài liệu. Kiểm tra kết nối và thử lại."));
       setSubmitting(false);
     }
   }
 
   return <>
-    <Head><title>DocuMind · Tải tài liệu</title></Head>
+    <Head><title>{t("DocuMind · Tải tài liệu")}</title></Head>
     <main className="workspace upload-page">
       <header>
-        <a href="/workspace" className="brand">DocuMind<span className="brand-dot">.</span></a>
-        <WorkspaceNavigation><a href="/workspace" className="btn">Về không gian tài liệu</a></WorkspaceNavigation>
+        <a href="/workspace" className="brand">{t("DocuMind")}<span className="brand-dot">.</span></a>
+        <WorkspaceNavigation><a href="/workspace" className="btn">{t("Về không gian tài liệu")}</a></WorkspaceNavigation>
       </header>
       <section className="upload-content">
-        <p className="eyebrow">THÊM TÀI LIỆU</p>
-        <h1>Tải tài liệu</h1>
-        <p className="muted">Chọn tài liệu để kiểm tra trước khi tải lên.</p>
+        <p className="eyebrow">{t("THÊM TÀI LIỆU")}</p>
+        <h1>{t("Tải tài liệu")}</h1>
+        <p className="muted">{t("Chọn tài liệu để kiểm tra trước khi tải lên.")}</p>
+        <p className="search-help">{t("Bản tóm tắt sẽ được tạo và lưu bằng ngôn ngữ đang chọn.")}</p>
         <div className="upload-picker" onDragOver={event => event.preventDefault()}
           onDrop={event => { event.preventDefault(); addFiles(event.dataTransfer.files); }}>
-          <h2>Chọn hoặc kéo thả tệp vào đây</h2>
-          <p id="upload-rules">PDF, DOCX hoặc PPTX · Tối đa 5 tệp · Mỗi tệp ≤ 5 MB · Tổng ≤ 50 MB</p>
-          <label htmlFor="upload-files">Chọn tệp tài liệu</label>
+          <h2>{t("Chọn hoặc kéo thả tệp vào đây")}</h2>
+          <p id="upload-rules">{t("PDF, DOCX hoặc PPTX · Tối đa 5 tệp · Mỗi tệp ≤ 5 MB · Tổng ≤ 50 MB")}</p>
+          <label htmlFor="upload-files">{t("Chọn tệp tài liệu")}</label>
           <input id="upload-files" type="file" multiple accept=".pdf,.docx,.pptx" disabled={!ready || submitting}
             aria-describedby="upload-rules" onChange={event => {
               addFiles(event.target.files);
@@ -97,29 +102,28 @@ export default function Upload() {
             }} />
         </div>
         <div role="status" className="upload-summary">
-          {accepted.length}/5 tệp hợp lệ · {(total / MB).toFixed(2)} MB
-          {rejected > 0 && <span> · {rejected} tệp cần kiểm tra</span>}
+          {accepted.length}{t("/5 tệp hợp lệ ·") + " "}{(total / MB).toFixed(2)}{" " + t("MB")}{rejected > 0 && <span> · {rejected}{" " + t("tệp cần kiểm tra")}</span>}
         </div>
-        {entries.length > 0 && <ul className="upload-files" aria-label="Tệp đã chọn">
+        {entries.length > 0 && <ul className="upload-files" aria-label={t("Tệp đã chọn")}>
           {entries.map(entry => <li key={entry.id} className="upload-file">
             <div className="upload-file-info">
               <strong>{entry.file.name}</strong>
-              <span className="upload-size">{(entry.file.size / MB).toFixed(2)} MB</span>
+              <span className="upload-size">{(entry.file.size / MB).toFixed(2)}{" " + t("MB")}</span>
               {entry.errors.length > 0
                 ? <div role="alert" className="upload-errors">{entry.errors.map(error =>
-                  <span className="upload-error-badge" key={error}>{error}</span>)}</div>
-                : <span className="badge">Hợp lệ</span>}
+                  <span className="upload-error-badge" key={error}>{t(error)}</span>)}</div>
+                : <span className="badge">{t("Hợp lệ")}</span>}
             </div>
-            <button type="button" className="btn" disabled={submitting} aria-label={`Xóa ${entry.file.name}`}
-              onClick={() => removeFile(entry.id)}>Xóa</button>
+            <button type="button" className="btn" disabled={submitting} aria-label={t("Xóa {0}", entry.file.name)}
+              onClick={() => removeFile(entry.id)}>{t("Xóa")}</button>
           </li>)}
         </ul>}
-        {accepted.length > 0 && rejected === 0 && <p className="upload-ready">Các tệp đã chọn hợp lệ và sẵn sàng tải lên.</p>}
+        {accepted.length > 0 && rejected === 0 && <p className="upload-ready">{t("Các tệp đã chọn hợp lệ và sẵn sàng tải lên.")}</p>}
         <div className="analysis-submit">
           <UploadModeSelector value={mode} disabled={!ready || submitting} onChange={handleModeChange} />
           <button type="button" className="btn primary" disabled={!ready || submitting || !accepted.length || rejected > 0}
-            onClick={submit}>{submitting ? 'Đang gửi…' : 'Tải lên và phân tích'}</button>
-          {error && <p className="error-box" role="alert">{error}</p>}
+            onClick={submit}>{submitting ? t("Đang gửi…") : t("Tải lên và phân tích")}</button>
+          {error && <p className="error-box" role="alert">{errorText(error)}</p>}
         </div>
       </section>
     </main>
@@ -129,5 +133,5 @@ export default function Upload() {
 export async function getServerSideProps({ req, res }) {
   res.setHeader('Cache-Control', 'no-store');
   const user = await getSession(req);
-  return user ? { props: {} } : { redirect: { destination: '/', permanent: false } };
+  return user ? { props: { initialLocale: readLocale(req.headers.cookie) } } : { redirect: { destination: '/', permanent: false } };
 }

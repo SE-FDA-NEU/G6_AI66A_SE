@@ -728,6 +728,15 @@ input::placeholder { color: #96a29a; font-size: 13px; }
   .navigation-links > .btn { width: 100%; text-align: center; }
   .workspace input, .workspace select { font-size: 16px; }
   .workspace select, .workspace .citation-badge { min-height: 44px; }
+  /* WebKit's native menu can ignore min-height; keep a usable touch target. */
+  .workspace select {
+    appearance: none;
+    padding-right: 32px;
+    background-image: linear-gradient(45deg, transparent 50%, #5f7167 50%), linear-gradient(135deg, #5f7167 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+  }
   .workspace .citation-badge { align-items: center; }
   .workspace-search .search-bar { flex-wrap: wrap; }
   .workspace-search .search-bar input { flex-basis: 100%; }
@@ -741,3 +750,14 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 
 
 
+.reader-saved-summary { margin: 32px 0; padding: 24px; border: 1px solid #dce4de; background: #fff; border-radius: 14px; }
+.reader-saved-summary > h2 { font-size: 24px; margin-top: 0; }
+.reader-saved-summary .analysis-results { margin-top: 20px; }
+.reader-saved-summary .analysis-card { border: 0; padding: 0; }
+.reader-saved-summary > .btn { display: inline-block; margin-top: 16px; }
+.reader-highlight-note { padding: 12px 16px; background: #fff7d6; border-radius: 8px; color: #805b18; font-size: 13px; line-height: 1.6; }
+@media(max-width: 540px) { .reader-saved-summary { padding: 16px; } }
+.language-switcher { position: fixed; bottom: 20px; right: 20px; z-index: 100; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #dce4de; border-radius: 12px; background: #ffffffee; box-shadow: 0 4px 18px #233b3212; }
+.language-switcher label { margin: 0; font-size: 12px; }
+.language-switcher select { font: inherit; font-size: 13px; color: #233b32; padding: 8px; min-height: 36px; border: 0; background: transparent; }
+@media(max-width: 640px) { .language-switcher { bottom: 10px; right: 10px; padding: 4px 8px; }.language-switcher select { min-height: 44px; font-size: 16px; } }

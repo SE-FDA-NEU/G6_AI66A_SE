@@ -29,7 +29,7 @@ function readPdf(file) {
 test('real authenticated PDF download matches all five displayed saved rows, units and field sources after reload', async ({ page }) => {
   await page.goto('/results/9002');
   await page.reload();
-  const button = page.getByRole('button', { name: 'Export Table', exact: true });
+  const button = page.getByRole('button', { name: 'Xuất bảng', exact: true });
   await expect(button).toBeEnabled();
   const downloadEvent = page.waitForEvent('download');
   await button.click();
@@ -51,8 +51,8 @@ test('real authenticated PDF download matches all five displayed saved rows, uni
       expect(pdfRow[column + 1]).toContain(claim.text || 'Không có thông tin');
       if (claim.text) await expect(cell.locator('.claim-text')).toHaveText(claim.text);
       if (claim.unverified) {
-        await expect(cell).toContainText('Unverified');
-        expect(pdfRow[column + 1]).toContain('Unverified');
+        await expect(cell).toContainText('Chưa xác thực');
+        expect(pdfRow[column + 1]).toContain('Chưa xác thực');
       }
       const links = rows.nth(index).locator(`.table-source-${field}`).getByRole('link');
       await expect(links).toHaveCount(claim.evidence.length);
@@ -85,7 +85,7 @@ for (const [name, modify] of Object.entries(incompleteCases)) {
     await page.route('**/jobs/9002', route => route.fulfill({ json: saved }));
     await page.route('**/jobs/9002/export.pdf', route => { requests++; return route.abort(); });
     await page.goto('/results/9002');
-    const button = page.getByRole('button', { name: 'Export Table', exact: true });
+    const button = page.getByRole('button', { name: 'Xuất bảng', exact: true });
     await expect(button).toBeDisabled();
     await button.dispatchEvent('click');
     expect(requests).toBe(0);
@@ -102,7 +102,7 @@ test('existing polling enables export only after all saved rows finish', async (
   let finished = false;
   await page.route('**/jobs/9002', route => route.fulfill({ json: finished ? complete : saved }));
   await page.goto('/results/9002');
-  const button = page.getByRole('button', { name: 'Export Table', exact: true });
+  const button = page.getByRole('button', { name: 'Xuất bảng', exact: true });
   await expect(button).toBeDisabled();
   finished = true;
   await page.clock.fastForward(3100);
@@ -115,7 +115,7 @@ test('pending download disables repeated clicks and reports status without hidin
   let requests = 0;
   await page.route('**/jobs/9002/export.pdf', async route => { requests++; await gate; await route.continue(); });
   await page.goto('/results/9002');
-  const button = page.getByRole('button', { name: 'Export Table', exact: true });
+  const button = page.getByRole('button', { name: 'Xuất bảng', exact: true });
   await button.click();
   await expect(button).toBeDisabled();
   await expect(button).toHaveAttribute('aria-busy', 'true');
@@ -140,7 +140,7 @@ for (const failure of ['network', '401', '404', '409', '500', 'html', 'invalid-p
       return route.fulfill({ status: Number(failure), json: { detail: 'Do not show server internals' } });
     });
     await page.goto('/results/9002');
-    const button = page.getByRole('button', { name: 'Export Table', exact: true });
+    const button = page.getByRole('button', { name: 'Xuất bảng', exact: true });
     const error = page.getByRole('region', { name: 'Xuất bảng so sánh', exact: true }).getByRole('alert');
     await button.click();
     await expect(error).toBeVisible();
@@ -167,5 +167,5 @@ test('bullet results do not offer table export', async ({ page }) => {
   await page.route('**/jobs/9002', route => route.fulfill({ json: saved }));
   await page.goto('/results/9002');
   await expect(page.getByRole('heading', { name: 'Trạng thái xử lý' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Export Table', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Xuất bảng', exact: true })).toHaveCount(0);
 });

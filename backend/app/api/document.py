@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
+from fastapi.responses import Response
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session, defer
@@ -92,7 +93,7 @@ def prepare_reader(document_id: int, user_id: int = Depends(get_current_user_id)
     try:
         result = extract_document_for_reader(owned_id, factory)
     except ReaderConversionError as error:
-        raise reader_error(error, 503 if error.code == 'converter_unavailable' else 422)
+        raise reader_error(error, 422)
     document = owned_reader_document(db, owned_id, user_id)
     renew_retention(document)
     db.commit()
@@ -107,6 +108,8 @@ def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), 
     except ReaderConversionError as error:
         raise reader_error(error)
     payload = {
+        'file_format': document.file_format.value,
+        'reader_layout': 'text' if reference.get('renderer') == 'python-text-v1' else 'original',
         'page_count': document.page_count,
         'pages': [{key: value for key, value in page.items() if key != 'search'}
                   for page in document.extracted_text],
@@ -156,8 +159,28 @@ def get_page_text(
 
 
 
+@router.get('/{document_id}/summary')
+def saved_document_summary(document_id: int, job_id: int | None = Query(None, gt=0),
+                           user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    from app.models.job import Job
+    from app.models.job_file import JobFile
+    document = owned_reader_document(db, document_id, user_id)
+    jobs = db.query(Job).join(JobFile).filter(Job.owner_id == user_id, JobFile.document_id == document.id)
+    if job_id is not None:
+        jobs = jobs.filter(Job.id == job_id)
+    for job in jobs.order_by(Job.created_at.desc(), Job.id.desc()):
+        result = (job.result_data or {}).get('documents', {}).get(str(document.id))
+        if isinstance(result, dict) and result.get('schema_version') == 1 and result.get('document_id') == document.id and result.get('analysis_status') == 'completed':
+            payload = {'job_id': job.id, 'created_at': job.created_at, 'mode': job.mode.value, 'document': result}
+            return payload
+    return {'job_id': job_id, 'document': None}
+
+
 @router.get('/{document_id}/reader.pdf')
-def reader_pdf(document_id: int, version: str = Query(...), user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+def reader_pdf(document_id: int, version: str = Query(...),
+               highlight_page: int | None = Query(None, ge=1), q: str = Query('', max_length=500),
+               start: int | None = Query(None, ge=0), end: int | None = Query(None, ge=1),
+               user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     document = owned_reader_document(db, document_id, user_id)
     try:
         path, reference = reader_representation(document)
@@ -165,6 +188,19 @@ def reader_pdf(document_id: int, version: str = Query(...), user_id: int = Depen
         raise reader_error(error)
     if version != reference['sha256']:
         raise HTTPException(409, 'Reader version changed. Reload the document before using page references.')
+    if highlight_page is not None:
+        from app.services.pdf_highlights import highlighted_pdf
+        if highlight_page > document.page_count:
+            raise HTTPException(422, 'Highlight page is outside the document.')
+        try:
+            payload = highlighted_pdf(path, document.extracted_text[highlight_page - 1], query=q, start=start, end=end)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from None
+        return Response(payload, media_type='application/pdf', background=download_retention_task(db, user_id, [document.id]),
+                        headers={'Cache-Control': 'no-store', 'Content-Disposition': 'inline; filename="reader.pdf"',
+                                 'X-Reader-Version': version})
+    if q or start is not None or end is not None:
+        raise HTTPException(422, 'A highlight page is required.')
     return RetainedFileResponse(path, media_type='application/pdf', filename='reader.pdf',
                         on_success=download_retention_task(db, user_id, [document.id]),
                         content_disposition_type='inline', headers={'Cache-Control': 'no-store',
@@ -276,6 +312,8 @@ def get_documents(
                                     description="Alias for label; never matches user_label."),
     review_state: Optional[ReviewState] = Query(None, description="Filter by review state"),
     search: Optional[str] = Query(None, description="Search by file name or AI label"),
+    filename: Optional[str] = Query(None, max_length=500, description="Literal substring of the file name"),
+    unassigned: bool = Query(False, description="Only documents with no folder"),
     skip: int = Query(0, ge=0, description="Number of records to skip (pagination)"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of records to return"),
     current_user_id: int = Depends(get_current_user_id),
@@ -300,6 +338,11 @@ def get_documents(
 
     if folder_id is not None:
         query = query.filter(Document.folder_id == folder_id)
+
+    if unassigned:
+        query = query.filter(Document.folder_id.is_(None))
+    if filename and filename.strip():
+        query = query.filter(Document.original_filename.icontains(filename.strip(), autoescape=True))
 
     if selected_label is not None:
         # MySQL's default text collation ignores case/accents. Compare UTF-8
