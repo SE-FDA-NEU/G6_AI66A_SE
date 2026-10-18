@@ -1,0 +1,54 @@
+T145 - Synthetic acceptance fixtures (no real customer data)
+
+From backend, generate/rebuild PDFs and expected answers offline:
+  .venv\Scripts\python.exe test/acceptance_fixtures.py
+
+Optional local MySQL seed (writes only when explicitly run):
+  .venv\Scripts\python.exe src/init_db.py --acceptance
+Login: acceptance145 / Acceptance145!Local
+This extends the existing seed entry point with a separate, repeatable
+20-document scenario. The default legacy 10-document accounts are unchanged.
+An existing 10-fixture account can be extended to 20 through seed_account;
+reruns insert missing files only, preserving labels, folders and retention.
+Use a fresh acceptance account to check the baseline after editing its data.
+No model calls are made by generation or seeding. Seeded label confidence is
+controlled test data, not a real prediction or user confirmation.
+
+expected.json records exact source text, hashes, physical page numbers,
+field-level quote offsets, expected fields, search hits and manual checks.
+Offsets refer to extracted text, not PDF byte offsets. Runtime document IDs
+and reader versions come from upload/reader APIs, never hardcoded fixture IDs.
+
+Upload contract-1.pdf through contract-5.pdf together in table mode.
+Expect 5 rows, 1,200,000,000 VND unchanged, 0.05% per day unchanged,
+999,999.99 USD and 0.00 VND unchanged. Contract 5 has no supported payment
+term: show Unverified with no invented source. Review each source page.
+
+Use report-15-pages.pdf for T38: pages 2 and 3 explicitly support two actions.
+Run the real model benchmark separately:
+  .venv\Scripts\python.exe test/benchmark_t38.py --pdf test/fixtures/acceptance/report-15-pages.pdf
+Controlled tests cannot establish real model latency or semantic accuracy.
+
+contract-24-pages.pdf has the escrow evidence only on physical page 12.
+report-15-pages.pdf has the liquidity-covenant evidence only on page 6.
+textless-page.pdf contains graphics, no extractable text. No OCR is assumed.
+insufficient-actions.pdf supports exactly one action; an explicit limitation
+must be displayed rather than a fabricated second action.
+missing-evidence.pdf never promises 99% returns. The controlled provider
+emits that unsupported claim without evidence to exercise Unverified.
+
+Controlled outputs are built by controlled_output in acceptance_fixtures.py;
+tests use the real extraction/evidence/persistence pipeline, replacing only
+the paid provider. Contract 1 has 79% (low), contract 2 has 80% (high), both
+needs_review; factual evidence status remains independent of label confidence.
+
+20-document seed: 8 course notes have exact AI label Macroeconomics across
+folders and unfiled. Their user label differs; the last 2 notes have the
+opposite user-label override. Filter AI label alone => 8, clear => 20.
+Combined folder + AI label means intersection. Move Economics 101 documents
+to Research, reload, verify labels remain. Search the full account with a
+small list page; a result outside that page must still appear. Open its page
+6 / page 12 link. Compare snippets with expected.json and original PDF.
+Repeat search as a second account: no first-account hits should be disclosed.
+For manual real-model review, accept different wording only if every factual
+claim and action follows from the cited source; do not use mocks as evidence.
