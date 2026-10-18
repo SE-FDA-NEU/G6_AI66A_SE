@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session, defer
 
 from app.db.database import get_db
 from app.models.document import Document
+from app.models.folder import Folder
 from app.models.fileformat import FileFormat
 from app.models.reviewstate import ReviewState
-from app.schemas.document import DocumentResponse
+from app.schemas.document import DocumentFolderUpdate, DocumentResponse
 from app.core.security import get_current_user_id
 from app.services.reader_extraction import extract_document_for_reader, reader_representation, ReaderConversionError
 
@@ -23,6 +24,22 @@ def owned_reader_document(db, document_id, user_id):
         raise HTTPException(404, 'Document not found')
     if document.owner_id != user_id:
         raise HTTPException(403, 'Access denied')
+    return document
+
+
+@router.patch('/{document_id}/folder', response_model=DocumentResponse)
+def move_document(document_id: int, payload: DocumentFolderUpdate,
+                  user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    document = owned_reader_document(db, document_id, user_id)
+    if payload.folder_id is not None:
+        folder = db.get(Folder, payload.folder_id)
+        if folder is None:
+            raise HTTPException(404, 'Folder not found')
+        if folder.owner_id != user_id:
+            raise HTTPException(403, 'Access denied')
+    document.folder_id = payload.folder_id
+    db.commit()
+    db.refresh(document)
     return document
 
 
