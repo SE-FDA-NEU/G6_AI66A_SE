@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getSession } from '../../lib/session';
 import DocumentMetadata from '../../components/DocumentMetadata';
+import DocumentLabelEditor from '../../components/DocumentLabelEditor';
 
 export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData) {
   if (!evidenceId && rawStart == null && rawEnd == null) {
@@ -385,6 +386,7 @@ export default function Reader({
 
         {/* Document Metadata (US10) */}
         {!error && data && (
+          <>
           <DocumentMetadata
             aiLabel={data.ai_label}
             aiConfidence={data.ai_confidence}
@@ -393,6 +395,10 @@ export default function Reader({
             folderId={data.folder_id}
             className="reader-document-metadata"
           />
+          <DocumentLabelEditor key={documentId} documentId={documentId} document={data} onSaved={saved => setData(current => ({
+            ...current, user_label: saved.user_label, review_state: saved.review_state,
+          }))} />
+          </>
         )}
 
         {/* Loading state */}

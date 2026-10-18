@@ -19,6 +19,7 @@ from app.db.database import Base, get_db
 from app.models import User, Document, FileFormat, Folder, Job, JobFile, JobMode, JobStatus, ReviewState
 from app.core.security import get_password_hash
 from app.core.config import settings
+from app.services.reader_extraction import extract_document_for_reader
 import app.main as main_module
 
 engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
@@ -28,6 +29,28 @@ main_module.SessionLocal = TestSession
 test_storage = tempfile.TemporaryDirectory(prefix='documind-reader-e2e-')
 settings.STORAGE_DIR = Path(test_storage.name)
 atexit.register(test_storage.cleanup)
+
+
+def metadata_pdf(path):
+    objects = ['<< /Type /Catalog /Pages 2 0 R >>',
+               '<< /Type /Pages /Count 2 /Kids [4 0 R 6 0 R] >>',
+               '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
+    for page in (1, 2):
+        stream = f'BT /F1 12 Tf 72 720 Td (Metadata source page {page}) Tj ET'
+        objects.append(f'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents {len(objects) + 2} 0 R >>')
+        objects.append(f'<< /Length {len(stream)} >>\nstream\n{stream}\nendstream')
+    pdf = '%PDF-1.4\n'
+    offsets = [0]
+    for number, obj in enumerate(objects, 1):
+        offsets.append(len(pdf)); pdf += f'{number} 0 obj\n{obj}\nendobj\n'
+    xref = len(pdf)
+    pdf += f'xref\n0 {len(offsets)}\n0000000000 65535 f \n'
+    pdf += ''.join(f'{offset:010d} 00000 n \n' for offset in offsets[1:])
+    pdf += f'trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n'
+    path.write_bytes(pdf.encode('ascii'))
+
+
+review_document_ids = []
 with TestSession() as db:
     db.add(User(username='playwright_user', email='playwright@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
@@ -41,9 +64,11 @@ with TestSession() as db:
                 password_hash=get_password_hash('LocalIssueTest2026!')))
     db.add(User(username='label_user', email='label@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
+    db.add(User(username='review_user', email='review@example.com',
+                password_hash=get_password_hash('LocalIssueTest2026!')))
     db.flush()
     for owner in db.query(User).all():
-        if owner.username == 'label_user':
+        if owner.username in ('label_user', 'review_user'):
             continue
         db.add(Document(
             owner_id=owner.id,
@@ -72,6 +97,17 @@ with TestSession() as db:
                         user_label='User correction' if number < 8 else 'Macroeconomics',
                         created_at=datetime(2026, 1, 1) + timedelta(seconds=number),
                         expires_at=datetime.utcnow() + timedelta(days=30)))
+    reviewer = db.query(User).filter_by(username='review_user').one()
+    review_folder = Folder(owner_id=reviewer.id, name='Economics 101')
+    db.add(review_folder); db.flush()
+    for score in (.79, .8):
+        source = Path(test_storage.name) / f'review-{score}.pdf'
+        metadata_pdf(source)
+        review_document = Document(owner_id=reviewer.id, folder_id=review_folder.id,
+                                   original_filename=source.name, storage_path=str(source), file_format=FileFormat.PDF,
+                                   file_size_bytes=source.stat().st_size, ai_label='Macroeconomics', ai_confidence=score,
+                                   review_state=ReviewState.NEEDS_REVIEW, expires_at=datetime.utcnow() + timedelta(days=30))
+        db.add(review_document); db.flush(); review_document_ids.append(review_document.id)
     owner = db.query(User).filter_by(username='playwright_user').one()
     document = db.query(Document).filter_by(owner_id=owner.id).one()
     completed_job = Job(id=9001, owner_id=owner.id, mode=JobMode.BULLET,
@@ -81,6 +117,9 @@ with TestSession() as db:
     db.add(JobFile(job=completed_job, document=document, status=JobStatus.COMPLETED,
                    attempt_count=1, timeout_seconds=33))
     db.commit()
+
+for document_id in review_document_ids:
+    extract_document_for_reader(document_id, TestSession)
 
 
 def test_db():

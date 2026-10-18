@@ -6,7 +6,7 @@
  * NOTE:
  * - AI confidence represents document-level classifier probability and is kept
  *   strictly distinct from factual claim verification (CitationBadge / UnverifiedBadge).
- * - Confirmation and edit controls are implemented under US12 and are not duplicated here.
+ * - DocumentLabelEditor provides the shared human confirmation/edit controls.
  * - Scores >= 80% represent high-confidence AI suggestions; scores < 80% display "Needs review".
  */
 export function DocumentMetadata({
@@ -33,9 +33,9 @@ export function DocumentMetadata({
     : (document?.folder_id !== undefined ? document.folder_id : null);
 
   // Confidence calculations & boundary threshold (80%)
-  const percent = confidence != null && !isNaN(confidence) ? Math.round(Number(confidence) * 100) : null;
-  const isHighConfidence = percent != null ? percent >= 80 : false;
-  const isLowConfidence = percent != null ? percent < 80 : false;
+  const percent = confidence != null && !isNaN(confidence) ? Number((Number(confidence) * 100).toFixed(2)) : null;
+  const isHighConfidence = percent != null ? Number(confidence) >= .8 : false;
+  const isLowConfidence = percent != null ? Number(confidence) < .8 : false;
 
   const isConfirmed = state === 'confirmed';
 
@@ -120,6 +120,9 @@ export function DocumentMetadata({
           <strong>{userLab}</strong>
         </span>
       )}
+      {userLab && <span className="metadata-badge metadata-human-decision" data-testid="document-user-decision">
+        {isConfirmed ? (userLab === label ? 'Người dùng đã xác nhận gợi ý AI' : 'Người dùng đã chỉnh sửa và xác nhận') : 'Bản nháp của người dùng · Chưa xác nhận'}
+      </span>}
     </div>
   );
 }
