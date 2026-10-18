@@ -332,7 +332,7 @@ test('unresolved span fallback still opens the correct page and displays exact h
 });
 
 test('originating job ID displays Back to Results, survives reader refresh and page navigation, and returns to /results/:jobId with saved results', async ({ page }) => {
-  const version = 'g'.repeat(64);
+  const version = '7'.repeat(64); // Persisted reader versions are hexadecimal SHA-256 digests.
   const jobId = 105;
   const docId = 88;
 
