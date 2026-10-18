@@ -1,5 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
@@ -9,8 +10,32 @@ from app.models.jobmode import JobMode
 from app.models.jobstatus import JobStatus
 from app.schemas.job import JobResponse, JobDetailResponse
 from app.core.security import get_current_user_id
+from app.services.table_pdf import IncompleteTable, render_table_pdf, saved_table_rows
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
+
+
+@router.get('/{job_id}/export.pdf', summary='Export a completed saved financial comparison',
+            response_class=Response, responses={200: {'content': {'application/pdf': {}}},
+                                               409: {'description': 'Table is not complete'}})
+def export_table_pdf(
+    job_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    job = (db.query(Job).options(joinedload(Job.job_files).joinedload(JobFile.document))
+           .filter(Job.id == job_id, Job.owner_id == current_user_id).first())
+    if not job:
+        raise HTTPException(status_code=404, detail=f'Job with ID {job_id} not found')
+    try:
+        rows = saved_table_rows(job)
+    except IncompleteTable as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return Response(render_table_pdf(job.id, rows), media_type='application/pdf', headers={
+        'Content-Disposition': f'attachment; filename="comparison-{job.id}.pdf"',
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+    })
 
 
 @router.get("", response_model=List[JobResponse], summary="Get list of jobs for current user")
