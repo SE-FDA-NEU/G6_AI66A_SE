@@ -409,11 +409,21 @@ def seed_database():
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Initialize local demo data.')
+    parser.add_argument('--acceptance', action='store_true',
+                        help='Seed the repeatable 20-document acceptance account instead of legacy 10-document demos.')
+    args = parser.parse_args()
     print("==================================================")
     print("       DocuMind — All-in-One Database Setup       ")
     print("==================================================")
     create_database_and_tables()
-    seed_database()
+    if args.acceptance:
+        sys.path.insert(0, os.path.join(BACKEND_DIR, 'test'))
+        from acceptance_fixtures import seed_local
+        seed_local()
+    else:
+        seed_database()
 
 
 if __name__ == "__main__":

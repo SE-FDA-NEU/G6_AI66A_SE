@@ -1,0 +1,870 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "documents": [
+    {
+      "key": "contract-1",
+      "fields": {
+        "value": "1,200,000,000 VND",
+        "payment_term": "Within 30 days",
+        "penalty": "0.05% per day"
+      },
+      "confidence": 79,
+      "filename": "contract-1.pdf",
+      "folder": "Economics 101",
+      "sha256": "cc2b011b8a9017ea1ab1672f1bfca5cc5d5441aca168e1105b130874885ab723",
+      "page_count": 3,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Contract 1. Synthetic acceptance data.\nContract value: 1,200,000,000 VND"
+        },
+        {
+          "page": 2,
+          "text": "Payment term: Within 30 days"
+        },
+        {
+          "page": 3,
+          "text": "Penalty: 0.05% per day"
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.79,
+        "confidence_level": "low",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "field_evidence": {
+        "value": {
+          "page": 1,
+          "start": 55,
+          "end": 72,
+          "quote": "1,200,000,000 VND"
+        },
+        "payment_term": {
+          "page": 2,
+          "start": 14,
+          "end": 28,
+          "quote": "Within 30 days"
+        },
+        "penalty": {
+          "page": 3,
+          "start": 9,
+          "end": 22,
+          "quote": "0.05% per day"
+        }
+      },
+      "expected_unverified_fields": []
+    },
+    {
+      "key": "contract-2",
+      "fields": {
+        "value": "2,500,000,000 VND",
+        "payment_term": "Within 30 days",
+        "penalty": "0.05% per day"
+      },
+      "confidence": 80,
+      "filename": "contract-2.pdf",
+      "folder": "Research",
+      "sha256": "6d5439ebe7660cf820341687e91d3d67db1bb0cc340e633b40fc0aea2aaef95c",
+      "page_count": 3,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Contract 2. Synthetic acceptance data.\nContract value: 2,500,000,000 VND"
+        },
+        {
+          "page": 2,
+          "text": "Payment term: Within 30 days"
+        },
+        {
+          "page": 3,
+          "text": "Penalty: 0.05% per day"
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.8,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "field_evidence": {
+        "value": {
+          "page": 1,
+          "start": 55,
+          "end": 72,
+          "quote": "2,500,000,000 VND"
+        },
+        "payment_term": {
+          "page": 2,
+          "start": 14,
+          "end": 28,
+          "quote": "Within 30 days"
+        },
+        "penalty": {
+          "page": 3,
+          "start": 9,
+          "end": 22,
+          "quote": "0.05% per day"
+        }
+      },
+      "expected_unverified_fields": []
+    },
+    {
+      "key": "contract-3",
+      "fields": {
+        "value": "999,999.99 USD",
+        "payment_term": "Within 30 days",
+        "penalty": "0.05% per day"
+      },
+      "confidence": 90,
+      "filename": "contract-3.pdf",
+      "folder": null,
+      "sha256": "501d9558b5f9d4051df357a30a3730311343bbea27e75a8c3df32d5259c2ed65",
+      "page_count": 3,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Contract 3. Synthetic acceptance data.\nContract value: 999,999.99 USD"
+        },
+        {
+          "page": 2,
+          "text": "Payment term: Within 30 days"
+        },
+        {
+          "page": 3,
+          "text": "Penalty: 0.05% per day"
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "field_evidence": {
+        "value": {
+          "page": 1,
+          "start": 55,
+          "end": 69,
+          "quote": "999,999.99 USD"
+        },
+        "payment_term": {
+          "page": 2,
+          "start": 14,
+          "end": 28,
+          "quote": "Within 30 days"
+        },
+        "penalty": {
+          "page": 3,
+          "start": 9,
+          "end": 22,
+          "quote": "0.05% per day"
+        }
+      },
+      "expected_unverified_fields": []
+    },
+    {
+      "key": "contract-4",
+      "fields": {
+        "value": "0.00 VND",
+        "payment_term": "Within 30 days",
+        "penalty": "0.05% per day"
+      },
+      "confidence": 90,
+      "filename": "contract-4.pdf",
+      "folder": "Economics 101",
+      "sha256": "4682181657a1d08ee885de3bcefa4a4a4c8d50d4ff740df1ab1ae6af236c5049",
+      "page_count": 3,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Contract 4. Synthetic acceptance data.\nContract value: 0.00 VND"
+        },
+        {
+          "page": 2,
+          "text": "Payment term: Within 30 days"
+        },
+        {
+          "page": 3,
+          "text": "Penalty: 0.05% per day"
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "field_evidence": {
+        "value": {
+          "page": 1,
+          "start": 55,
+          "end": 63,
+          "quote": "0.00 VND"
+        },
+        "payment_term": {
+          "page": 2,
+          "start": 14,
+          "end": 28,
+          "quote": "Within 30 days"
+        },
+        "penalty": {
+          "page": 3,
+          "start": 9,
+          "end": 22,
+          "quote": "0.05% per day"
+        }
+      },
+      "expected_unverified_fields": []
+    },
+    {
+      "key": "contract-5",
+      "fields": {
+        "value": "750,000,000 VND",
+        "payment_term": null,
+        "penalty": "0.05% per day"
+      },
+      "confidence": 90,
+      "filename": "contract-5.pdf",
+      "folder": "Research",
+      "sha256": "49682791969a06ae92d5d2a03aeb199e3db68d540eba0ae4128be8abde8c9828",
+      "page_count": 3,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Contract 5. Synthetic acceptance data.\nContract value: 750,000,000 VND"
+        },
+        {
+          "page": 2,
+          "text": "No payment schedule provided."
+        },
+        {
+          "page": 3,
+          "text": "Penalty: 0.05% per day"
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "field_evidence": {
+        "value": {
+          "page": 1,
+          "start": 55,
+          "end": 70,
+          "quote": "750,000,000 VND"
+        },
+        "payment_term": null,
+        "penalty": {
+          "page": 3,
+          "start": 9,
+          "end": 22,
+          "quote": "0.05% per day"
+        }
+      },
+      "expected_unverified_fields": [
+        "payment_term"
+      ]
+    },
+    {
+      "key": "report-15-pages",
+      "actions": [
+        2,
+        3
+      ],
+      "filename": "report-15-pages.pdf",
+      "folder": null,
+      "sha256": "0ddeab697835729e957d17b986599f387a7226f942dafe77a137671282bd396d",
+      "page_count": 15,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Market report. Revenue is 1,200,000,000 VND."
+        },
+        {
+          "page": 2,
+          "text": "Recommended action: Review the revenue forecast before approving the budget."
+        },
+        {
+          "page": 3,
+          "text": "Recommended action: Compare supplier quotations before renewing the supply contract."
+        },
+        {
+          "page": 4,
+          "text": "Late payment incurs a penalty of 0.05% per day."
+        },
+        {
+          "page": 5,
+          "text": "Market demand remains stable."
+        },
+        {
+          "page": 6,
+          "text": "Orchid liquidity covenant requires a quarterly cash reserve review."
+        },
+        {
+          "page": 7,
+          "text": "Report section 7. Demand observations for period 7."
+        },
+        {
+          "page": 8,
+          "text": "Report section 8. Demand observations for period 8."
+        },
+        {
+          "page": 9,
+          "text": "Report section 9. Demand observations for period 9."
+        },
+        {
+          "page": 10,
+          "text": "Report section 10. Demand observations for period 10."
+        },
+        {
+          "page": 11,
+          "text": "Report section 11. Demand observations for period 11."
+        },
+        {
+          "page": 12,
+          "text": "Report section 12. Demand observations for period 12."
+        },
+        {
+          "page": 13,
+          "text": "Report section 13. Demand observations for period 13."
+        },
+        {
+          "page": 14,
+          "text": "Report section 14. Demand observations for period 14."
+        },
+        {
+          "page": 15,
+          "text": "Report section 15. Demand observations for period 15."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "expected_bullet_output": {
+        "bullets": [
+          {
+            "text": "Market report. Revenue is 1,200,000,000 VND.",
+            "unverified": false,
+            "source_pages": [
+              1
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "text": "Recommended action: Review the revenue forecast before approving the budget.",
+            "source_pages": [
+              2
+            ],
+            "unverified": false
+          },
+          {
+            "text": "Recommended action: Compare supplier quotations before renewing the supply contract.",
+            "source_pages": [
+              3
+            ],
+            "unverified": false
+          }
+        ],
+        "limitation_required": false
+      }
+    },
+    {
+      "key": "contract-24-pages",
+      "filename": "contract-24-pages.pdf",
+      "folder": "Economics 101",
+      "sha256": "2b8215ebd5dec3cd82773448a3b66f524fa353633d58f4956e3be600da38c898",
+      "page_count": 24,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Contract annex page 1. Administrative contact details only."
+        },
+        {
+          "page": 2,
+          "text": "Contract annex page 2. Administrative contact details only."
+        },
+        {
+          "page": 3,
+          "text": "Contract annex page 3. Administrative contact details only."
+        },
+        {
+          "page": 4,
+          "text": "Contract annex page 4. Administrative contact details only."
+        },
+        {
+          "page": 5,
+          "text": "Contract annex page 5. Administrative contact details only."
+        },
+        {
+          "page": 6,
+          "text": "Contract annex page 6. Administrative contact details only."
+        },
+        {
+          "page": 7,
+          "text": "Contract annex page 7. Administrative contact details only."
+        },
+        {
+          "page": 8,
+          "text": "Contract annex page 8. Administrative contact details only."
+        },
+        {
+          "page": 9,
+          "text": "Contract annex page 9. Administrative contact details only."
+        },
+        {
+          "page": 10,
+          "text": "Contract annex page 10. Administrative contact details only."
+        },
+        {
+          "page": 11,
+          "text": "Contract annex page 11. Administrative contact details only."
+        },
+        {
+          "page": 12,
+          "text": "Amber escrow release requires signed delivery acceptance."
+        },
+        {
+          "page": 13,
+          "text": "Contract annex page 13. Administrative contact details only."
+        },
+        {
+          "page": 14,
+          "text": "Contract annex page 14. Administrative contact details only."
+        },
+        {
+          "page": 15,
+          "text": "Contract annex page 15. Administrative contact details only."
+        },
+        {
+          "page": 16,
+          "text": "Contract annex page 16. Administrative contact details only."
+        },
+        {
+          "page": 17,
+          "text": "Contract annex page 17. Administrative contact details only."
+        },
+        {
+          "page": 18,
+          "text": "Contract annex page 18. Administrative contact details only."
+        },
+        {
+          "page": 19,
+          "text": "Contract annex page 19. Administrative contact details only."
+        },
+        {
+          "page": 20,
+          "text": "Contract annex page 20. Administrative contact details only."
+        },
+        {
+          "page": 21,
+          "text": "Contract annex page 21. Administrative contact details only."
+        },
+        {
+          "page": 22,
+          "text": "Contract annex page 22. Administrative contact details only."
+        },
+        {
+          "page": 23,
+          "text": "Contract annex page 23. Administrative contact details only."
+        },
+        {
+          "page": 24,
+          "text": "Contract annex page 24. Administrative contact details only."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      }
+    },
+    {
+      "key": "textless-page",
+      "filename": "textless-page.pdf",
+      "folder": "Research",
+      "sha256": "c76550bf8438d4c77279cc0f461c65b4d13fb3d6b01cd82f1e52edc7f661a4f7",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": ""
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "expected_bullet_output": {
+        "bullets": [],
+        "actions": [],
+        "limitation_required": true
+      }
+    },
+    {
+      "key": "insufficient-actions",
+      "actions": [
+        2
+      ],
+      "limitation": "The source supports only one recommended action; a second action is unsupported.",
+      "filename": "insufficient-actions.pdf",
+      "folder": null,
+      "sha256": "048c0e9c6960d054226c6cf33c730cadb07674e67e475ee1131d6c87f65c2729",
+      "page_count": 2,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Archive report. Revenue was 750,000,000 VND."
+        },
+        {
+          "page": 2,
+          "text": "Recommended action: Retain the signed receipt."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "expected_bullet_output": {
+        "bullets": [
+          {
+            "text": "Archive report. Revenue was 750,000,000 VND.",
+            "unverified": false,
+            "source_pages": [
+              1
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "text": "Recommended action: Retain the signed receipt.",
+            "source_pages": [
+              2
+            ],
+            "unverified": false
+          }
+        ],
+        "limitation_required": true
+      }
+    },
+    {
+      "key": "missing-evidence",
+      "unsupported": "The contract guarantees a 99% return.",
+      "filename": "missing-evidence.pdf",
+      "folder": "Economics 101",
+      "sha256": "b5a6dfc469ade9ca6d8d61dfdbc8c178e51179e3d534536d6a14d5e7e9577882",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "The contract identifies the parties only."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Contract",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": null
+      },
+      "expected_bullet_output": {
+        "bullets": [
+          {
+            "text": "The contract guarantees a 99% return.",
+            "unverified": true,
+            "source_pages": []
+          }
+        ],
+        "actions": [],
+        "limitation_required": true
+      }
+    },
+    {
+      "key": "course-note-01",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-01.pdf",
+      "folder": "Research",
+      "sha256": "947f9071119466fc00247ddacac227a8c4498b04f3c088f71670d5509118226a",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 1. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-02",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-02.pdf",
+      "folder": null,
+      "sha256": "2926ae5be1d9adb75077ddb6495a3b0c9e1f7cdb0a54e2731d6d2c5113718fce",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 2. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-03",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-03.pdf",
+      "folder": "Economics 101",
+      "sha256": "98af4ef0da6a7f03c01211fc2851e3bd91ce235f02d2d01841747194732f1b25",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 3. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-04",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-04.pdf",
+      "folder": "Research",
+      "sha256": "89424045935ddc1634e829ee73506143456aa10dbd929ab642514586173718c4",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 4. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-05",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-05.pdf",
+      "folder": null,
+      "sha256": "2b16fb1b93ca66d84f3fb4864a82d42f7eda2e8158d084fd5d158962cd595d93",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 5. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-06",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-06.pdf",
+      "folder": "Economics 101",
+      "sha256": "505169a39bdd32116ca46ed1678f089ff2136b7f21bc59ef1756de911af169be",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 6. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-07",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-07.pdf",
+      "folder": "Research",
+      "sha256": "d5cf5a1ed2146df9940a447c80f365c579d2f91b1075c7fdadad6f493d7e939a",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 7. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-08",
+      "ai_label": "Macroeconomics",
+      "user_label": "User correction",
+      "filename": "course-note-08.pdf",
+      "folder": null,
+      "sha256": "984672810569fabff9a2af013b35f9dd0ca9e528b0c9eeb190fcac13c121da43",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 8. Macroeconomics studies aggregate demand."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Macroeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "User correction"
+      }
+    },
+    {
+      "key": "course-note-09",
+      "ai_label": "Microeconomics",
+      "user_label": "Macroeconomics",
+      "filename": "course-note-09.pdf",
+      "folder": "Economics 101",
+      "sha256": "f9d3bd7fdd4705119ae87e2a75ac3874a953ca16cd11c7ed5ae9b481b210b8ea",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 9. Microeconomics studies household choices."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Microeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "Macroeconomics"
+      }
+    },
+    {
+      "key": "course-note-10",
+      "ai_label": "Microeconomics",
+      "user_label": "Macroeconomics",
+      "filename": "course-note-10.pdf",
+      "folder": "Research",
+      "sha256": "1bbefbe400edd567c51dfb1678e1c12f9973d0c3df74fa4ac3ce032a554175f3",
+      "page_count": 1,
+      "pages": [
+        {
+          "page": 1,
+          "text": "Course note 10. Microeconomics studies household choices."
+        }
+      ],
+      "expected_label": {
+        "ai_label": "Microeconomics",
+        "ai_confidence": 0.9,
+        "confidence_level": "high",
+        "review_state": "needs_review",
+        "user_label": "Macroeconomics"
+      }
+    }
+  ],
+  "account": {
+    "document_count": 20,
+    "ai_label": "Macroeconomics",
+    "ai_label_count": 8
+  },
+  "search": [
+    {
+      "query": "Orchid liquidity covenant",
+      "hits": [
+        {
+          "key": "report-15-pages",
+          "page": 6,
+          "snippet": "Orchid liquidity covenant requires a quarterly cash reserve review.",
+          "start": 0,
+          "end": 67
+        }
+      ]
+    },
+    {
+      "query": "Amber escrow release",
+      "hits": [
+        {
+          "key": "contract-24-pages",
+          "page": 12,
+          "snippet": "Amber escrow release requires signed delivery acceptance.",
+          "start": 0,
+          "end": 57
+        }
+      ]
+    },
+    {
+      "query": "volcanic submarine zirconium",
+      "hits": []
+    }
+  ],
+  "manual_checks": [
+    "Compare all five financial rows with their original PDF pages; preserve commas, currencies and daily units.",
+    "Open each citation and compare the quote with the source, not merely the generated answer.",
+    "Verify page 6 and page 12 navigation after refreshing the reader.",
+    "Graphics-only page must not produce invented text, facts or source links.",
+    "Missing evidence must show Unverified and no fabricated link.",
+    "One supported action must retain an explicit limitation; do not invent a second action.",
+    "79% is low; 80% is high; neither is a user confirmation.",
+    "20 documents, 8 exact AI-label matches regardless of folder; clear filter restores 20.",
+    "Real model wording/ranking is reviewed against source; controlled outputs are not a real-model benchmark."
+  ]
+}
