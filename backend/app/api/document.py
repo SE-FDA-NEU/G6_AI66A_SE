@@ -12,7 +12,7 @@ from app.models.document import Document
 from app.models.folder import Folder
 from app.models.fileformat import FileFormat
 from app.models.reviewstate import ReviewState
-from app.schemas.document import DocumentFolderUpdate, DocumentResponse
+from app.schemas.document import DocumentFolderUpdate, DocumentLabelUpdate, DocumentResponse
 from app.core.security import get_current_user_id
 from app.services.reader_extraction import extract_document_for_reader, reader_representation, ReaderConversionError
 
@@ -25,6 +25,36 @@ def owned_reader_document(db, document_id, user_id):
         raise HTTPException(404, 'Document not found')
     if document.owner_id != user_id:
         raise HTTPException(403, 'Access denied')
+    return document
+
+
+@router.patch('/{document_id}/label', response_model=DocumentResponse)
+def update_document_label(document_id: int, payload: DocumentLabelUpdate,
+                          user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    """Save a human decision; AI predictions/confidence and folder stay intact.
+
+    A label edit confirms by default. Explicit needs_review saves a draft;
+    explicit null clears the human decision. Confirm-only snapshots the
+    existing user label or the current AI suggestion into user_label.
+    """
+    document = db.query(Document).options(defer(Document.extracted_text)).filter(
+        Document.id == document_id, Document.owner_id == user_id).with_for_update().first()
+    if document is None:
+        raise HTTPException(404, 'Document not found')
+    if 'user_label' in payload.model_fields_set:
+        chosen_label = payload.user_label
+        chosen_state = payload.review_state or (ReviewState.CONFIRMED if chosen_label is not None else ReviewState.NEEDS_REVIEW)
+    else:
+        chosen_label = document.user_label
+        chosen_state = payload.review_state
+        if chosen_state == ReviewState.CONFIRMED:
+            chosen_label = (document.user_label or '').strip() or (document.ai_label or '').strip()
+    if chosen_state == ReviewState.CONFIRMED and not chosen_label:
+        raise HTTPException(422, 'A label is required before confirmation.')
+    document.user_label = chosen_label
+    document.review_state = chosen_state
+    db.commit()
+    db.refresh(document)
     return document
 
 
