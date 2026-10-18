@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session, defer
+from sqlalchemy import cast, LargeBinary
 
 from app.db.database import get_db
 from app.models.document import Document
@@ -226,6 +227,10 @@ def get_rendered_file(
 @router.get("", response_model=List[DocumentResponse], summary="Get list of documents for current user")
 def get_documents(
     folder_id: Optional[int] = Query(None, description="Filter by folder ID"),
+    label: Optional[str] = Query(None, min_length=1, max_length=100,
+                                 description="Exact AI label only, case/accent sensitive; combined with other filters using AND."),
+    ai_label: Optional[str] = Query(None, min_length=1, max_length=100,
+                                    description="Alias for label; never matches user_label."),
     review_state: Optional[ReviewState] = Query(None, description="Filter by review state"),
     search: Optional[str] = Query(None, description="Search by file name or AI label"),
     skip: int = Query(0, ge=0, description="Number of records to skip (pagination)"),
@@ -236,8 +241,13 @@ def get_documents(
     """
     Retrieve documents owned by the current user (BR07).
     Defers the extracted_text field to optimize latency and payload size.
-    Supports filtering by folder, review state, search, and pagination.
+    Applies all filters before pagination. Label filtering uses only ai_label.
     """
+    if (label is not None and not label.strip()) or (ai_label is not None and not ai_label.strip()):
+        raise HTTPException(422, 'AI label must not be blank.')
+    if label is not None and ai_label is not None and label != ai_label:
+        raise HTTPException(422, 'label and ai_label must identify the same AI label.')
+    selected_label = ai_label if ai_label is not None else label
     query = (
         db.query(Document)
         .options(defer(Document.extracted_text))
@@ -246,6 +256,11 @@ def get_documents(
 
     if folder_id is not None:
         query = query.filter(Document.folder_id == folder_id)
+
+    if selected_label is not None:
+        # MySQL's default text collation ignores case/accents. Compare UTF-8
+        # bytes so "exact" has the same meaning on MySQL and SQLite.
+        query = query.filter(cast(Document.ai_label, LargeBinary) == selected_label.encode('utf-8'))
 
     if review_state is not None:
         query = query.filter(Document.review_state == review_state)
@@ -258,7 +273,7 @@ def get_documents(
             | (Document.user_label.ilike(search_filter))
         )
 
-    documents = query.order_by(Document.created_at.desc()).offset(skip).limit(limit).all()
+    documents = query.order_by(Document.created_at.desc(), Document.id.desc()).offset(skip).limit(limit).all()
     return documents
 
 

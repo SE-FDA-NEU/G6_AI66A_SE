@@ -5,7 +5,7 @@ import DocumentFolderMove from './DocumentFolderMove';
 
 const PAGE_SIZE = 10;
 
-export default function WorkspaceDocumentList({ folderId = '', folders = [], foldersUnavailable = false, refreshKey = 0, onMoved }) {
+export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', folders = [], foldersUnavailable = false, refreshKey = 0, onMoved }) {
   const [page, setPage] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [documents, setDocuments] = useState([]);
@@ -22,6 +22,7 @@ export default function WorkspaceDocumentList({ folderId = '', folders = [], fol
         // The list API returns an array, so one extra row identifies a next page.
         const params = new URLSearchParams({ skip: String(page * PAGE_SIZE), limit: String(PAGE_SIZE + 1) });
         if (folderId) params.set('folder_id', folderId);
+        if (aiLabel) params.set('label', aiLabel);
         const response = await fetch(`/api/documents?${params}`,
           { signal: controller.signal, cache: 'no-store' });
         if (response.status === 401) { window.location.assign('/'); return; }
@@ -40,7 +41,7 @@ export default function WorkspaceDocumentList({ folderId = '', folders = [], fol
     }
     load();
     return () => controller.abort();
-  }, [page, attempt, folderId, refreshKey]);
+  }, [page, attempt, folderId, aiLabel, refreshKey]);
 
   return (
     <section className="workspace-documents" aria-label="Danh sách tài liệu" aria-busy={loading}>
@@ -50,7 +51,8 @@ export default function WorkspaceDocumentList({ folderId = '', folders = [], fol
         <button className="btn" onClick={() => setAttempt(value => value + 1)}>Thử lại danh sách</button></div>}
       {!loading && !error && <>
         {documents.length === 0 ? <p className="muted">{page === 0
-          ? (folderId ? 'Thư mục này chưa có tài liệu.' : 'Chưa có tài liệu nào trong không gian làm việc. Tải tài liệu để bắt đầu.')
+          ? (aiLabel ? (folderId ? 'Không có tài liệu khớp đồng thời thư mục và nhãn AI đã chọn.' : 'Không có tài liệu khớp nhãn AI đã chọn.')
+            : folderId ? 'Thư mục này chưa có tài liệu.' : 'Chưa có tài liệu nào trong không gian làm việc. Tải tài liệu để bắt đầu.')
           : 'Không còn tài liệu trên trang này. Hãy quay về trang trước.'}</p> : (
           <ul className="workspace-document-list" aria-label="Danh sách tài liệu workspace">
             {documents.map(doc => <li key={doc.id} className="workspace-document-row"

@@ -6,12 +6,14 @@ import WorkspaceDocumentList from '../components/WorkspaceDocumentList';
 import WorkspaceNavigation from '../components/WorkspaceNavigation';
 import WorkspaceFolders from '../components/WorkspaceFolders';
 import useFolders from '../lib/use-folders';
+import WorkspaceLabelFilter from '../components/WorkspaceLabelFilter';
 
 export default function Workspace({ user }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const folderState = useFolders();
   const [selectedFolder, setSelectedFolder] = useState('');
+  const [aiLabel, setAiLabel] = useState('');
   const [revision, setRevision] = useState(0);
   const [moveMessage, setMoveMessage] = useState('');
 
@@ -60,7 +62,10 @@ export default function Workspace({ user }) {
           {moveMessage && <p role="status">{moveMessage}</p>}
           <WorkspaceSearch folders={folderState.folders} foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision} />
 
-          <WorkspaceDocumentList key={selectedFolder} folderId={selectedFolder} folders={folderState.folders}
+          <WorkspaceLabelFilter label={aiLabel} folderName={folderState.folders.find(folder => String(folder.id) === selectedFolder)?.name}
+            hasFolder={Boolean(selectedFolder)} onApply={setAiLabel} onClear={() => setAiLabel('')}
+            onClearAll={() => { setAiLabel(''); setSelectedFolder(''); }} />
+          <WorkspaceDocumentList key={JSON.stringify([selectedFolder, aiLabel])} folderId={selectedFolder} aiLabel={aiLabel} folders={folderState.folders}
             foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision} onMoved={documentMoved} />
         </section>
       </main>
