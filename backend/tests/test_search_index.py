@@ -71,7 +71,7 @@ def test_search_owner_is_always_taken_from_authentication(client, corpus):
     assert client.get('/search?q=penalty', headers={'Authorization': 'Bearer invalid', 'Cookie': ''}).status_code == 401
     for params in [{'q': ' '}, {'q': 'penalty', 'limit': 0}, {'q': 'penalty', 'offset': -1}, {'q': 'penalty', 'mode': 'unsupported'}]:
         assert client.get('/search', params=params).status_code == 422
-    assert client.get('/search?q=%25').json()['hits'] == []
+    assert client.get('/search?q=%25').status_code == 422
 
 
 def test_unicode_chunks_cover_original_text_and_normalization_never_changes_offsets():
