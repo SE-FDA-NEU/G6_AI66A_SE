@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     GEMINI_MAX_OUTPUT_TOKENS: int = Field(default=1024, ge=256, le=8192)
     GEMINI_REQUEST_TIMEOUT_SECONDS: int = Field(default=45, ge=1, le=300)
     GEMINI_CACHE_ENABLED: bool = True
+    SEARCH_EMBEDDING_MODEL: str = Field(default='gemini-embedding-001', max_length=100, pattern=r'^gemini-[a-z0-9.-]+$')
+    SEARCH_EMBEDDING_DIMENSIONS: int = Field(default=768, ge=128, le=3072)
+    SEARCH_EMBEDDING_TIMEOUT_SECONDS: int = Field(default=15, ge=1, le=60)
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
