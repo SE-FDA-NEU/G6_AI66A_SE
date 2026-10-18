@@ -16,6 +16,12 @@ export default function Workspace({ user }) {
   const [aiLabel, setAiLabel] = useState('');
   const [revision, setRevision] = useState(0);
   const [moveMessage, setMoveMessage] = useState('');
+  const [labelMessage, setLabelMessage] = useState('');
+
+  function labelSaved(document) {
+    setLabelMessage(`Đã lưu nhãn người dùng cho “${document.original_filename}”.`);
+    setRevision(value => value + 1);
+  }
 
   function documentMoved(document) {
     const folder = folderState.folders.find(item => item.id === document.folder_id);
@@ -60,13 +66,14 @@ export default function Workspace({ user }) {
 
           <WorkspaceFolders {...folderState} selected={selectedFolder} onSelect={setSelectedFolder} />
           {moveMessage && <p role="status">{moveMessage}</p>}
+          {labelMessage && <p role="status">{labelMessage}</p>}
           <WorkspaceSearch folders={folderState.folders} foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision} />
 
           <WorkspaceLabelFilter label={aiLabel} folderName={folderState.folders.find(folder => String(folder.id) === selectedFolder)?.name}
             hasFolder={Boolean(selectedFolder)} onApply={setAiLabel} onClear={() => setAiLabel('')}
             onClearAll={() => { setAiLabel(''); setSelectedFolder(''); }} />
           <WorkspaceDocumentList key={JSON.stringify([selectedFolder, aiLabel])} folderId={selectedFolder} aiLabel={aiLabel} folders={folderState.folders}
-            foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision} onMoved={documentMoved} />
+            foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision} onMoved={documentMoved} onLabelSaved={labelSaved} />
         </section>
       </main>
     </>

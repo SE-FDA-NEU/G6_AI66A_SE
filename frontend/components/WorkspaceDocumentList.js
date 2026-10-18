@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import DocumentMetadata from './DocumentMetadata';
 import WorkspacePagination from './WorkspacePagination';
 import DocumentFolderMove from './DocumentFolderMove';
+import DocumentLabelEditor from './DocumentLabelEditor';
 
 const PAGE_SIZE = 10;
 
-export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', folders = [], foldersUnavailable = false, refreshKey = 0, onMoved }) {
+export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', folders = [], foldersUnavailable = false, refreshKey = 0, onMoved, onLabelSaved }) {
   const [page, setPage] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [documents, setDocuments] = useState([]);
@@ -61,6 +62,7 @@ export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', fol
                 <a href={`/documents/${doc.id}?page=1`} className="document-row-title"><strong>{doc.original_filename}</strong></a>
                 <DocumentMetadata document={doc} folderName={folders.find(folder => folder.id === doc.folder_id)?.name} className="workspace-metadata-row" />
               </div>
+              <DocumentLabelEditor documentId={doc.id} document={doc} onSaved={onLabelSaved} />
               <DocumentFolderMove document={doc} folders={folders} foldersUnavailable={foldersUnavailable} onMoved={onMoved} />
             </li>)}
           </ul>

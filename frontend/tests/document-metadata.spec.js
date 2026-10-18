@@ -57,6 +57,7 @@ test.describe('Document Metadata UI - Threshold Display & Boundary (US10)', () =
     { score: 0.87, expectedText: '87%', isHigh: true, expectNeedsReview: false },
     { score: 0.80, expectedText: '80%', isHigh: true, expectNeedsReview: false },
     { score: 0.79, expectedText: '79%', isHigh: false, expectNeedsReview: true },
+    { score: 0.799, expectedText: '79.9%', isHigh: false, expectNeedsReview: true },
     { score: 0.72, expectedText: '72%', isHigh: false, expectNeedsReview: true },
   ];
 
@@ -214,7 +215,7 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     expect(isCitationBadge).toBe(false);
   });
 
-  test('confirmation and edit controls are not duplicated in metadata UI (reserved for US12)', async ({ page }) => {
+  test('read-only metadata and the single shared reader label editor remain separate', async ({ page }) => {
     const docData = makePageData({
       ai_label: 'Hợp đồng',
       ai_confidence: 0.85,
@@ -233,5 +234,8 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     await expect(metadata.locator('button')).toHaveCount(0);
     await expect(metadata.locator('input')).toHaveCount(0);
     await expect(metadata.locator('select')).toHaveCount(0);
+    await expect(page.getByTestId('document-label-editor')).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Xác nhận nhãn AI', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Chỉnh sửa nhãn', exact: true })).toBeVisible();
   });
 });

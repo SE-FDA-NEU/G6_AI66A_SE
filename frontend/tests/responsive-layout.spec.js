@@ -55,6 +55,11 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
   await login(page);
   await expect(page).toHaveURL('/workspace');
   await expectNoOverflow(page);
+  const workspaceLabelEditor = page.getByTestId('workspace-document-row').getByTestId('document-label-editor');
+  await workspaceLabelEditor.getByRole('button', { name: 'Chỉnh sửa nhãn', exact: true }).tap();
+  await workspaceLabelEditor.getByLabel('Nhãn người dùng', { exact: true }).fill('long-user-label-'.repeat(6));
+  await expectNoOverflow(page);
+  await workspaceLabelEditor.getByRole('button', { name: 'Hủy chỉnh sửa', exact: true }).tap();
   const toggle = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeHidden();
