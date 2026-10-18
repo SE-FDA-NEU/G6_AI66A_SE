@@ -185,10 +185,10 @@ def test_ai_suggestion_keeps_human_label_review_and_folder(client, session_facto
         db.add(folder)
         db.flush()
         document.folder_id = folder.id
-        document.user_label = 'My chosen label'
-        document.review_state = ReviewState.CONFIRMED
         doc_id, folder_id = document.id, folder.id
         db.commit()
+    updated = client.patch(f'/documents/{doc_id}/label', json={'user_label': 'My chosen label', 'review_state': 'confirmed'})
+    assert updated.status_code == 200
     async def analyzer(document, mode):
         return analysis(document, mode, confidence=confidence)
     processing.process_job(job_id, session_factory, analyzer=analyzer)
