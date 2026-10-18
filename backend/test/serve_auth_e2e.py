@@ -35,6 +35,8 @@ with TestSession() as db:
                 password_hash=get_password_hash('LocalIssueTest2026!')))
     db.add(User(username='reader_user', email='reader@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
+    db.add(User(username='workspace_user', email='workspace@example.com',
+                password_hash=get_password_hash('LocalIssueTest2026!')))
     db.flush()
     for owner in db.query(User).all():
         db.add(Document(

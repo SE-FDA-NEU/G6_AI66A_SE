@@ -175,6 +175,19 @@ input::placeholder { color: #96a29a; font-size: 13px; }
   width: auto;
   white-space: nowrap;
 }
+.workspace-search-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.workspace-search-filters label { min-width: 0; }
+.workspace-search-filters input, .workspace-search-filters select { display: block; margin-top: 8px; width: 100%; }
+.workspace-search-filters select { min-height: 48px; padding: 12px; border: 1px solid #dce4de; border-radius: 9px; background: #fcfdfc; color: #233b32; font: inherit; }
+.search-help { color: #5f7167; font-size: 13px; line-height: 1.6; }
+.search-hit-heading { margin-top: 0; }
+.search-snippet { white-space: pre-wrap; overflow-wrap: anywhere; }
+.workspace-pagination { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+@media (max-width: 640px) {
+  .workspace-search-filters { grid-template-columns: 1fr; }
+  .workspace-pagination { gap: 8px; }
+  .workspace-pagination .btn { padding: 12px; }
+}
 .search-results {
   margin-top: 16px;
 }

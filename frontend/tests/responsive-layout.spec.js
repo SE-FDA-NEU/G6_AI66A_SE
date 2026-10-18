@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, user } from './helpers';
+import { login, user, searchHit } from './helpers';
 
 const longName = `${'long-contract-name-'.repeat(10)}.pdf`;
 
@@ -47,6 +47,8 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
   await page.route('**/api/documents*', route => new URL(route.request().url()).pathname === '/api/documents'
     ? route.fulfill({ json: [{ id: 51, original_filename: longName, ai_label: 'long-label-'.repeat(15),
       ai_confidence: .9, review_state: 'needs_review', folder_id: null }] }) : route.continue());
+  await page.route('**/api/search?*', route => route.fulfill({ json: { query: 'contract', total_hits: 1,
+    hits: [searchHit({ doc_name: longName, snippet: 'long-source-text-'.repeat(30), ai_label: 'long-label-'.repeat(15) })] } }));
   await login(page);
   await expect(page).toHaveURL('/workspace');
   await expectNoOverflow(page);
