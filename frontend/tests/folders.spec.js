@@ -39,11 +39,19 @@ test('real APIs persist a move from Economics 101 to Research and unfile without
   await expect(row.getByTestId('document-ai-confidence')).toContainText('91%');
   await expect(row.getByTestId('document-user-label')).toContainText('Semester 1');
   await expect(row.getByTestId('document-review-state')).toContainText('Đã xác nhận');
-  expect((await (await page.request.get('/api/documents')).json())[0]).toEqual({ ...before, folder_id: research.id });
+  const moved = (await (await page.request.get('/api/documents')).json())[0];
+  expect(moved).toEqual({ ...before, folder_id: research.id,
+    last_accessed_at: moved.last_accessed_at, expires_at: moved.expires_at });
+  expect(new Date(moved.expires_at + 'Z') - new Date(moved.last_accessed_at + 'Z')).toBe(30 * 86400000);
+  expect(new Date(moved.last_accessed_at + 'Z').getTime()).toBeGreaterThanOrEqual(new Date(before.last_accessed_at + 'Z').getTime());
   await row.getByRole('button', { name: 'Bỏ thư mục', exact: true }).click();
   await expect(row.getByTestId('document-folder-placement')).toContainText('Chưa phân thư mục');
   await page.reload();
-  expect((await (await page.request.get('/api/documents')).json())[0]).toEqual({ ...before, folder_id: null });
+  const unfiled = (await (await page.request.get('/api/documents')).json())[0];
+  expect(unfiled).toEqual({ ...before, folder_id: null,
+    last_accessed_at: unfiled.last_accessed_at, expires_at: unfiled.expires_at });
+  expect(new Date(unfiled.expires_at + 'Z') - new Date(unfiled.last_accessed_at + 'Z')).toBe(30 * 86400000);
+  expect(new Date(unfiled.last_accessed_at + 'Z').getTime()).toBeGreaterThanOrEqual(new Date(moved.last_accessed_at + 'Z').getTime());
   await expect(row.getByTestId('document-ai-confidence')).toContainText('91%');
 });
 
