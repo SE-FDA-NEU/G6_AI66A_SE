@@ -7,6 +7,7 @@ import WorkspaceNavigation from '../components/WorkspaceNavigation';
 import WorkspaceFolders from '../components/WorkspaceFolders';
 import useFolders from '../lib/use-folders';
 import WorkspaceLabelFilter from '../components/WorkspaceLabelFilter';
+import usePageRefresh from '../lib/use-page-refresh';
 
 export default function Workspace({ user }) {
   const [error, setError] = useState('');
@@ -17,6 +18,7 @@ export default function Workspace({ user }) {
   const [revision, setRevision] = useState(0);
   const [moveMessage, setMoveMessage] = useState('');
   const [labelMessage, setLabelMessage] = useState('');
+  usePageRefresh(() => setRevision(value => value + 1));
 
   function labelSaved(document) {
     setLabelMessage(`Đã lưu nhãn người dùng cho “${document.original_filename}”.`);

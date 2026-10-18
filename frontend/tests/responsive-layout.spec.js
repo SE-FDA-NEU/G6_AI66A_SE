@@ -199,6 +199,25 @@ test('Export Table pending, error and real PDF download work at 375px without ov
   await expectNoOverflow(page);
 });
 
+test('seven-day expiry warnings and expired reader messages fit 375px', async ({ page }) => {
+  await page.request.post('/auth/login', { form: { username: user.email, password: user.password } });
+  await page.clock.install({ time: new Date('2026-03-24T12:00:00Z') });
+  await page.route('**/api/documents?*', route => route.fulfill({ json: [{
+    id: 61, original_filename: longName, ai_label: 'Contract', ai_confidence: .9, folder_id: null,
+    last_accessed_at: '2026-03-01T00:00:00', expires_at: '2026-03-31T00:00:00',
+  }] }));
+  await page.goto('/workspace');
+  await expect(page.getByTestId('expiry-warning')).toBeVisible();
+  await expect(page.getByTestId('document-expiry')).toContainText('31/03/2026');
+  await expectNoOverflow(page);
+  await page.route('**/api/documents/61/pages', route => route.fulfill({ status: 410,
+    json: { detail: { code: 'source_expired', message: 'Source expired.' } } }));
+  await page.getByRole('link', { name: longName, exact: true }).tap();
+  await expect(page.locator('main').getByRole('alert')).toContainText('Nguồn đã hết hạn');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await expectNoOverflow(page);
+});
+
 test('progress, timeout errors, limitations and Unverified citations wrap at 375px', async ({ page }) => {
   await page.request.post('/auth/login', { form: { username: user.email, password: user.password } });
   const saved = resultJob();

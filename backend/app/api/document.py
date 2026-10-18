@@ -122,6 +122,8 @@ def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), 
     }
     renew_retention(document)
     db.commit()
+    payload['last_accessed_at'] = document.last_accessed_at
+    payload['expires_at'] = document.expires_at
     return payload
 
 

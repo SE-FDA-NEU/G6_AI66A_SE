@@ -48,7 +48,10 @@ test('real workspace confirmation at 79/80 and reader edits persist after reload
   await expect(metadata.getByTestId('document-ai-confidence')).toContainText('79%');
   await expect(metadata.getByTestId('document-folder-placement')).toHaveAttribute('data-folder-id', String(original.folder_id));
   const saved = (await (await page.request.get('/api/documents')).json()).find(document => document.id === original.id);
-  expect(saved).toEqual({ ...original, user_label: 'Reader classification', review_state: 'confirmed' });
+  expect(saved).toEqual({ ...original, user_label: 'Reader classification', review_state: 'confirmed',
+    last_accessed_at: saved.last_accessed_at, expires_at: saved.expires_at });
+  expect(new Date(saved.expires_at + 'Z') - new Date(saved.last_accessed_at + 'Z')).toBe(30 * 86400000);
+  expect(new Date(saved.last_accessed_at + 'Z').getTime()).toBeGreaterThanOrEqual(new Date(original.last_accessed_at + 'Z').getTime());
 });
 
 test('pending/error preserves the draft and metadata; retry saves only human fields and cancel writes nothing', async ({ page }) => {

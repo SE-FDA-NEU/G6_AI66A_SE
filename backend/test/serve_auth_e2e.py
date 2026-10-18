@@ -67,9 +67,11 @@ with TestSession() as db:
                 password_hash=get_password_hash('LocalIssueTest2026!')))
     db.add(User(username='review_user', email='review@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
+    db.add(User(username='expiry_user', email='expiry@example.com',
+                password_hash=get_password_hash('LocalIssueTest2026!')))
     db.flush()
     for owner in db.query(User).all():
-        if owner.username in ('label_user', 'review_user'):
+        if owner.username in ('label_user', 'review_user', 'expiry_user'):
             continue
         db.add(Document(
             owner_id=owner.id,
@@ -109,6 +111,17 @@ with TestSession() as db:
                                    file_size_bytes=source.stat().st_size, ai_label='Macroeconomics', ai_confidence=score,
                                    review_state=ReviewState.NEEDS_REVIEW, expires_at=datetime.utcnow() + timedelta(days=30))
         db.add(review_document); db.flush(); review_document_ids.append(review_document.id)
+    expiry_owner = db.query(User).filter_by(username='expiry_user').one()
+    expiry_folder = Folder(owner_id=expiry_owner.id, name='Economics 101')
+    db.add(expiry_folder); db.flush()
+    expiry_source = Path(test_storage.name) / 'expiry-reader.pdf'
+    metadata_pdf(expiry_source)
+    expiry_doc = Document(owner_id=expiry_owner.id, folder_id=expiry_folder.id,
+                          original_filename=expiry_source.name, storage_path=str(expiry_source),
+                          file_format=FileFormat.PDF, file_size_bytes=expiry_source.stat().st_size,
+                          ai_label='Macroeconomics', ai_confidence=.79, review_state=ReviewState.NEEDS_REVIEW,
+                          expires_at=datetime.utcnow() + timedelta(days=30))
+    db.add(expiry_doc); db.flush(); review_document_ids.append(expiry_doc.id)
     owner = db.query(User).filter_by(username='playwright_user').one()
     document = db.query(Document).filter_by(owner_id=owner.id).one()
     completed_job = Job(id=9001, owner_id=owner.id, mode=JobMode.BULLET,

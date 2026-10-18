@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export default function DocumentLabelEditor({ documentId, document, onSaved }) {
+export default function DocumentLabelEditor({ documentId, document, onSaved, onUnavailable }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState(false);
@@ -20,14 +20,17 @@ export default function DocumentLabelEditor({ documentId, document, onSaved }) {
         body: JSON.stringify(payload), signal: controller.signal,
       });
       if (response.status === 401) { window.location.assign('/'); return; }
+      if (response.status === 410) { onUnavailable?.(); throw new Error('source_expired'); }
       if (!response.ok) throw new Error();
       const saved = await response.json();
       if (saved.id !== Number(documentId) || saved.review_state !== 'confirmed' || !saved.user_label) throw new Error();
       if (controller.signal.aborted) return;
       setEditing(false); setMessage('Đã lưu nhãn người dùng.');
       onSaved(saved);
-    } catch {
-      if (!controller.signal.aborted) setError('Không thể lưu nhãn. Nội dung đã nhập được giữ lại; vui lòng thử lại.');
+    } catch (err) {
+      if (!controller.signal.aborted) setError(err.message === 'source_expired'
+        ? 'Nguồn đã hết hạn và không còn khả dụng. Không thể cập nhật nhãn.'
+        : 'Không thể lưu nhãn. Nội dung đã nhập được giữ lại; vui lòng thử lại.');
     } finally {
       if (!controller.signal.aborted) setPending(false);
       activeRequest.current = null;

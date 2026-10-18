@@ -4,6 +4,7 @@ import { getSession } from '../../lib/session';
 import AnalysisResults from '../../components/AnalysisResults';
 import WorkspaceNavigation from '../../components/WorkspaceNavigation';
 import ExportTableButton from '../../components/ExportTableButton';
+import usePageRefresh from '../../lib/use-page-refresh';
 
 const labels = {
   pending: 'Pending', processing: 'Processing', completed: 'Completed',
@@ -18,6 +19,8 @@ function Badge({ status }) {
 export default function Results({ jobId }) {
   const [job, setJob] = useState(null);
   const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0);
+  usePageRefresh(() => setRevision(value => value + 1));
 
   useEffect(() => {
     let stopped = false;
@@ -41,8 +44,14 @@ export default function Results({ jobId }) {
           setError('Không tìm thấy tác vụ hoặc bạn không có quyền truy cập.');
           return;
         }
+        if (response.status === 410) {
+          setJob(null);
+          setError('Nguồn đã hết hạn. Kết quả này không còn khả dụng.');
+          return;
+        }
         if (!response.ok) throw new Error('Cannot fetch job');
         const next = await response.json();
+        if (next.job_files?.some(file => file.error_message?.includes('source_expired'))) next.result_data = null;
         if (stopped) return;
         setJob(next);
         setError('');
@@ -60,7 +69,7 @@ export default function Results({ jobId }) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [jobId]);
+  }, [jobId, revision]);
 
   const total = job?.file_count || 0;
   const completed = Math.min(total, Math.max(0, job?.completed_count || 0));
@@ -89,6 +98,9 @@ export default function Results({ jobId }) {
               : 'Tiến độ tự cập nhật mỗi 3 giây. Bạn có thể quay lại trang này sau.'}</p>
           </section>
           <h2 className="job-files-heading">Trạng thái từng tệp</h2>
+          {job.job_files?.some(file => file.error_message?.includes('source_expired')) && <p className="error-box" role="alert">
+            Nguồn đã hết hạn và không còn khả dụng. Kết quả liên quan không thể hiển thị hoặc xuất PDF.
+          </p>}
           {job.job_files?.length ? <ul className="job-files" aria-label="Trạng thái từng tệp">
             {job.job_files.map(file => <li key={file.id} className="job-file">
               <div className="job-file-details"><strong>{file.original_filename || `Tài liệu #${file.document_id}`}</strong>

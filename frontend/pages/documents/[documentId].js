@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import { getSession } from '../../lib/session';
 import DocumentMetadata from '../../components/DocumentMetadata';
 import DocumentLabelEditor from '../../components/DocumentLabelEditor';
+import DocumentExpiry from '../../components/DocumentExpiry';
+import usePageRefresh from '../../lib/use-page-refresh';
 
 export function resolveCitationHighlight(evidenceId, rawStart, rawEnd, pageData) {
   if (!evidenceId && rawStart == null && rawEnd == null) {
@@ -137,6 +139,8 @@ export default function Reader({
   const [needsPreparation, setNeedsPreparation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+  usePageRefresh(() => setRevision(value => value + 1));
 
   // In-document text search states (US04)
   const [searchInput, setSearchInput] = useState(initialSearch);
@@ -159,6 +163,8 @@ export default function Reader({
 
   async function load(signal) {
     setLoading(true);
+    setData(null);
+    setNeedsPreparation(false);
     setError('');
     setErrorStatus(null);
     try {
@@ -177,7 +183,13 @@ export default function Reader({
         setError('Không tìm thấy tài liệu.');
         return;
       }
+      if (response.status === 410) {
+        setErrorStatus(410);
+        setError('Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này.');
+        return;
+      }
       const payload = await response.json();
+      if (signal?.aborted) return;
       if (!response.ok) {
         setNeedsPreparation(response.status === 409);
         setErrorStatus(response.status);
@@ -191,17 +203,17 @@ export default function Reader({
         setError(err.message || 'Lỗi khi tải tài liệu.');
       }
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }
 
   useEffect(() => {
     const controller = new AbortController();
     setData(null);
-    setPage(initialPage);
     load(controller.signal);
     return () => controller.abort();
-  }, [documentId]);
+  }, [documentId, revision]);
+  useEffect(() => { setPage(initialPage); }, [documentId]);
 
   async function prepare() {
     setBusy(true);
@@ -214,6 +226,9 @@ export default function Reader({
       }
       const payload = await response.json();
       if (!response.ok) {
+        if (response.status === 410) {
+          setData(null); setNeedsPreparation(false); setErrorStatus(410);
+        }
         throw new Error(payload.detail?.message || payload.detail || 'Không thể chuẩn bị bản đọc.');
       }
       await load();
@@ -395,8 +410,12 @@ export default function Reader({
             folderId={data.folder_id}
             className="reader-document-metadata"
           />
-          <DocumentLabelEditor key={documentId} documentId={documentId} document={data} onSaved={saved => setData(current => ({
+          <DocumentExpiry expiresAt={data.expires_at} />
+          <DocumentLabelEditor key={documentId} documentId={documentId} document={data}
+            onUnavailable={() => { setData(null); setNeedsPreparation(false); setErrorStatus(410); setError('Nguồn đã hết hạn và không còn khả dụng.'); }}
+            onSaved={saved => setData(current => ({
             ...current, user_label: saved.user_label, review_state: saved.review_state,
+            last_accessed_at: saved.last_accessed_at, expires_at: saved.expires_at,
           }))} />
           </>
         )}
@@ -423,7 +442,11 @@ export default function Reader({
         )}
 
         {/* Generic or conversion errors */}
-        {error && errorStatus !== 404 && errorStatus !== 403 && (
+        {errorStatus === 410 && <div className="reader-error error-box" role="alert">
+          <p>Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này.</p>
+          <a className="btn" href="/workspace">Về thư viện</a>
+        </div>}
+        {error && errorStatus !== 404 && errorStatus !== 403 && errorStatus !== 410 && (
           <p role="alert" className="error-box">{error}</p>
         )}
 
