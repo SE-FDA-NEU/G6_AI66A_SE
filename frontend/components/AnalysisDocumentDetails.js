@@ -4,6 +4,7 @@ const warnings = {
   source_truncated: 'Đã chọn các đoạn nguồn trong giới hạn tiết kiệm token. Kết quả chưa bao quát toàn bộ tài liệu.',
   unverified_claims: 'Một số nội dung chưa có bằng chứng nguồn hợp lệ.',
   insufficient_concepts: 'Tài liệu nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi. Không tự tạo khái niệm khi thiếu căn cứ nguồn.',
+  insufficient_actions: 'Tài liệu không đủ căn cứ nguồn để hỗ trợ hai hành động đề xuất.',
 };
 
 export default function AnalysisDocumentDetails({ document }) {
@@ -13,7 +14,8 @@ export default function AnalysisDocumentDetails({ document }) {
       {document.label.confidence_level === 'low' && ' · Cần kiểm tra'}
       {document.label.user_label && <span> · Nhãn của bạn: {document.label.user_label}</span>}
     </p>}
-    {document.warnings?.map(warning => <p className="analysis-warning" key={warning}>
+    {document.warnings?.filter(warning => !(warning === 'insufficient_actions' &&
+      document.analysis_status === 'completed' && document.output?.type === 'bullet')).map(warning => <p className="analysis-warning" key={warning}>
       {warnings[warning] || warning}
     </p>)}
     {document.error_message && <p className="analysis-error error-box" role="alert" data-testid="document-analysis-error">
