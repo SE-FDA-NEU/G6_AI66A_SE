@@ -1,10 +1,11 @@
-"""Exact source spans plus an owner-scoped inverted index and reusable vectors.
+"""Search the six-table design using the existing documents.extracted_text JSON.
 
-No DB-specific full-text/vector extension is required for a 20-document account.
-Embeddings are optional and computed lazily by semantic search, outside US07 jobs.
-The caller owns the transaction; failed indexing rolls back with extraction.
+Passages and term frequencies are derived in memory from authorized saved pages.
+Optional vectors are cached in those pages' JSON, never in additional tables.
 """
 from collections import Counter
+from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime
 import hashlib
 import json
@@ -15,7 +16,7 @@ import unicodedata
 
 from sqlalchemy import func
 
-from app.models import Document, SearchDocument, SearchPassage, SearchTerm
+from app.models import Document
 from app.schemas.search import SearchHit, SearchResponse
 
 CHUNK_SIZE = 800
@@ -73,75 +74,74 @@ def index_payload(document):
     return revision, values[0][2], values[0][3]
 
 
-def remove_document_index(db, document_id):
-    snapshot = db.get(SearchDocument, document_id)
-    if snapshot is not None:
-        db.delete(snapshot)
-        db.flush()
+@dataclass
+class IndexedPassage:
+    document_id: int
+    page: int
+    start: int
+    end: int
+    text: str
+    embedding: list | None = None
 
 
-def sync_document_index(db, document, *, now=None):
-    now = now or datetime.utcnow()
+@dataclass(frozen=True)
+class IndexedDocument:
+    doc_name: str
+    revision: str
+    reader_version: str
+
+
+def document_passages(document):
     payload = index_payload(document)
-    if document.expires_at is None or document.expires_at <= now or payload is None:
-        remove_document_index(db, document.id)
-        return 0
-    revision, reader_version, source_hash = payload
-    snapshot = db.get(SearchDocument, document.id)
-    if snapshot is not None and snapshot.revision == revision:
-        return len(snapshot.passages)
-    if snapshot is None:
-        snapshot = SearchDocument(document_id=document.id)
-        db.add(snapshot)
-    else:
-        snapshot.passages.clear()
-        db.flush()
-    snapshot.owner_id = document.owner_id
-    snapshot.doc_name = document.original_filename
-    snapshot.revision = revision
-    snapshot.reader_version = reader_version
-    snapshot.source_sha256 = source_hash
-    for page in document.extracted_text:
-        for start, end, text in passages(page['text']):
-            passage = SearchPassage(document_id=document.id, owner_id=document.owner_id,
-                                    page=page['page'], start=start, end=end, text=text)
-            passage.terms = [SearchTerm(term=term, owner_id=document.owner_id, frequency=count)
-                             for term, count in Counter(tokens(text)).items()]
-            snapshot.passages.append(passage)
-    db.flush()
-    return len(snapshot.passages)
+    if payload is None:
+        return []
+    revision, version, _ = payload
+    snapshot = IndexedDocument(document.original_filename, revision, version)
+    return [(IndexedPassage(document.id, page['page'], start, end, text), snapshot, document)
+            for page in document.extracted_text for start, end, text in passages(page['text'])]
 
 
-def purge_expired_index(db, *, owner_id=None, now=None):
-    now = now or datetime.utcnow()
-    query = db.query(SearchDocument).outerjoin(Document, Document.id == SearchDocument.document_id)
-    if owner_id is not None:
-        query = query.filter(SearchDocument.owner_id == owner_id)
-    stale = query.filter((Document.id.is_(None)) | (Document.expires_at <= now) |
-                         (Document.owner_id != SearchDocument.owner_id)).all()
-    for snapshot in stale:
-        db.delete(snapshot)
-    db.flush()
-    return len(stale)
-
-
-def reconcile_owner_index(db, owner_id, *, now=None):
-    """Backfill legacy extractions and remove stale bytes, expired docs and renames."""
+def authorized_passages(documents):
+    """Reject changed/missing original bytes and invalid reader references."""
     from app.services.reader_extraction import ReaderConversionError, reader_representation, sha256
-    now = now or datetime.utcnow()
-    purge_expired_index(db, owner_id=owner_id, now=now)
-    documents = db.query(Document).filter(Document.owner_id == owner_id, Document.expires_at > now).all()
+    rows = []
     for document in documents:
         try:
             path, reference = reader_representation(document)
             if (not Path(document.storage_path).is_file() or
                     sha256(document.storage_path) != reference['source_sha256'] or sha256(path) != reference['sha256']):
-                remove_document_index(db, document.id)
                 continue
         except (ReaderConversionError, OSError):
-            remove_document_index(db, document.id)
             continue
-        sync_document_index(db, document, now=now)
+        rows.extend(document_passages(document))
+    return rows
+
+
+def cached_embedding(passage, snapshot, document, model_key):
+    cache = document.extracted_text[passage.page - 1].get('search', {})
+    if not isinstance(cache, dict) or cache.get('revision') != snapshot.revision or cache.get('model') != model_key:
+        return None
+    entries = cache.get('passages', {})
+    return entries.get(f'{passage.start}:{passage.end}') if isinstance(entries, dict) else None
+
+
+def save_embeddings(rows, model_key):
+    """Reassign JSON only after all provider output has been validated."""
+    updates = {}
+    for passage, snapshot, document in rows:
+        if document.id not in updates:
+            updates[document.id] = (document, deepcopy(document.extracted_text))
+        pages = updates[document.id][1]
+        page = pages[passage.page - 1]
+        cache = page.get('search', {})
+        if (not isinstance(cache, dict) or cache.get('revision') != snapshot.revision or
+                cache.get('model') != model_key or not isinstance(cache.get('passages'), dict)):
+            cache = {'revision': snapshot.revision, 'model': model_key, 'passages': {}}
+            page['search'] = cache
+        cache['passages'][f'{passage.start}:{passage.end}'] = passage.embedding
+    for document, pages in updates.values():
+        if pages != document.extracted_text:
+            document.extracted_text = pages
 
 
 def normalized_vector(vector):
@@ -182,12 +182,7 @@ def search_passages(db, owner_id, query, *, mode='content', limit=20, offset=0, 
         raise ValueError('Unsupported search mode.')
     if mode == 'semantic' and embedder is None:
         raise ValueError('Semantic search requires an embedding provider.')
-    reconcile_owner_index(db, owner_id, now=now)
-    candidates = db.query(SearchPassage, SearchDocument, Document).join(
-        SearchDocument, SearchDocument.document_id == SearchPassage.document_id).join(
-        Document, Document.id == SearchPassage.document_id).filter(
-        SearchPassage.owner_id == owner_id, SearchDocument.owner_id == owner_id,
-        Document.owner_id == owner_id, Document.expires_at > now)
+    candidates = db.query(Document).filter(Document.owner_id == owner_id, Document.expires_at > now)
     if folder_id is not None:
         candidates = candidates.filter(Document.folder_id == folder_id)
     if label is not None:
@@ -195,16 +190,22 @@ def search_passages(db, owner_id, query, *, mode='content', limit=20, offset=0, 
         # treating wildcard characters supplied by the user as a broad match.
         effective_label = func.coalesce(func.nullif(func.trim(Document.user_label), ''), Document.ai_label)
         candidates = candidates.filter(func.lower(effective_label) == label.lower())
+    if mode == 'semantic':
+        # Cache writes share the source JSON column. Serialize them with extraction
+        # updates so a slow embedding request cannot overwrite newer saved pages.
+        candidates = candidates.with_for_update()
     terms = set(tokens(query))
     if mode == 'content':
         if not terms:
             return SearchResponse(query=query, total_hits=0)
-        candidates = candidates.join(SearchTerm, SearchTerm.passage_id == SearchPassage.id).filter(
-            SearchTerm.owner_id == owner_id, SearchTerm.term.in_(terms)).distinct()
-    rows = candidates.all()
+    rows = authorized_passages(candidates.all())
+    if mode == 'content':
+        rows = [row for row in rows if terms.intersection(tokens(row[0].text))]
     scored = []
     if mode == 'semantic' and rows:
-        missing = [passage for passage, _, _ in rows if passage.embedding_model != embedder.model_key or passage.embedding is None]
+        for passage, snapshot, document in rows:
+            passage.embedding = cached_embedding(passage, snapshot, document, embedder.model_key)
+        missing = [passage for passage, _, _ in rows if passage.embedding is None]
         if missing:
             vectors = embedder.embed([passage.text for passage in missing], task='RETRIEVAL_DOCUMENT')
             if len(vectors) != len(missing):
@@ -212,7 +213,6 @@ def search_passages(db, owner_id, query, *, mode='content', limit=20, offset=0, 
             validated = [normalized_vector(vector) for vector in vectors]
             for passage, vector in zip(missing, validated):
                 passage.embedding = vector
-                passage.embedding_model = embedder.model_key
         vector = normalized_vector(embedder.embed([query], task='RETRIEVAL_QUERY')[0])
         for passage, snapshot, document in rows:
             stored = normalized_vector(passage.embedding)
@@ -221,6 +221,7 @@ def search_passages(db, owner_id, query, *, mode='content', limit=20, offset=0, 
             score = sum(left * right for left, right in zip(vector, stored))
             if score >= MIN_SEMANTIC_SCORE:
                 scored.append((score, passage, snapshot, document))
+        save_embeddings(rows, embedder.model_key)
     elif mode == 'content':
         frequencies = [Counter(tokens(passage.text)) for passage, _, _ in rows]
         average_length = sum(sum(found.values()) for found in frequencies) / max(len(rows), 1)

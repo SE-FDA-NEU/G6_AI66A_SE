@@ -5,7 +5,7 @@ import WorkspacePagination from './WorkspacePagination';
 
 const PAGE_SIZE = 10;
 
-export function WorkspaceSearch({ jobId }) {
+export function WorkspaceSearch({ jobId, folders = [], foldersUnavailable = false, refreshKey = 0 }) {
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState('content');
   const [label, setLabel] = useState('');
@@ -45,7 +45,7 @@ export function WorkspaceSearch({ jobId }) {
     }
     search();
     return () => controller.abort();
-  }, [request]);
+  }, [request, refreshKey]);
 
   function handleSearch(event) {
     event.preventDefault();
@@ -81,7 +81,11 @@ export function WorkspaceSearch({ jobId }) {
             </select>
           </label>
           <label>Lọc theo nhãn<input value={label} maxLength={100} placeholder="Tất cả nhãn" onChange={event => setLabel(event.target.value)} /></label>
-          <label>Thư mục (#)<input type="number" min="1" step="1" value={folder} placeholder="Tất cả thư mục" onChange={event => setFolder(event.target.value)} /></label>
+          <div><label htmlFor="search-folder-select">Thư mục tìm kiếm</label>
+          <select id="search-folder-select" value={folder} disabled={foldersUnavailable} onChange={event => setFolder(event.target.value)}>
+            <option value="">Tất cả thư mục</option>
+            {folders.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select></div>
         </div>
       </form>
       <div aria-live="polite" aria-busy={loading}>
@@ -98,7 +102,8 @@ export function WorkspaceSearch({ jobId }) {
                 <div className="search-hit-body">
                   <p className="search-hit-heading"><strong>{request.page * PAGE_SIZE + index + 1}. {hit.doc_name}</strong></p>
                   <p className="search-snippet">{hit.snippet}</p>
-                  <DocumentMetadata aiLabel={hit.ai_label} folderId={hit.folder_id} className="search-hit-metadata" />
+                  <DocumentMetadata aiLabel={hit.ai_label} folderId={hit.folder_id}
+                    folderName={folders.find(item => item.id === hit.folder_id)?.name} className="search-hit-metadata" />
                   <div className="search-hit-citations"><CitationBadge source={hit} documentName={hit.doc_name} jobId={jobId} /></div>
                 </div>
               </li>)}

@@ -7,6 +7,7 @@ export default {
       { source: '/jobs/:path*', destination: `${backend}/jobs/:path*` },
       { source: '/api/upload', destination: `${backend}/upload` },
       { source: '/api/search', destination: `${backend}/search` },
+      { source: '/api/folders', destination: `${backend}/folders` },
       { source: '/api/documents/:path*', destination: `${backend}/documents/:path*` },
     ];
   },

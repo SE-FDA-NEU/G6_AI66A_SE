@@ -4,10 +4,22 @@ import { getSession } from '../lib/session';
 import WorkspaceSearch from '../components/WorkspaceSearch';
 import WorkspaceDocumentList from '../components/WorkspaceDocumentList';
 import WorkspaceNavigation from '../components/WorkspaceNavigation';
+import WorkspaceFolders from '../components/WorkspaceFolders';
+import useFolders from '../lib/use-folders';
 
 export default function Workspace({ user }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const folderState = useFolders();
+  const [selectedFolder, setSelectedFolder] = useState('');
+  const [revision, setRevision] = useState(0);
+  const [moveMessage, setMoveMessage] = useState('');
+
+  function documentMoved(document) {
+    const folder = folderState.folders.find(item => item.id === document.folder_id);
+    setMoveMessage(`Đã chuyển “${document.original_filename}” ${document.folder_id == null ? 'về Chưa phân thư mục' : `tới “${folder?.name || 'thư mục đã chọn'}”`}.`);
+    setRevision(value => value + 1);
+  }
 
   async function logout() {
     setBusy(true);
@@ -44,9 +56,12 @@ export default function Workspace({ user }) {
           </a>
           <div role="alert">{error && <p className="error-box">{error}</p>}</div>
 
-          <WorkspaceSearch />
+          <WorkspaceFolders {...folderState} selected={selectedFolder} onSelect={setSelectedFolder} />
+          {moveMessage && <p role="status">{moveMessage}</p>}
+          <WorkspaceSearch folders={folderState.folders} foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision} />
 
-          <WorkspaceDocumentList />
+          <WorkspaceDocumentList key={selectedFolder} folderId={selectedFolder} folders={folderState.folders}
+            foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision} onMoved={documentMoved} />
         </section>
       </main>
     </>

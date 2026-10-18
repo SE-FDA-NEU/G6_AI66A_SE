@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from app.main import app
 from app.db.database import Base, get_db
-from app.models import User, Document, FileFormat, Job, JobFile, JobMode, JobStatus
+from app.models import User, Document, FileFormat, Job, JobFile, JobMode, JobStatus, ReviewState
 from app.core.security import get_password_hash
 from app.core.config import settings
 import app.main as main_module
@@ -37,6 +37,8 @@ with TestSession() as db:
                 password_hash=get_password_hash('LocalIssueTest2026!')))
     db.add(User(username='workspace_user', email='workspace@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
+    db.add(User(username='folder_user', email='folder@example.com',
+                password_hash=get_password_hash('LocalIssueTest2026!')))
     db.flush()
     for owner in db.query(User).all():
         db.add(Document(
@@ -45,6 +47,10 @@ with TestSession() as db:
             storage_path=f'/private/{owner.username}/confidential.pdf',
             file_format=FileFormat.PDF,
             file_size_bytes=128,
+            ai_label='Economics' if owner.username == 'folder_user' else None,
+            ai_confidence=.91 if owner.username == 'folder_user' else None,
+            user_label='Semester 1' if owner.username == 'folder_user' else None,
+            review_state=ReviewState.CONFIRMED if owner.username == 'folder_user' else ReviewState.NEEDS_REVIEW,
             extracted_text=[{'page': 1, 'text': f'Confidential content for {owner.username}'}],
             last_accessed_at=datetime(2026, 1, 1),
             expires_at=datetime(2026, 1, 1) + timedelta(days=30),

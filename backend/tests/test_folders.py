@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from app.core.security import create_access_token
-from app.models import Document, FileFormat, Folder, ReviewState, SearchDocument, SearchPassage
+from app.models import Document, FileFormat, Folder, ReviewState
 from app.services.reader_extraction import extract_document_for_reader
 from test_pdf_extraction import make_pdf
 
@@ -87,8 +87,6 @@ def test_move_and_unfile_change_only_membership_and_existing_search_filters_see_
     ids = filed_documents
     with session_factory() as db:
         before = snapshot(db.get(Document, ids['own']))
-        indexed_revision = db.get(SearchDocument, ids['own']).revision
-        indexed_passages = [row.id for row in db.query(SearchPassage).filter_by(document_id=ids['own'])]
     for folder_id in [ids['second'], None, None, ids['first']]:
         moved = client.patch(f"/documents/{ids['own']}/folder", json={'folder_id': folder_id})
         assert moved.status_code == 200
@@ -98,8 +96,6 @@ def test_move_and_unfile_change_only_membership_and_existing_search_filters_see_
         with session_factory() as db:
             after = snapshot(db.get(Document, ids['own']))
             assert after == {**before, 'folder_id': folder_id}
-            assert db.get(SearchDocument, ids['own']).revision == indexed_revision
-            assert [row.id for row in db.query(SearchPassage).filter_by(document_id=ids['own'])] == indexed_passages
         for candidate in [ids['first'], ids['second']]:
             listed = client.get('/documents', params={'folder_id': candidate}).json()
             assert [doc['id'] for doc in listed] == ([ids['own']] if folder_id == candidate else [])

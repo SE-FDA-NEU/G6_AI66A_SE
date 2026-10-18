@@ -69,7 +69,8 @@ def reader_pages(document_id: int, user_id: int = Depends(get_current_user_id), 
         raise reader_error(error)
     return {
         'page_count': document.page_count,
-        'pages': document.extracted_text,
+        'pages': [{key: value for key, value in page.items() if key != 'search'}
+                  for page in document.extracted_text],
         'page_kind': reference['page_kind'],
         'reader_version': reference['sha256'],
         'reader_url': f"/documents/{document_id}/reader.pdf?version={reference['sha256']}",

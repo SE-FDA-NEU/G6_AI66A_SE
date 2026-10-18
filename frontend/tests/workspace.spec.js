@@ -37,6 +37,7 @@ test('list pagination requests server pages, retains badges and provides documen
 });
 
 test('search preserves server ranking, sends filters and paginates independently of the document list', async ({ page }) => {
+  await page.route('**/api/folders?*', route => route.fulfill({ json: [{ id: 7, name: 'Economics 101' }] }));
   await page.route('**/api/documents?*', route => route.fulfill({ json: documents(1) }));
   const requests = [];
   await page.route('**/api/search?*', route => {
@@ -51,7 +52,7 @@ test('search preserves server ranking, sends filters and paginates independently
   await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('payment penalty');
   await page.getByLabel('Kiểu tìm kiếm').selectOption('semantic');
   await page.getByLabel('Lọc theo nhãn').fill('Contract');
-  await page.getByLabel('Thư mục (#)', { exact: true }).fill('7');
+  await page.getByLabel('Thư mục tìm kiếm', { exact: true }).selectOption('7');
   await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
   await expect(page.locator('.search-hit-card')).toHaveCount(10);
   await expect(page.locator('.search-hit-card').first()).toContainText('rank-1.pdf');
