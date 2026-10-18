@@ -13,17 +13,18 @@ from app.models.reviewstate import ReviewState
 from app.schemas.document import DocumentFolderUpdate, DocumentLabelUpdate, DocumentResponse
 from app.core.security import get_current_user_id
 from app.services.reader_extraction import extract_document_for_reader, reader_representation, ReaderConversionError
-from app.services.document_retention import renew_retention, download_retention_task, RetainedFileResponse
+from app.services.document_retention import renew_retention, download_retention_task, RetainedFileResponse, require_available
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
 
 def owned_reader_document(db, document_id, user_id):
-    document = db.get(Document, document_id)
+    document = db.query(Document).filter(Document.id == document_id).with_for_update().first()
     if document is None:
         raise HTTPException(404, 'Document not found')
     if document.owner_id != user_id:
         raise HTTPException(403, 'Access denied')
+    require_available(document)
     return document
 
 
@@ -40,6 +41,7 @@ def update_document_label(document_id: int, payload: DocumentLabelUpdate,
         Document.id == document_id, Document.owner_id == user_id).with_for_update().first()
     if document is None:
         raise HTTPException(404, 'Document not found')
+    require_available(document)
     if 'user_label' in payload.model_fields_set:
         chosen_label = payload.user_label
         chosen_state = payload.review_state or (ReviewState.CONFIRMED if chosen_label is not None else ReviewState.NEEDS_REVIEW)
@@ -76,6 +78,8 @@ def move_document(document_id: int, payload: DocumentFolderUpdate,
 
 
 def reader_error(error, status_code=409):
+    if error.code == 'source_expired':
+        status_code = 410
     return HTTPException(status_code, detail={'code': error.code, 'message': str(error)})
 
 
@@ -288,7 +292,8 @@ def get_documents(
     query = (
         db.query(Document)
         .options(defer(Document.extracted_text))
-        .filter(Document.owner_id == current_user_id)
+        .filter(Document.owner_id == current_user_id, Document.storage_path != '',
+                ~Document.storage_path.startswith('expired:'))
     )
 
     if folder_id is not None:
@@ -328,6 +333,7 @@ def get_document_by_id(
         db.query(Document)
         .options(defer(Document.extracted_text))
         .filter(Document.id == document_id)
+        .with_for_update()
         .first()
     )
 
@@ -344,6 +350,7 @@ def get_document_by_id(
         )
 
     # Update last accessed time and extend expires_at (BR06) only after ownership check.
+    require_available(document)
     renew_retention(document)
     db.commit()
     db.refresh(document)

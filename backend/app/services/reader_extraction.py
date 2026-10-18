@@ -14,6 +14,7 @@ import signal
 import subprocess
 import tempfile
 import zipfile
+from app.services.document_retention import is_expired_source
 from xml.etree import ElementTree
 
 from app.core.config import settings
@@ -190,9 +191,11 @@ def extract_document_for_reader(document_id, session_factory, converter=None):
     created = None
     try:
         with session_factory() as db:
-            document = db.get(Document, document_id)
+            document = db.query(Document).filter(Document.id == document_id).with_for_update().first()
             if document is None:
                 raise LookupError('Document not found.')
+            if is_expired_source(document):
+                raise ReaderConversionError('source_expired', 'Source expired and is no longer available.')
             source = Path(document.storage_path)
             if not source.is_file():
                 raise ReaderConversionError('source_missing', 'The original file is missing.')

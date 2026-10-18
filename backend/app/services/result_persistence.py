@@ -5,6 +5,7 @@ from app.models import Citation, Document, ReviewState
 from app.schemas.result import DocumentResult, LabelMetadata, ReaderMetadata
 from app.services.evidence import EvidenceValidator, claim_contexts, claims, parse_analysis
 from app.services.bullet_output import finalize_bullet_actions
+from app.services.document_retention import is_expired_source
 from app.services.reader_extraction import ReaderConversionError, publish_pdf, reader_file, sha256
 
 
@@ -15,6 +16,8 @@ class InvalidAnalysisResult(ValueError):
 @contextmanager
 def publish_reader(document, prepared):
     """A DB rollback removes only an artifact newly published by this attempt."""
+    if is_expired_source(document):
+        raise ReaderConversionError('source_expired', 'Source expired and is no longer available.')
     reference = prepared.data['extracted_text'][0]['reader']
     if sha256(document.storage_path) != reference['source_sha256']:
         raise ReaderConversionError('source_changed', 'The source changed during processing. Please retry.')
@@ -35,6 +38,9 @@ def publish_reader(document, prepared):
 
 def save_analysis(db, job, document, prepared, raw_result):
     """Stage JSON, native pages, labels and citations in the caller's transaction."""
+    db.refresh(document, with_for_update=True)
+    if is_expired_source(document):
+        raise InvalidAnalysisResult('Source expired and is no longer available.')
     if document.owner_id != job.owner_id or document.id not in {link.document_id for link in job.job_files}:
         raise InvalidAnalysisResult('The job does not own this document.')
     try:

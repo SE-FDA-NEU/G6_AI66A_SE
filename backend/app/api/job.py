@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.db.database import get_db
 from app.models.job import Job
 from app.models.job_file import JobFile
+from app.models.document import Document
 from app.models.jobmode import JobMode
 from app.models.jobstatus import JobStatus
 from app.schemas.job import JobResponse, JobDetailResponse
@@ -28,6 +29,10 @@ def export_table_pdf(
            .filter(Job.id == job_id, Job.owner_id == current_user_id).first())
     if not job:
         raise HTTPException(status_code=404, detail=f'Job with ID {job_id} not found')
+    # Lock sources in ID order until the completed download renews retention.
+    sources = db.query(Document).filter(Document.id.in_([file.document_id for file in job.job_files]))
+    sources.order_by(Document.id).populate_existing().with_for_update().all()
+    db.refresh(job, with_for_update=True)
     try:
         rows = saved_table_rows(job)
     except IncompleteTable as error:

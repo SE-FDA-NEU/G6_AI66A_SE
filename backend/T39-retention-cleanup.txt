@@ -1,0 +1,45 @@
+T39 - Retention scheduler startup and verification
+
+From the repository root (Windows PowerShell):
+  .\backend\.venv\Scripts\python.exe run.py --no-browser
+
+Or from backend with its virtual environment activated:
+  python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
+
+No separate cron/service is required. FastAPI lifespan starts a sweep immediately,
+then repeats every RETENTION_CLEANUP_INTERVAL_SECONDS (default 3600). Shutdown
+waits for the current sweep to finish. Settings are read from backend/.env when
+the backend starts in that directory; see .env.example for the three settings.
+RETENTION_CLEANUP_BATCH_SIZE bounds each candidate query, not the entire sweep.
+Multiple API workers may sweep: document/job row locks serialize each claim.
+Production requires MySQL/InnoDB, as configured by this project, for row locking.
+
+Scope: only expired files under STORAGE_DIR/<owner_id>/ and the original's
+.reader/<document_id>/ tree. Symlinks, junctions, traversal, shared originals and
+paths outside the owner root are refused and logged for operator investigation.
+
+A committed renewal before cleanup claims a document preserves its files.
+An access already serving a file holds its document lock until the response
+finishes and then renews it. After cleanup claims a source, new reader/update
+requests return 410 source_expired; a tombstone cannot be renewed or reprocessed.
+Listings omit tombstones. Expired sources are excluded from search. Cleanup
+removes extracted text/embedding caches and citations, invalidates associated
+saved batch results, and marks the expired job file unavailable. It retains only
+owner-scoped metadata/timestamps for old links and progress/failure messages.
+
+Content removal commits before disk deletion. On interrupted/failed deletion,
+the original path remains privately in the tombstone for retry next sweep.
+No removed content is served while retrying. Successful deletion clears the path.
+Pending deletion uses an expired: prefix on storage_path; file size alone is not
+an expiry marker. The owner-level optional Gemini response cache is purged on
+each sweep for owners with expired tombstones, since cache keys are shared
+across identical uploads and have no document manifest. Other owners' caches,
+active originals/readers and unrelated job results are preserved.
+Database backup restoration and restoring filesystem backups are operator tasks.
+
+Isolated verification (never cleans the local MySQL database):
+  .\backend\.venv\Scripts\python.exe -m pytest backend/tests/test_retention_cleanup.py -q
+
+Look for startup/sweep messages in the backend logs. No production sweep was
+executed as part of implementing this task; automated checks use temporary files
+and an isolated database. Existing schema remains six tables, without new columns.
