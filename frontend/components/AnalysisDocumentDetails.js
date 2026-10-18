@@ -1,3 +1,5 @@
+import DocumentMetadata from './DocumentMetadata';
+
 const warnings = {
   analysis_not_configured: 'Chưa cấu hình Gemini. Thêm GEMINI_API_KEY vào backend/.env rồi tải lại tài liệu để phân tích.',
   no_text_layer: 'Tài liệu không có lớp chữ để phân tích. Hệ thống không tự tạo nội dung hoặc chạy OCR.',
@@ -9,11 +11,8 @@ const warnings = {
 
 export default function AnalysisDocumentDetails({ document }) {
   return <>
-    {document.label?.ai_label && <p className="analysis-label">
-      Nhãn AI: <strong>{document.label.ai_label}</strong> · {Math.round(document.label.ai_confidence * 100)}%
-      {document.label.confidence_level === 'low' && ' · Cần kiểm tra'}
-      {document.label.user_label && <span> · Nhãn của bạn: {document.label.user_label}</span>}
-    </p>}
+    {document.label && (document.label.ai_label || document.label.user_label || document.label.ai_confidence != null) &&
+      <DocumentMetadata document={document} showFolder={false} className="analysis-label" />}
     {document.warnings?.filter(warning => !(warning === 'insufficient_actions' &&
       document.analysis_status === 'completed' && document.output?.type === 'bullet')).map(warning => <p className="analysis-warning" key={warning}>
       {warnings[warning] || warning}

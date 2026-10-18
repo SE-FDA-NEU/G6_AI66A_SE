@@ -45,7 +45,8 @@ test('five saved contracts render as five comparison rows with exact numbers, un
       const row = table.locator('tbody tr').nth(index);
       const output = saved.result_data.documents[file.document_id].output;
       await expect(row.getByRole('rowheader')).toContainText(file.original_filename);
-      await expect(row.getByRole('rowheader')).toContainText('Nhãn AI: Hợp đồng · 90%');
+      await expect(row.getByTestId('document-ai-label')).toContainText('Hợp đồng');
+      await expect(row.getByTestId('document-ai-confidence')).toContainText('90%');
       for (const [field, pageNumber] of [['value', 1], ['payment_term', 2], ['penalty', 3]]) {
         const cell = row.locator(`.table-field-${field}`);
         await expect(cell.locator('.claim-text')).toHaveText(output[field].text);

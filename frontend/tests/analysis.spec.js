@@ -36,7 +36,7 @@ for (const mode of ['bullet', 'table', 'concept']) {
     await expect(analysis.getByText('Phạt 0.05% mỗi ngày.', { exact: true })).toBeVisible();
     await expect(analysis.getByRole('link', { name: 'contract.pdf — page 2', exact: true }))
       .toHaveAttribute('href', '/documents/17?page=2&start=0&end=10&evidence=17-2-0-10&job=77');
-    await expect(analysis.getByText(/Nhãn AI:/)).toContainText('Hợp đồng');
+    await expect(analysis.getByTestId('document-ai-label')).toContainText('Hợp đồng');
     if (mode === 'bullet') {
       await expect(analysis.getByText('Unverified · Cần kiểm tra')).toBeVisible();
       await expect(analysis.getByRole('link', { name: 'contract.pdf — page 2' })).toHaveCount(1);
@@ -253,7 +253,8 @@ test.describe('AI Label Prediction and Confidence Boundary (US06 / US10)', () =>
 
       const labelPara = page.locator('.analysis-label');
       await expect(labelPara).toBeVisible();
-      await expect(labelPara).toContainText(`Nhãn AI: Hợp đồng · ${Math.round(score * 100)}%`);
+      await expect(labelPara.getByTestId('document-ai-label')).toContainText('Hợp đồng');
+      await expect(labelPara.getByTestId('document-ai-confidence')).toContainText(`${Math.round(score * 100)}%`);
 
       if (needsReviewText) {
         await expect(labelPara).toContainText('· Cần kiểm tra');
@@ -277,8 +278,9 @@ test.describe('AI Label Prediction and Confidence Boundary (US06 / US10)', () =>
 
     const labelPara = page.locator('.analysis-label');
     await expect(labelPara).toBeVisible();
-    await expect(labelPara).toContainText('Nhãn AI: Hợp đồng · 87%');
-    await expect(labelPara).toContainText('Nhãn của bạn: Tài liệu pháp lý');
+    await expect(labelPara.getByTestId('document-ai-label')).toContainText('Hợp đồng');
+    await expect(labelPara.getByTestId('document-ai-confidence')).toContainText('87%');
+    await expect(labelPara.getByTestId('document-user-label')).toContainText('Tài liệu pháp lý');
     await expect(labelPara).not.toContainText('· Cần kiểm tra');
   });
 });

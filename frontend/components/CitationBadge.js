@@ -8,6 +8,24 @@
  * - Multiple sources render as separate, distinct badges
  */
 
+export function isUsableSource(source) {
+  const quote = source?.quote ?? source?.snippet;
+  return Boolean(source && Number.isSafeInteger(source.document_id) && source.document_id > 0 &&
+    Number.isSafeInteger(source.page) && source.page > 0 &&
+    Number.isSafeInteger(source.start) && source.start >= 0 &&
+    Number.isSafeInteger(source.end) && source.end > source.start &&
+    typeof quote === 'string' && quote.trim() &&
+    typeof source.reader_version === 'string' && /^[0-9a-f]{64}$/.test(source.reader_version));
+}
+
+export function claimVerification(claim) {
+  const hasText = typeof claim?.text === 'string' && Boolean(claim.text.trim());
+  const evidence = Array.isArray(claim?.evidence) ? claim.evidence : [];
+  const sources = hasText ? evidence.filter(isUsableSource) : [];
+  return { hasText, sources, unverified: Boolean(claim?.unverified || !sources.length ||
+    sources.length !== evidence.length || (Array.isArray(claim?.verification_issues) && claim.verification_issues.length)) };
+}
+
 export function buildEvidenceId(source) {
   if (source.evidence_id != null) return String(source.evidence_id);
   if (source.id != null) return String(source.id);
@@ -46,7 +64,7 @@ export function formatCitationText(source, documentName, currentDocumentId, page
 }
 
 export function CitationBadge({ source, documentName, currentDocumentId, jobId, pageKind = 'page' }) {
-  if (!source || !source.document_id) return null;
+  if (!isUsableSource(source)) return <UnverifiedBadge />;
   const href = buildCitationHref(source, jobId);
   const text = formatCitationText(source, documentName, currentDocumentId, pageKind);
 
@@ -72,6 +90,17 @@ export function UnverifiedBadge({ text = 'Unverified', note = 'Cần kiểm tra'
   );
 }
 
+export function ClaimSources({ claim, documentName, documentId, jobId, pageKind = 'page', missingNote }) {
+  const { sources, unverified } = claimVerification(claim);
+  return <div className="claim-citations">
+    {unverified && <UnverifiedBadge note={!sources.length && missingNote ? missingNote : 'Cần kiểm tra'} />}
+    {sources.length > 0 && <div className="evidence-badges">
+      {sources.map((source, index) => <CitationBadge key={index} source={source} documentName={documentName}
+        currentDocumentId={documentId} jobId={jobId} pageKind={pageKind} />)}
+    </div>}
+  </div>;
+}
+
 export function ClaimEvidence({
   claim,
   documentName,
@@ -81,15 +110,12 @@ export function ClaimEvidence({
   className = '',
   showEvidence = true,
 }) {
-  if (!claim) return null;
-  const hasText = Boolean(claim.text);
-  const hasEvidence = Array.isArray(claim.evidence) && claim.evidence.length > 0;
-  const isUnverified = claim.unverified || !hasEvidence;
+  const { hasText, unverified } = claimVerification(claim);
 
   if (!hasText) {
     return (
       <div className={`analysis-claim ${className}`}>
-        <span className="analysis-unverified unverified-badge">Không có thông tin · Unverified</span>
+        <UnverifiedBadge text="Không có thông tin · Unverified" note="" />
       </div>
     );
   }
@@ -97,23 +123,8 @@ export function ClaimEvidence({
   return (
     <div className={`analysis-claim ${className}`}>
       <p className="claim-text">{claim.text}</p>
-      <div className="claim-citations">
-        {isUnverified && <UnverifiedBadge />}
-        {showEvidence && hasEvidence && (
-          <div className="evidence-badges">
-            {claim.evidence.map((source, index) => (
-              <CitationBadge
-                key={index}
-                source={source}
-                documentName={documentName}
-                currentDocumentId={documentId}
-                jobId={jobId}
-                pageKind={pageKind}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {showEvidence ? <ClaimSources claim={claim} documentName={documentName} documentId={documentId}
+        jobId={jobId} pageKind={pageKind} /> : unverified && <UnverifiedBadge />}
     </div>
   );
 }

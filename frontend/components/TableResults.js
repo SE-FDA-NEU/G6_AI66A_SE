@@ -1,4 +1,4 @@
-import { CitationBadge, ClaimEvidence } from './CitationBadge';
+import { ClaimSources, ClaimEvidence, UnverifiedBadge } from './CitationBadge';
 import AnalysisDocumentDetails from './AnalysisDocumentDetails';
 
 const TABLE_FIELDS = [
@@ -58,21 +58,21 @@ export function TableResults({ documents = [], jobFiles = [], jobId }) {
                 <span className="financial-field-label" aria-hidden="true">Nguồn</span>
                 {TABLE_FIELDS.map(([field, label]) => {
                   const claim = document.output[field];
-                  const sources = claim?.text && Array.isArray(claim.evidence) ? claim.evidence : [];
                   return <div key={field} className={`table-source-${field}`} role="group" aria-label={`Nguồn: ${label}`}>
                     <p className="financial-source-label">{label}</p>
-                    {sources.length ? sources.map((source, index) => <CitationBadge
-                      key={index}
-                      source={source}
+                    <ClaimSources
+                      claim={claim}
                       documentName={name}
-                      currentDocumentId={file.document_id}
+                      documentId={file.document_id}
                       jobId={jobId}
                       pageKind={document.reader?.page_kind}
-                    />) : <span className="analysis-unverified">Chưa có nguồn xác thực</span>}
+                      missingNote="Chưa có nguồn xác thực"
+                    />
                   </div>;
                 })}
               </td></> : <td colSpan={4}>
-                <p className="analysis-unverified">{fileStates[file.status] || 'Chưa có kết quả phân tích · Unverified'}</p>
+                <p className="analysis-unverified">{['pending', 'processing'].includes(file.status) ? fileStates[file.status] :
+                  <UnverifiedBadge text={fileStates[file.status] || 'Chưa có kết quả phân tích · Unverified'} note="" />}</p>
               </td>}
             </tr>;
           })}
