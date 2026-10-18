@@ -16,6 +16,7 @@ export function DocumentMetadata({
   userLabel,
   folderId,
   folderName,
+  showFolder = true,
   document,
   className = '',
 }) {
@@ -98,7 +99,7 @@ export function DocumentMetadata({
       )}
 
       {/* Folder Placement (unchanged folder placement verification) */}
-      <span
+      {showFolder && <span
         className="metadata-badge metadata-folder-placement"
         data-testid="document-folder-placement"
         data-folder-id={folder != null ? folder : 'unassigned'}
@@ -111,7 +112,7 @@ export function DocumentMetadata({
         ) : (
           'Chưa phân thư mục (Unassigned)'
         )}
-      </span>
+      </span>}
 
       {/* User label if previously assigned */}
       {userLab && (
