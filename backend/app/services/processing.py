@@ -12,6 +12,7 @@ from app.services.reader_extraction import ReaderConversionError
 from app.services.result_persistence import InvalidAnalysisResult, publish_reader, save_analysis, sync_citations
 from app.core.config import settings
 from app.services.gemini_analysis import GeminiAnalysisError, analyze_document
+from app.services.document_retention import is_expired_source
 from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -123,6 +124,12 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                     # Cancel and await cleanup before starting the next attempt.
                     result = await asyncio.wait_for((processor or analyzer)(source, job.mode), timeout=remaining)
                     check_target()
+                    # Cleanup may have claimed a source while the model ran.
+                    # Lock and re-read before publishing any artifacts or JSON.
+                    db.refresh(document, with_for_update=True)
+                    if is_expired_source(document):
+                        raise ReaderConversionError('source_expired', 'Source expired and is no longer available.')
+                    db.refresh(job, with_for_update=True)
                     if prepared is not None:
                         with publish_reader(document, prepared):
                             result = save_analysis(db, job, document, prepared, result)

@@ -2,8 +2,8 @@
 from datetime import datetime, timedelta
 
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import sessionmaker
 from starlette.background import BackgroundTask
+from fastapi import HTTPException
 
 from app.models.document import Document
 
@@ -14,25 +14,37 @@ def utcnow():
 
 
 def renew_retention(document, now=None):
+    require_available(document)
     accessed = utcnow() if now is None else now
     document.last_accessed_at = accessed
     document.expires_at = accessed + timedelta(days=30)
 
 
-def _renew_downloaded_documents(factory, owner_id, document_ids):
-    # File responses outlive the request's DB session; use a fresh transaction.
-    with factory() as db:
-        documents = db.query(Document).filter(
-            Document.owner_id == owner_id, Document.id.in_(document_ids)).with_for_update().all()
-        now = utcnow()
-        for document in documents:
-            renew_retention(document, now)
-        db.commit()
+EXPIRED_PATH_PREFIX = 'expired:'
+
+
+def is_expired_source(document):
+    return not document.storage_path or document.storage_path.startswith(EXPIRED_PATH_PREFIX)
+
+
+def require_available(document):
+    if is_expired_source(document):
+        raise HTTPException(410, {'code': 'source_expired', 'message': 'Source expired and is no longer available.'})
+
+
+def _renew_downloaded_documents(db, owner_id, document_ids):
+    documents = db.query(Document).filter(
+        Document.owner_id == owner_id, Document.id.in_(document_ids)).order_by(Document.id).with_for_update().all()
+    now = utcnow()
+    for document in documents:
+        renew_retention(document, now)
+    db.commit()
 
 
 def download_retention_task(db, owner_id, document_ids):
-    return BackgroundTask(_renew_downloaded_documents, sessionmaker(bind=db.get_bind()),
-                          owner_id, tuple(document_ids))
+    # The request-scoped session holds the document lock through the transfer.
+    # Renew in that same transaction; a second session would deadlock on it.
+    return BackgroundTask(_renew_downloaded_documents, db, owner_id, tuple(document_ids))
 
 
 class RetainedFileResponse(FileResponse):

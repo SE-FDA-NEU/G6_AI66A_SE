@@ -121,8 +121,11 @@ class EvidenceValidator:
             return self.sources[document_id]
         result = None
         if document_id in self.allowed_ids:
-            document = self.db.query(Document).filter_by(id=document_id, owner_id=self.owner_id).first()
+            document = self.db.query(Document).filter_by(id=document_id, owner_id=self.owner_id).populate_existing().with_for_update().first()
             if document is not None:
+                from app.services.document_retention import is_expired_source
+                if is_expired_source(document):
+                    raise ReaderConversionError('source_expired', 'Source expired and is no longer available.')
                 # Current extraction is staged, so use its pages before commit.
                 reader = (SimpleNamespace(id=document.id, storage_path=document.storage_path,
                           file_format=document.file_format, **self.prepared.data)

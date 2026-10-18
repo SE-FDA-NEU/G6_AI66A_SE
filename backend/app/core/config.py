@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440 # 24 hours
     STORAGE_DIR: Path = Path(__file__).resolve().parents[2] / "data" / "uploads"
+    RETENTION_CLEANUP_ENABLED: bool = True
+    RETENTION_CLEANUP_INTERVAL_SECONDS: int = Field(default=3600, ge=1, le=86400)
+    RETENTION_CLEANUP_BATCH_SIZE: int = Field(default=100, ge=1, le=1000)
     SOFFICE_BINARY: str = ""
     OFFICE_CONVERSION_TIMEOUT_SECONDS: int = 120
     GEMINI_API_KEY: SecretStr = SecretStr('')
