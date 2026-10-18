@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from app.main import app
 from app.db.database import Base, get_db
-from app.models import User, Document, FileFormat, Job, JobFile, JobMode, JobStatus, ReviewState
+from app.models import User, Document, FileFormat, Folder, Job, JobFile, JobMode, JobStatus, ReviewState
 from app.core.security import get_password_hash
 from app.core.config import settings
 import app.main as main_module
@@ -39,8 +39,12 @@ with TestSession() as db:
                 password_hash=get_password_hash('LocalIssueTest2026!')))
     db.add(User(username='folder_user', email='folder@example.com',
                 password_hash=get_password_hash('LocalIssueTest2026!')))
+    db.add(User(username='label_user', email='label@example.com',
+                password_hash=get_password_hash('LocalIssueTest2026!')))
     db.flush()
     for owner in db.query(User).all():
+        if owner.username == 'label_user':
+            continue
         db.add(Document(
             owner_id=owner.id,
             original_filename=f'private-{owner.username}.pdf',
@@ -56,6 +60,18 @@ with TestSession() as db:
             expires_at=datetime(2026, 1, 1) + timedelta(days=30),
         ))
     db.flush()
+    label_owner = db.query(User).filter_by(username='label_user').one()
+    label_folders = [Folder(owner_id=label_owner.id, name=name) for name in ['Economics 101', 'Research']]
+    db.add_all(label_folders)
+    db.flush()
+    for number in range(20):
+        db.add(Document(owner_id=label_owner.id, folder_id=label_folders[number % 2].id,
+                        original_filename=f'label-document-{number}.pdf', storage_path=f'/fixture/label-{number}.pdf',
+                        file_format=FileFormat.PDF, file_size_bytes=128,
+                        ai_label='Macroeconomics' if number < 8 else 'Microeconomics', ai_confidence=.91,
+                        user_label='User correction' if number < 8 else 'Macroeconomics',
+                        created_at=datetime(2026, 1, 1) + timedelta(seconds=number),
+                        expires_at=datetime.utcnow() + timedelta(days=30)))
     owner = db.query(User).filter_by(username='playwright_user').one()
     document = db.query(Document).filter_by(owner_id=owner.id).one()
     completed_job = Job(id=9001, owner_id=owner.id, mode=JobMode.BULLET,

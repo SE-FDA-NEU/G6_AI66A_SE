@@ -481,6 +481,9 @@ input::placeholder { color: #96a29a; font-size: 13px; }
 .document-folder-move { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; margin-top: 20px; }
 .document-folder-move label { min-width: 0; margin: 0; }
 .folder-destination { min-width: 0; }
+.workspace-label-filter { margin: 24px 0; }
+.label-filter-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+.label-filter-controls input { flex: 1 1 220px; min-width: 0; }
 .document-folder-move select { display: block; margin-top: 8px; }
 .document-folder-move > p { grid-column: 1 / -1; margin: 0; }
 @media (max-width: 640px) {
