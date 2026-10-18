@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getSession } from '../lib/session';
 import { MB, validateSelection } from '../lib/upload-validation';
 import UploadModeSelector, { UPLOAD_MODES } from '../components/UploadModeSelector';
+import WorkspaceNavigation from '../components/WorkspaceNavigation';
 
 export default function Upload() {
   const [entries, setEntries] = useState([]);
@@ -78,7 +79,7 @@ export default function Upload() {
     <main className="workspace upload-page">
       <header>
         <a href="/workspace" className="brand">DocuMind<span className="brand-dot">.</span></a>
-        <a href="/workspace" className="btn">Về không gian tài liệu</a>
+        <WorkspaceNavigation><a href="/workspace" className="btn">Về không gian tài liệu</a></WorkspaceNavigation>
       </header>
       <section className="upload-content">
         <p className="eyebrow">THÊM TÀI LIỆU</p>
