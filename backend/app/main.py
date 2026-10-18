@@ -30,11 +30,13 @@ from app.api.auth import router as auth_router
 from app.api.upload import router as upload_router
 from app.api.document import router as document_router
 from app.api.job import router as job_router
+from app.api.search import router as search_router
 
 app.include_router(auth_router)
 app.include_router(upload_router)
 app.include_router(document_router)
 app.include_router(job_router)
+app.include_router(search_router)
 
 @app.get("/")
 def read_root():

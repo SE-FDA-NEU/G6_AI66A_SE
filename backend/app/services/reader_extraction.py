@@ -200,6 +200,9 @@ def extract_document_for_reader(document_id, session_factory, converter=None):
             try:
                 _, reference = reader_representation(document)
                 if reference['source_sha256'] == source_hash:
+                    from app.services.search_index import sync_document_index
+                    sync_document_index(db, document)
+                    db.commit()
                     return {'page_count': document.page_count, 'extracted_text': document.extracted_text}
             except ReaderConversionError:
                 pass
@@ -220,6 +223,8 @@ def extract_document_for_reader(document_id, session_factory, converter=None):
                     created = target
                 document.page_count = result['page_count']
                 document.extracted_text = result['extracted_text']
+                from app.services.search_index import sync_document_index
+                sync_document_index(db, document)
                 db.commit()
                 return result
     except BaseException:
