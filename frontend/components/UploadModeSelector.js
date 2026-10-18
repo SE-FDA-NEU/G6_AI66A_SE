@@ -24,9 +24,9 @@ export default function UploadModeSelector({
         onChange={e => onChange(e.target.value)}
         className="upload-mode-select"
       >
-        <option value="bullet">Bullet Summary</option>
-        <option value="table">Financial Clause Table</option>
-        <option value="concept">Concept Overview</option>
+        {UPLOAD_MODES.map(mode => (
+          <option key={mode.value} value={mode.value}>{mode.label}</option>
+        ))}
       </select>
     </div>
   );
