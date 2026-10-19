@@ -39,25 +39,58 @@ Submitted by:   Phan Dang Vu
 
 ## 3.1 Architecture
 
-```text
-┌───────────────────┐    HTTP (JSON/JWT)    ┌─────────────────────────┐
-│     Browser       │ ────────────────────► │      FastAPI App        │
-│ (Swagger/React)   │ ◄──────────────────── │      backend/app        │
-└───────────────────┘     JSON response     └───────────┬─────────────┘
-                                                        │ function calls
-                                                        ▼
-                                            ┌─────────────────────────┐
-                                            │      Core Services      │
-                                            │   auth, jobs, upload    │
-                                            │   (enforces BR1–BR7)    │markdown
-                                            └───────────┬─────────────┘
-                                                        │ SQL (SQLAlchemy)
-                                                        ▼
-                                            ┌─────────────────────────┐
-                                            │     MySQL Database      │
-                                            │       documind_db       │
-                                            └─────────────────────────┘
+The browser uses Next.js on port 8000; Next.js forwards API calls to FastAPI on port 8001. FastAPI owns authentication, document access, background processing and persistence.
+
+```mermaid
+%% DocuMind - current local application architecture.
+%%{init: {"theme":"base","look":"classic","themeVariables":{"fontFamily":"Arial, sans-serif","fontSize":"15px","primaryColor":"#ecf5f0","primaryBorderColor":"#46816b","lineColor":"#718078","clusterBkg":"#f7f9fb","clusterBorder":"#d7dfe7"},"flowchart":{"curve":"basis","nodeSpacing":32,"rankSpacing":36,"htmlLabels":false,"wrappingWidth":260}}}%%
+flowchart TB
+    USER["Browser<br/>Five application screens"]
+    WEB["Next.js :8000<br/>Session guards + API rewrites"]
+
+    subgraph BACKEND["Backend - FastAPI :8001 and background workers"]
+        API["HTTP routers<br/>JWT + ownership checks"]
+        SERVICES["Request services<br/>Upload, search, reader, labels and export"]
+        QUEUE["In-process job queue<br/>Async tasks / worker threads"]
+        WORKER["Analysis worker<br/>Timeouts + evidence validation"]
+        EXTRACT["Extraction subprocess<br/>PDF / DOCX / PPTX"]
+        CLEANUP["Retention scheduler<br/>Startup + periodic cleanup"]
+    end
+
+    subgraph DATA["Persistence"]
+        DB[("MySQL<br/>Six application tables")]
+        FILES[("Local storage<br/>Originals, reader PDFs and analysis cache")]
+    end
+    AI["Gemini API<br/>Analysis + semantic embeddings"]
+
+    USER <-->|"Pages / JSON / PDF"| WEB
+    WEB <-->|"API forwarding"| API
+    API --> SERVICES
+    SERVICES -->|"Enqueue saved job"| QUEUE
+    QUEUE --> WORKER
+    WORKER --> EXTRACT
+    SERVICES <-->|"SQLAlchemy / file I/O"| DATA
+    WORKER -->|"Persist results and evidence"| DATA
+    EXTRACT <-->|"Read source / prepare reader"| FILES
+    WORKER <-->|"Labels and analysis"| AI
+    SERVICES <-->|"Semantic search"| AI
+    CLEANUP -->|"Expire data and remove files"| DATA
+
+    classDef client fill:#eef3ff,stroke:#6682bd,color:#25344b;
+    classDef service fill:#ecf5f0,stroke:#46816b,color:#233d32;
+    classDef data fill:#fff5df,stroke:#c79b47,color:#55421e;
+    classDef external fill:#f1edff,stroke:#8c75bd,color:#42335f;
+    class USER,WEB client;
+    class API,SERVICES,QUEUE,WORKER,EXTRACT,CLEANUP service;
+    class DB,FILES data;
+    class AI external;
 ```
+
+Editable source: [architecture.mmd](architecture.mmd).
+
+- **Processing:** uploads return a saved job ID immediately; the in-process queue runs extraction, Gemini analysis and evidence validation in the background. Results are stored in MySQL and polled by the interface.
+- **Sources:** original files and immutable reader PDFs stay on local storage. PDF uses source pages; DOCX uses generated reader pages and PPTX uses one reader page per slide. Cached analysis and saved summaries avoid repeated model calls.
+- **Operations:** `run.py` prepares the database before starting both servers. Retention cleanup starts with FastAPI. The queue drains on graceful shutdown but has no durable broker or crash recovery.
 
 ## 3.2 Data model
 
@@ -84,32 +117,101 @@ Submitted by:   Phan Dang Vu
 
 ## 3.3 API design
 
-| Method    | Path                              | Input                                                                               | Success                                                                                         | Errors                                                                                                                               |
-| :-------- | :-------------------------------- | :---------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| **POST**  | `/auth/login`                     | Form:<br>`username`, `password`                                                     | `200` &middot; `access_token`, `token_type`                                                     | `401` invalid credentials;<br>`422` missing form fields                                                                              |
-| **POST**  | `/upload`                         | Multipart: `files` (1–5 PDF/DOCX/PPTX files), `mode` (`bullet` default, `table`, `concept`) | `202` &middot; `{"jobId":"123"}`; batch saved, pending Job created and processing enqueued | `401` no valid token/account (**BR07**);<br>`422` invalid batch/mode (**BR01**, #66); `500` storage/DB failure; `503` enqueue failure |
-| **GET**   | `/documents`                      | Query:<br>`folder_id?`, `label?`, `review_state?`                                   | `200` &middot; current user's document list with suggested labels, folder and processing status | `401` unauthenticated (**BR07**);<br>`422` invalid filter                                                                            |
-| **GET**   | `/documents/{document_id}`        | Path:<br>`document_id`                                                              | `200` &middot; document metadata, AI label/confidence, user label, folder, page count, expiry   | `401` unauthenticated;<br>`403` owned by another user;<br>`404` absent (**BR07**)                                                       |
-| **GET**   | `/documents/{document_id}/file`   | Path: `document_id`;<br>query: `page?`                                              | `200` &middot; original file for the reader; `page` selects the initial view                    | `401` unauthenticated;<br>`404` absent or not owned (**BR07**);<br>`422` page outside document                                       |
-| **PATCH** | `/documents/{document_id}/label`  | JSON:<br>`user_label`, `review_state`                                               | `200` &middot; saved user label; original AI suggestion retained                                | `401` unauthenticated;<br>`404` absent or not owned (**BR07**);<br>`422` invalid label (**BR03**)                                    |
-| **PATCH** | `/documents/{document_id}/folder` | JSON:<br>`folder_id` or `null` to leave unfiled                                     | `200` &middot; updated folder; AI label unchanged                                               | `401` unauthenticated;<br>`404` document or folder absent/not owned (**BR07**);<br>`422` invalid folder ID (**BR03**)                |
-| **GET**   | `/folders`                        | —                                                                                   | `200` &middot; folders owned by the current user                                                | `401` unauthenticated (**BR07**)                                                                                                     |
-| **POST**  | `/folders`                        | JSON: `name`                                                                        | `201` &middot; `folder_id`, `name`                                                              | `401` unauthenticated (**BR07**);<br>`422` blank or invalid name                                                                     |
-| **GET**   | `/search`                         | Query:<br>`q`, `folder_id?`, `label?`                                               | `200` &middot; relevance-ranked search results                                                  | `401` unauthenticated (**BR07**);<br>`422` missing query `q`                                                                         |
+This inventory covers all **22 application endpoints** registered in `backend/app/main.py`, plus FastAPI's generated documentation routes. Paths below are backend paths on **http://127.0.0.1:8001**.
 
----
+### Authentication and shared conventions
 
-### Upload validation implemented in #66
+Protected endpoints accept either `Authorization: Bearer <JWT>` or the `documind_session` HttpOnly cookie. `POST /auth/login`, `POST /auth/logout`, `GET /` and the generated documentation routes are public; all other operations require authentication (**BR07**).
 
-`POST /upload` accepts repeated multipart `files` fields and an optional `mode` (default `bullet`). After validation it saves the files, creates Document/JobFile records and a pending Job in one database transaction, enqueues background work with `asyncio.create_task`, and returns **202** with `{"jobId":"123"}`. The ID is the string form of the existing integer Job primary key. The response waits for validation, storage and commit, but never waits for document processing. Poll the existing owner-scoped `GET /jobs/{jobId}` for status and per-file errors.
+- Protected calls return **401** for a missing/invalid session. Invalid parameters or request bodies return **422**. Endpoint-specific errors are listed below.
+- Errors use FastAPI's `{"detail": ...}` envelope: a string, a validation-error list or a structured object containing `code` and `message`.
+- `DocumentResponse` contains file metadata, AI/user labels, confidence, folder and retention timestamps; it excludes extracted page text. `JobResponse` contains status, counts, timestamps and saved `result_data`.
+- Query parameters marked `?` are optional. IDs are integers; page numbers are one-based. Time fields use UTC.
 
-Storage uses random filenames under `backend/data/uploads/<owner>/<batch>/` (override with `STORAGE_DIR`). Original names are metadata only. Failed persistence rolls back the database transaction and removes only the new batch's files. Enqueue failure marks the persisted job failed and returns 503. Background exceptions are logged and reflected as failed job/file statuses without exposing internal errors. Worker sessions are independent of request sessions.
+### Authentication
 
-The in-process queue holds task references and drains them during graceful shutdown. It is not durable across a crash or forced restart; a durable broker and restart recovery are outside this task. The actual analysis worker is not present yet: `services/processing.py` is an explicit integration point that currently marks jobs/files failed with `Document processing worker is not integrated yet.` It does not invent successful analysis results.
+| Method | Endpoint | Request | Success response | Other errors |
+|---|---|---|---|---|
+| POST | `/auth/login` | URL-encoded form: `username` (email or username), `password`. | **200**: `access_token`, `token_type`; sets the session cookie. | **401** incorrect credentials. |
+| GET | `/auth/me` | Session cookie or Bearer token. | **200**: current user's `id`, `username`, `email`. | **401** invalid session or missing user. |
+| POST | `/auth/logout` | No body. | **204**: clears the session cookie; safe without an active session. | None specific. |
 
-All BR01 file-validation failures return **422**, including size violations (replacing the earlier 413 design). Limits are inclusive: at most five PDF/DOCX/PPTX files, 5 MB per file and 50 MB total, with 1 MB = 1,048,576 bytes. Extensions are case-insensitive; client MIME and size claims are not trusted. Actual bytes are counted in chunks and streams rewound. Authentication still requires a valid Bearer token or session cookie. Invalid batches are rejected as a whole.
+### Upload and jobs
 
-Example error response:
+| Method | Endpoint | Request | Success response | Other errors |
+|---|---|---|---|---|
+| POST | `/upload` | Multipart: repeated `files`; `mode=bullet` by default (`bullet`, `table`, `concept`); `language=vi` by default (`en` or `vi`). | **202**: `{"jobId":"123"}`; processing continues in the background. | **422** invalid batch/mode/language; **500** storage or database failure; **503** enqueue failure. |
+| GET | `/jobs` | Query: `status?`, `mode?`, `skip=0`, `limit=50` (1-100). | **200**: current user's `JobResponse[]`. | **422** invalid filters/pagination. |
+| GET | `/jobs/{job_id}` | Path: `job_id`. | **200**: job metadata, `result_data`, `job_files` and `citations`. | **404** missing job or job owned by another user. |
+| GET | `/jobs/{job_id}/export.pdf` | Path: `job_id`; optional header `X-DocuMind-Language: en` or `vi`. | **200**: downloadable `application/pdf` comparison table. Saved job language takes precedence over the header. | **404** missing/not-owned job; **409** incomplete table, unavailable source or unsuitable result. |
+
+Job/file statuses are `pending`, `processing`, `completed`, `failed` and `timed_out`. The Results screen polls job details every three seconds until completion/failure. Analysis is stored per document in `result_data.documents`; reading results does not invoke Gemini.
+
+### Document metadata and organization
+
+| Method | Endpoint | Request | Success response | Other errors |
+|---|---|---|---|---|
+| GET | `/documents` | Query: `folder_id?`, `unassigned=false`, `label?`, `ai_label?`, `review_state?`, `search?`, `filename?`, `skip=0`, `limit=50` (1-100). | **200**: owned, available `DocumentResponse[]`; filters apply before pagination. | **422** invalid/conflicting labels or pagination. |
+| GET | `/documents/{document_id}` | Path: `document_id`. | **200**: `DocumentResponse`; renews retention. | **403** another owner's document; **404** missing; **410** expired source. |
+| PATCH | `/documents/{document_id}/label` | JSON: `user_label?` (1-100 characters or null), `review_state?` (`confirmed` or `needs_review`); at least one field. | **200**: updated `DocumentResponse`; preserves AI label/confidence and folder. | **404** missing/not-owned document; **410** expired; **422** invalid or empty confirmation. |
+| PATCH | `/documents/{document_id}/folder` | JSON: required `folder_id` (positive integer or null to unfile). | **200**: updated `DocumentResponse`; preserves label metadata. | **403** document/folder owned by another user; **404** missing document/folder; **410** expired source. |
+
+`filename` matches a literal filename substring. `label` and its alias `ai_label` match the AI suggestion exactly, including case/accents; supplying both requires equal values. `search` matches filename, AI label or user label. List requests do not renew retention.
+
+### Reader, source files and saved summaries
+
+| Method | Endpoint | Request | Success response | Other errors |
+|---|---|---|---|---|
+| POST | `/documents/{document_id}/reader` | Path: `document_id`; no body. | **200**: `{"page_count":N}`; prepares/persists the reader representation. | **403** not owned; **404** missing; **410** expired; **422** extraction/conversion failure. |
+| GET | `/documents/{document_id}/pages` | Path: `document_id`. | **200**: pages with text/positions, `page_count`, `page_kind`, `reader_layout`, `reader_version`, `reader_url` and document metadata. | **403** not owned; **404** missing; **409** reader not ready or invalid; **410** expired. |
+| GET | `/documents/{document_id}/pages/{page}/text` | Path: `document_id`, `page`. | **200**: `document_id`, `page`, `text`, `positions`. | **403** not owned; **404** missing document/page/text; **410** expired. |
+| GET | `/documents/{document_id}/reader.pdf` | Required query: `version` (reader SHA-256). Optional: `highlight_page?`, `q?`, `start?`, `end?`. | **200**: inline `application/pdf`; optional highlights; `X-Reader-Version` header. | **403** not owned; **404** missing document; **409** unavailable/changed reader; **410** expired; **422** invalid highlight page/range. |
+| GET | `/documents/{document_id}/summary` | Path: `document_id`; query: `job_id?` (positive integer). | **200**: latest matching completed `{job_id, created_at, mode, document}`, or `document: null` when no result exists. | **403** not owned; **404** missing document; **410** expired. |
+| GET | `/documents/{document_id}/file` | Path: `document_id`; query: `page?`, `rendered=false`. | **200**: original file, or reader PDF when `rendered=true`; file/page metadata headers. `page` sets `X-Initial-Page`. | **403** not owned; **404** missing document/file; **409** reader unavailable; **410** expired; **422** page outside document. |
+| GET | `/documents/{document_id}/rendered-file` | Path: `document_id`; query: `page?`. | **200**: PDF; alias of `/file?rendered=true`. | Same errors as `/file`. |
+
+Reader PDFs are versioned against the exact displayed bytes. Highlight requests require `highlight_page` when using `q` or offsets. DOCX citations use generated text-reader pages; PPTX citations use slide numbers. Successful source opens/downloads and document updates renew retention; listing documents and polling jobs do not.
+
+### Folders and search
+
+| Method | Endpoint | Request | Success response | Other errors |
+|---|---|---|---|---|
+| GET | `/folders` | Query: `skip=0`, `limit=100` (1-100). | **200**: current user's `FolderResponse[]`: `id`, `owner_id`, `name`, `created_at`. | **422** invalid pagination. |
+| POST | `/folders` | JSON: `name` (1-100 nonblank characters). | **201**: created `FolderResponse`. | **422** invalid name or unexpected fields. |
+| GET | `/search` | Required query: `q` (1-500 characters). Optional: `mode=content` (`content` or `semantic`), `folder_id?`, `label?`, `offset=0`, `limit=20` (1-100). | **200**: `query`, `total_hits`, ranked `hits[]` with document/page, snippet, offsets, reader version and highlight URL. | **422** invalid/blank query/filter; **503** embedding unavailable or rate-limited; `Retry-After` for quota limits. |
+
+Content search matches normalized query terms against stored page passages. Semantic search uses Gemini embeddings. Search's `label` filter is case-insensitive and uses the user label when present, otherwise the AI label; it differs from the exact AI-label filter on `/documents`.
+
+### Service and generated documentation routes
+
+| Method | Endpoint | Purpose / response |
+|---|---|---|
+| GET | `/` | **200**: `{"message":"Welcome to DocuMind API"}`. |
+| GET, HEAD | `/openapi.json` | Generated OpenAPI schema. |
+| GET, HEAD | `/docs` | Swagger UI. |
+| GET, HEAD | `/docs/oauth2-redirect` | Swagger OAuth2 redirect helper. |
+| GET, HEAD | `/redoc` | ReDoc API reference. |
+
+### Browser-to-backend routing
+
+The browser uses the Next.js origin at **http://127.0.0.1:8000**. Rewrites in `frontend/next.config.mjs` forward these calls to `BACKEND_ORIGIN` (default `http://127.0.0.1:8001`).
+
+| Browser API path | FastAPI path |
+|---|---|
+| `/auth/*` | `/auth/*` |
+| `/jobs/*` | `/jobs/*` |
+| `/api/upload` | `/upload` |
+| `/api/search` | `/search` |
+| `/api/folders` | `/folders` |
+| `/api/documents/*` | `/documents/*` |
+
+### Upload validation and background processing
+
+`POST /upload` validates BR01 before saving a batch: PDF/DOCX/PPTX only, 1-5 files, at most 5 MB each and 50 MB combined; 1 MB = 1,048,576 bytes. It counts actual bytes, saves randomly named files and creates the pending Job/Document/JobFile records in one transaction. Persistence failures roll back the transaction and remove the new batch's files. Enqueue failures mark the saved job failed.
+
+The queue runs `services/processing.py` in a worker thread. A cancellable subprocess prepares reader pages, Gemini generates the selected output when configured, and validated results/evidence are persisted before publication. Without a Gemini key, results explicitly report `analysis_status: not_configured`. Per-file retries/timeouts and terminal states are saved independently of the request.
+
+BR01 failures return **422** with this structure:
 
 ```json
 {
@@ -121,14 +223,16 @@ Example error response:
         "index": 1,
         "filename": "malware.exe",
         "size_bytes": 16,
-        "errors": [{"code": "invalid_format", "message": "Only PDF, DOCX and PPTX files are allowed."}]
+        "errors": [
+          {"code": "invalid_format", "message": "Only PDF, DOCX and PPTX files are allowed."}
+        ]
       }
     ]
   }
 }
 ```
 
-`index` is zero-based, so files with identical names remain distinguishable. Only failed files are listed. Error codes are `files_required`, `too_many_files`, `invalid_format`, `file_too_large` and `batch_too_large`. Missing files, excessive count and excessive combined size also appear in `batch_errors`. File count errors identify entries from index 5 onward; a combined-size error marks every file in the rejected batch. Five valid files can total only 25 MB, so the 50 MB guard is tested independently using requests that also violate the per-file limit.
+`index` is zero-based; only rejected files appear in `files`. Validation codes are `files_required`, `too_many_files`, `invalid_format`, `file_too_large` and `batch_too_large`. Batch-level errors also appear in `batch_errors`. Five valid files can total at most 25 MB, while the independent 50 MB guard still rejects oversized submissions.
 
 ---
 
@@ -281,10 +385,10 @@ The server returns HTTP Status **`200 OK`** with exactly **10 documents** belong
     "file_format": "PDF",
     "file_size_bytes": 1048576,
     "page_count": 6,
-    "ai_label": "Hợp đồng",
+    "ai_label": "Contract",
     "ai_confidence": 0.95,
     "review_state": "confirmed",
-    "user_label": "Hợp đồng nhân sự",
+    "user_label": "Human resources contract",
     "last_accessed_at": "2026-09-30T14:00:00",
     "expires_at": "2026-10-30T14:00:00",
     "created_at": "2026-09-30T14:00:00"
@@ -420,39 +524,39 @@ M1's BR05 required every verified fact to link to a source document and page, bu
 
 DOCX/PPTX reader artifacts are generated in Python with python-docx/python-pptx and ReportLab. No external Office application is invoked. DOCX pagination belongs to the generated text-reader PDF, not Word's print layout. PPTX preserves one page per slide, including hidden/blank slides; speaker notes are excluded. Text/tables are available for evidence; source images/styles/layout are not reproduced. The pages API marks these artifacts with `reader_layout: text`; native PDFs and existing immutable reader artifacts retain their original representation. Glyph offsets are always computed from the exact displayed reader PDF.
 
-### Thư viện tài liệu local
+### Local document library
 
-Trang `/workspace` tổ chức theo thư mục: thanh bên để chuyển vị trí, các ô biểu tượng để mở thư mục và thẻ tệp để mở bản đọc. Đường dẫn `?folder=<id>` giữ vị trí khi tải lại hoặc dùng Back; `?folder=unassigned` là bộ lọc các tệp có `folder_id = null`, không phải một thư mục thật.
+The `/workspace` page organizes documents by folder: the sidebar changes locations, folder tiles open folders and document cards open the reader. The `?folder=<id>` parameter preserves the current location on reload or Back navigation. `?folder=unassigned` filters documents with `folder_id = null`; it does not represent a stored folder.
 
-Ô **Tìm theo tên tệp** lọc danh sách qua API trước khi phân trang, trong vị trí đang mở. Các ký tự `%` và `_` được tìm như ký tự trong tên tệp. Mục **Tìm trong nội dung tài liệu** mở khi cần, tìm đoạn trích đã lập chỉ mục trong toàn bộ thư viện hoặc thư mục được chọn riêng và dẫn tới trang nguồn. **Bộ lọc nhãn AI** là mục tùy chọn áp dụng cho danh sách thẻ. Các thao tác xác nhận/chỉnh sửa nhãn và chuyển thư mục vẫn độc lập trên từng thẻ.
+**Search by file name** filters the current location through the API before pagination. The `%` and `_` characters are treated as literal filename characters. **Search in document content** expands on demand, searches indexed excerpts across the library or an independently selected folder, and links to source pages. The optional **AI label filter** applies to the document cards. Label confirmation/editing and folder moves remain independent actions on each card.
 
-Ở màn hình nhỏ, nút **Mở thư mục** mở thanh điều hướng; chọn vị trí sẽ thu gọn thanh này. Không yêu cầu thay đổi database hay thêm dịch vụ ngoài để dùng giao diện.
+On smaller screens, **Open folders** expands the navigation panel; selecting a location collapses it. The interface requires no database changes or additional external services.
 
-### Tìm theo ý nghĩa: embedding và quota
+### Semantic search embeddings and quotas
 
-Luồng hiện tại gọi Gemini `batchEmbedContents`, không chạy model embedding local. Mỗi `EmbedContentRequest` gửi trực tiếp `taskType` và `outputDimensionality` để dịch vụ trả đúng 768 chiều theo cấu hình. Khi kiểm tra, gửi hai trường bên trong `embedContentConfig` đã bị dịch vụ bỏ qua và trả 3072 chiều, gây lỗi kiểm tra vector.
+The current flow calls Gemini `batchEmbedContents` rather than running a local embedding model. Each `EmbedContentRequest` sends `taskType` and `outputDimensionality` directly so the service returns the configured 768 dimensions. During verification, placing these fields inside `embedContentConfig` caused the service to ignore them and return 3,072 dimensions, which failed vector validation.
 
-Chỉ mục được tạo khi tìm lần đầu và lưu trong JSON trang của tài liệu. Các lô tối đa 50 đoạn được kiểm tra trước khi lưu; nếu lô sau gặp giới hạn quota, các lô hợp lệ trước đó vẫn được commit dưới khóa nguồn hiện có. Lần thử tiếp theo chỉ gửi những đoạn còn thiếu. Không lưu vector lỗi. API trả mã `embedding_rate_limited` cùng `Retry-After` và thông báo tiếng Việt, thay vì gộp quota với kết quả tìm kiếm rỗng. Giao diện hiển thị thời gian cần chờ; tìm bằng từ khóa vẫn dùng được.
+The index is created on the first search and stored in the document's page JSON. Batches of up to 50 chunks are validated before storage. If a later batch reaches a quota limit, previously validated batches are still committed under the existing source lock. A retry sends only the missing chunks; invalid vectors are not stored. The API returns `embedding_rate_limited`, a `Retry-After` header and a Vietnamese message, keeping quota failures distinct from empty search results. The interface displays the waiting period, while keyword search remains available.
 
-Đối với truy vấn khác ngôn ngữ nguồn, ngưỡng cố định 0.65 có thể loại hết các đoạn đúng chủ đề (kiểm tra “giáo dục” với tài liệu tiếng Anh đạt khoảng 0.643). Bộ xếp hạng dùng sàn 0.60 và chỉ giữ các đoạn cách điểm cao nhất không quá 0.025; điểm cosine là tiêu chí xếp hạng, không phải xác suất câu trả lời đúng. Các kiểm tra bao gồm loại hàng xóm yếu, cách ly tài khoản và truy vấn tiếng Việt trên nguồn tiếng Anh.
+For queries in a language different from the source, a fixed 0.65 threshold can exclude all relevant passages. A Vietnamese query meaning "education" against English documents scored approximately 0.643 during verification. Ranking uses a 0.60 floor and retains passages within 0.025 of the highest score. Cosine similarity is a ranking measure, not the probability that an answer is correct. Coverage includes excluding weak neighboring matches, isolating accounts and searching English sources with Vietnamese queries.
 
-### Trang đọc: PDF tô sáng và bản tóm tắt đã lưu
+### Reader PDF highlighting and saved summaries
 
-Phần trên của trang đọc tiếp tục hiển thị bản PDF nguồn (hoặc bản đọc Office hiện có). Tìm trong tài liệu và mở trích dẫn sẽ truyền trang, truy vấn và khoảng ký tự tới `GET /documents/{id}/reader.pdf`. Backend dùng tọa độ glyph đã trích xuất để vẽ màu vàng lên các kết quả và màu cam lên vị trí đang chọn. Bản PDF có màu được tạo trong bộ nhớ; tệp gốc và snapshot trên đĩa không bị sửa. Tọa độ được chuyển về cùng hướng trang trước khi ghép, kể cả PDF có Rotate hoặc CropBox. Nguồn quét không có tọa độ sẽ hiện thông báo không thể tô chính xác.
+The top of the reader continues to display the source PDF or the existing Office reader representation. In-document search and citation navigation send the page, query and character range to `GET /documents/{id}/reader.pdf`. The backend uses extracted glyph coordinates to highlight matches in yellow and the selected location in orange. The highlighted PDF is generated in memory; the original file and stored snapshot remain unchanged. Coordinates are normalized to the same page orientation before compositing, including PDFs with Rotate or CropBox settings. Scanned sources without glyph coordinates display a notice that precise highlighting is unavailable.
 
-Bên dưới PDF là **Bản tóm tắt đã lưu**, thay cho khối lớp chữ. `GET /documents/{id}/summary` lấy kết quả đã hoàn thành gần nhất trong `jobs.result_data` của đúng chủ tài liệu; nếu đi từ một tác vụ cụ thể thì lấy kết quả của tác vụ đó. Giao diện dùng lại phần trình bày bullet, concept hoặc bảng đã có và giữ các trích dẫn nguồn. Không gọi lại Gemini khi mở bản tóm tắt. Tài liệu chưa có kết quả, lỗi tải tóm tắt và kết quả khác phiên bản nguồn được thông báo riêng, không làm mất trình đọc.
+**Saved summary** appears below the PDF in place of the text-layer block. `GET /documents/{id}/summary` retrieves the document owner's most recent completed result from `jobs.result_data`, or the specified job's result when opened from that job. The interface reuses the existing bullet, concept or table presentation and preserves source citations. Opening a saved summary does not call Gemini again. Missing results, summary-loading failures and results from a different source version have separate messages and do not remove the reader.
 
-### Ngôn ngữ giao diện và kết quả AI
+### Interface language and AI output
 
-Ứng dụng dùng bộ dịch React tương tự gettext: `frontend/lib/i18n.js` cung cấp `useI18n()` và `t(message, ...values)`, còn `frontend/locales/messages.json` chứa bản tiếng Anh/Việt. Biến trong thông báo dùng `{0}`, `{1}`. Bộ chọn **Ngôn ngữ** ở góc dưới bên phải cập nhật toàn bộ trang và lưu cookie `documind_language`; các trang SSR và thẻ HTML nhận đúng ngôn ngữ khi tải lại.
+The application uses a gettext-style React translation layer: `frontend/lib/i18n.js` provides `useI18n()` and `t(message, ...values)`, while `frontend/locales/messages.json` stores English and Vietnamese translations. Message placeholders use `{0}` and `{1}`. The **Language** selector in the bottom-right corner updates the page and saves the `documind_language` cookie. Server-rendered pages and the HTML language attribute use the selected language on reload.
 
-Khi tải lên, frontend gửi `language=en|vi` cùng `files` và `mode`. Backend lưu ngôn ngữ vào cột JSON `jobs.result_data.language` trước khi đưa tác vụ vào hàng đợi. Worker dùng giá trị đã lưu để yêu cầu Gemini tóm tắt trực tiếp bằng ngôn ngữ đó; các giới hạn do server tạo cũng theo cùng ngôn ngữ. Kết quả mỗi tài liệu lưu `language` cùng `output` trong `jobs.result_data.documents`. Không cần thêm cột hay chạy migration database. Yêu cầu không có language mặc định tiếng Việt.
+During upload, the frontend sends `language=en|vi` with `files` and `mode`. Before queueing the job, the backend saves the language in `jobs.result_data.language`. The worker uses this value to request Gemini output directly in the selected language; server-generated limitation notices use that language as well. Each document result stores `language` alongside `output` in `jobs.result_data.documents`. No additional columns or database migration are required. Requests without a language default to Vietnamese.
 
-Đổi ngôn ngữ giao diện chỉ đổi nút, tiêu đề, trạng thái và thông báo. Tóm tắt, nhãn AI đã lưu, trích dẫn, tên tệp và nội dung người dùng nhập giữ nguyên. Xem kết quả, tải lại trang và xuất PDF không gọi AI để dịch. Prompt và cache phân tích phân biệt ngôn ngữ, tránh dùng kết quả tiếng Việt cho tác vụ tiếng Anh. PDF của tác vụ mới dùng ngôn ngữ đã lưu; tác vụ cũ dùng ngôn ngữ giao diện cho tiêu đề PDF và giữ nguyên nội dung đã lưu.
+Changing the interface language updates buttons, headings, statuses and messages. Saved summaries, AI labels, citations, filenames and user-entered content remain unchanged. Viewing results, reloading or exporting a PDF does not call AI for translation. Analysis prompts and cache entries distinguish languages, preventing Vietnamese results from being reused for English jobs. New-job PDFs use the saved language; older jobs use the interface language for PDF headings while retaining their saved content.
 
 
-### Kiểm tra database trước khi chạy local
+### Database preparation before local startup
 
-`run.py` chuẩn bị môi trường rồi chạy `python -m app.db.bootstrap` bằng Python của backend trước khi tạo tiến trình API/frontend. Module dùng metadata models làm danh sách bảng chuẩn, tạo database MySQL chưa tồn tại, sao lưu SQL các bảng hiện có trước thay đổi, tạo bảng thiếu và bỏ bảng thừa. Bảng ứng dụng hiện có không được dựng lại hoặc tự xóa cột. MySQL named lock ngăn hai launcher đồng bộ cùng database đồng thời; khóa ngoại từ bảng cần giữ/database khác vào bảng thừa sẽ chặn việc xóa. `backend/src/init_db.py` dùng chung bước chuẩn bị này trước phần seed được gọi riêng.
+`run.py` prepares the environment and runs `python -m app.db.bootstrap` with the backend's Python executable before starting the API and frontend processes. The module uses model metadata as the authoritative table list, creates the MySQL database if missing, backs up existing tables to SQL before making changes, creates missing tables and removes extra tables. Existing application tables are not rebuilt and their columns are not automatically deleted. A MySQL named lock prevents two launchers from synchronizing the same database concurrently. Foreign keys from retained tables or other databases into extra tables prevent their removal. `backend/src/init_db.py` uses the same preparation step before its separately requested seed operation.
 
-Các bản sao lưu nằm trong `backend/data/backups/` (ngoài Git). Tác vụ đồng bộ không seed, không reset dữ liệu/tài khoản và không truy cập Gemini.
+Backups are stored in `backend/data/backups/`, which is excluded from Git. Schema synchronization does not seed or reset data/accounts and does not access Gemini.
