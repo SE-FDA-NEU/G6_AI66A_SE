@@ -1,0 +1,42 @@
+%% DocuMind - current local application architecture.
+%%{init: {"theme":"base","look":"classic","themeVariables":{"fontFamily":"Arial, sans-serif","fontSize":"15px","primaryColor":"#ecf5f0","primaryBorderColor":"#46816b","lineColor":"#718078","clusterBkg":"#f7f9fb","clusterBorder":"#d7dfe7"},"flowchart":{"curve":"basis","nodeSpacing":32,"rankSpacing":36,"htmlLabels":false,"wrappingWidth":260}}}%%
+flowchart TB
+    USER["Browser<br/>Five application screens"]
+    WEB["Next.js :8000<br/>Session guards + API rewrites"]
+
+    subgraph BACKEND["Backend - FastAPI :8001 and background workers"]
+        API["HTTP routers<br/>JWT + ownership checks"]
+        SERVICES["Request services<br/>Upload, search, reader, labels and export"]
+        QUEUE["In-process job queue<br/>Async tasks / worker threads"]
+        WORKER["Analysis worker<br/>Timeouts + evidence validation"]
+        EXTRACT["Extraction subprocess<br/>PDF / DOCX / PPTX"]
+        CLEANUP["Retention scheduler<br/>Startup + periodic cleanup"]
+    end
+
+    subgraph DATA["Persistence"]
+        DB[("MySQL<br/>Six application tables")]
+        FILES[("Local storage<br/>Originals, reader PDFs and analysis cache")]
+    end
+    AI["Gemini API<br/>Analysis + semantic embeddings"]
+
+    USER <-->|"Pages / JSON / PDF"| WEB
+    WEB <-->|"API forwarding"| API
+    API --> SERVICES
+    SERVICES -->|"Enqueue saved job"| QUEUE
+    QUEUE --> WORKER
+    WORKER --> EXTRACT
+    SERVICES <-->|"SQLAlchemy / file I/O"| DATA
+    WORKER -->|"Persist results and evidence"| DATA
+    EXTRACT <-->|"Read source / prepare reader"| FILES
+    WORKER <-->|"Labels and analysis"| AI
+    SERVICES <-->|"Semantic search"| AI
+    CLEANUP -->|"Expire data and remove files"| DATA
+
+    classDef client fill:#eef3ff,stroke:#6682bd,color:#25344b;
+    classDef service fill:#ecf5f0,stroke:#46816b,color:#233d32;
+    classDef data fill:#fff5df,stroke:#c79b47,color:#55421e;
+    classDef external fill:#f1edff,stroke:#8c75bd,color:#42335f;
+    class USER,WEB client;
+    class API,SERVICES,QUEUE,WORKER,EXTRACT,CLEANUP service;
+    class DB,FILES data;
+    class AI external;
