@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="722" viewBox="0 0 1100 722" role="img" aria-labelledby="title desc">
+<title id="title">Upload | US01, US03, US06</title>
+<desc id="desc">Structural wireframe for the P0 interface, not a live app screenshot.</desc>
+<rect width="1100" height="722" fill="white"/>
+<g font-family="Arial, sans-serif">
+<text x="28" y="38" font-size="25" font-weight="bold" fill="#273044">Upload | US01, US03, US06</text>
+<text x="28" y="68" font-size="17" font-weight="normal" fill="#273044">/upload</text>
+<rect x="28" y="88" width="1044" height="43" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="118" font-size="19" font-weight="normal" fill="#273044">DocuMind          [Workspace]          [Back]</text>
+<rect x="28" y="150" width="1044" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="180" font-size="19" font-weight="normal" fill="#273044">Choose supported sources and the requested analysis format.</text>
+<rect x="28" y="226" width="1044" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="256" font-size="19" font-weight="normal" fill="#273044">[Choose / drop files]  PDF, DOCX, PPTX | 1-5 files | &lt;=5 MB each | &lt;=50 MB total</text>
+<rect x="28" y="302" width="1044" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="332" font-size="19" font-weight="normal" fill="#273044">contract.pdf  3.0 MB  Valid  [Remove]</text>
+<rect x="28" y="378" width="1044" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="408" font-size="19" font-weight="normal" fill="#273044">notes.txt  Invalid format  [Remove]  |  Keep valid files selected.</text>
+<rect x="28" y="454" width="1044" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="484" font-size="19" font-weight="normal" fill="#273044">Mode: [Financial table] [Bullet summary] [Concept overview]</text>
+<rect x="28" y="530" width="1044" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="560" font-size="19" font-weight="normal" fill="#273044">[Start processing] -&gt; Results | Disabled until the selection is valid.</text>
+<rect x="28" y="606" width="1044" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="636" font-size="19" font-weight="normal" fill="#273044">Uploading: disable controls. Failure: show retry message and preserve files.</text>
+<text x="28" y="709" font-size="13" font-weight="normal" fill="#666666">P0 structural wireframe | English labels</text>
+</g></svg>
