@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="950" viewBox="0 0 440 950" role="img" aria-labelledby="title desc">
+<title id="title">Mobile Results | US03</title>
+<desc id="desc">Structural wireframe for the P0 interface, not a live app screenshot.</desc>
+<rect width="440" height="950" fill="white"/>
+<g font-family="Arial, sans-serif">
+<text x="28" y="38" font-size="25" font-weight="bold" fill="#273044">Mobile Results | US03</text>
+<text x="28" y="68" font-size="17" font-weight="normal" fill="#273044">/results/:jobId</text>
+<rect x="28" y="88" width="384" height="43" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="118" font-size="19" font-weight="normal" fill="#273044">DocuMind   [Workspace]</text>
+<rect x="28" y="150" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="180" font-size="19" font-weight="normal" fill="#273044">Processing 1/1 / Completed</text>
+<rect x="28" y="226" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="256" font-size="19" font-weight="normal" fill="#273044">Bullet summary</text>
+<rect x="28" y="302" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="332" font-size="19" font-weight="normal" fill="#273044">Key point [Source page 1]</text>
+<rect x="28" y="378" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="408" font-size="19" font-weight="normal" fill="#273044">Recommended actions</text>
+<rect x="28" y="454" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="484" font-size="19" font-weight="normal" fill="#273044">Supported option [Source page 2]</text>
+<rect x="28" y="530" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="560" font-size="19" font-weight="normal" fill="#273044">Financial result card</text>
+<rect x="28" y="606" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="636" font-size="19" font-weight="normal" fill="#273044">Value: 1,200,000,000 VND</text>
+<rect x="28" y="682" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="712" font-size="19" font-weight="normal" fill="#273044">Penalty: 0.05% per day</text>
+<rect x="28" y="758" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="788" font-size="19" font-weight="normal" fill="#273044">[Source page 3]</text>
+<rect x="28" y="834" width="384" height="64" rx="8" fill="#f5f4ff" stroke="#b9b1dc"/><text x="46" y="864" font-size="19" font-weight="normal" fill="#273044">[Back to Workspace]</text>
+<text x="28" y="937" font-size="13" font-weight="normal" fill="#666666">P0 structural wireframe | English labels</text>
+</g></svg>

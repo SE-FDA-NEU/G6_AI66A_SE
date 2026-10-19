@@ -1,0 +1,32 @@
+%% DocuMind screen flow - P0 stories US01-US09 only.
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, sans-serif","fontSize":"18px","primaryColor":"#eeebff","primaryBorderColor":"#9273e8","primaryTextColor":"#343044","lineColor":"#605b73","edgeLabelBackground":"#ffffff"},"flowchart":{"curve":"basis","nodeSpacing":55,"rankSpacing":70,"htmlLabels":true}}}%%
+flowchart TB
+    START(["Visitor opens the app at /"])
+    LOGIN["/<br/>Landing / Login - US05"]
+    WORKSPACE["/workspace<br/>Document workspace<br/>US02, US04"]
+    UPLOAD["/upload<br/>Upload and select mode<br/>US01, US03, US06"]
+    RESULTS["/results/:jobId<br/>Processing and results<br/>US01, US03, US04, US07, US08"]
+    READER["/documents/:documentId<br/>Document Reader - US04, US09"]
+
+    START --> LOGIN
+    LOGIN -->|"Sign in / valid session"| WORKSPACE
+    WORKSPACE -->|"Sign out"| LOGIN
+    WORKSPACE -->|"Upload documents"| UPLOAD
+    UPLOAD -->|"Cancel"| WORKSPACE
+    UPLOAD -->|"Invalid files: correct selection - BR01"| UPLOAD
+    UPLOAD -->|"Start processing"| RESULTS
+    WORKSPACE -->|"Search / view AI labels"| WORKSPACE
+    WORKSPACE -->|"Open document / search hit"| READER
+    RESULTS -->|"View progress and analysis"| RESULTS
+    RESULTS -->|"Open citation - BR05"| READER
+    RESULTS -->|"Back to Workspace"| WORKSPACE
+    READER -->|"Search / change page"| READER
+    READER -->|"Back to Results (from a job)"| RESULTS
+    READER -->|"Back to Workspace"| WORKSPACE
+    WORKSPACE -.->|"Guest - BR07"| LOGIN
+    UPLOAD -.->|"Guest - BR07"| LOGIN
+    RESULTS -.->|"Guest - BR07"| LOGIN
+    READER -.->|"Guest - BR07"| LOGIN
+
+    classDef screen fill:#eeebff,stroke:#9273e8,color:#343044,stroke-width:1.5px;
+    class START,LOGIN,WORKSPACE,UPLOAD,RESULTS,READER screen;
