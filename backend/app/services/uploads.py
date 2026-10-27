@@ -5,16 +5,24 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException
-from app.models import Document, FileFormat, Job, JobFile, JobStatus, User
+from app.models import Document, FileFormat, Folder, Job, JobFile, JobStatus, User
 from app.core.upload_validation import READ_CHUNK_BYTES
 
 
-def save_upload_job(db, user_id, files, validated, mode, storage_root, language="vi"):
+def save_upload_job(db, user_id, files, validated, mode, storage_root, language="vi", folder_id=None):
     if db.get(User, user_id) is None:
         raise HTTPException(401, "Account no longer exists.")
     batch_dir = Path(storage_root).resolve() / str(user_id) / uuid4().hex
     created_directory = False
     try:
+        if folder_id is not None:
+            # Keep the destination valid until the batch is committed. No files
+            # or job records are created for a missing/foreign destination.
+            folder = db.query(Folder).filter(Folder.id == folder_id).with_for_update().first()
+            if folder is None:
+                raise HTTPException(404, "Folder not found")
+            if folder.owner_id != user_id:
+                raise HTTPException(403, "Access denied")
         batch_dir.mkdir(parents=True)
         created_directory = True
         now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -34,7 +42,7 @@ def save_upload_job(db, user_id, files, validated, mode, storage_root, language=
             with path.open('xb') as target:
                 shutil.copyfileobj(upload.file, target, length=READ_CHUNK_BYTES)
             document = Document(
-                owner_id=user_id, original_filename=filename, storage_path=str(path),
+                owner_id=user_id, folder_id=folder_id, original_filename=filename, storage_path=str(path),
                 file_format=FileFormat(extension.upper()), file_size_bytes=metadata['size_bytes'],
                 last_accessed_at=now, expires_at=now + timedelta(days=30),
             )

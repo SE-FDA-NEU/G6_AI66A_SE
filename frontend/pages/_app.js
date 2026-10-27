@@ -1,6 +1,7 @@
 import { LanguageProvider, LanguageSwitcher } from '../lib/i18n';
-import '../styles/globals.css';
-import '../styles/library.css';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/tailwind.css';
 export default function App({ Component, pageProps }) {
-  return <LanguageProvider initialLocale={pageProps.initialLocale}><Component {...pageProps} /><LanguageSwitcher /></LanguageProvider>;
+  return <LanguageProvider initialLocale={pageProps.initialLocale}><LanguageSwitcher /><Component {...pageProps} /></LanguageProvider>;
 }

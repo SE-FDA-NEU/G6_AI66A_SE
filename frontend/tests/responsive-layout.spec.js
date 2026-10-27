@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, user, searchHit } from './helpers';
+import { openWorkspaceControls } from './helpers';
 
 const longName = `${'long-contract-name-'.repeat(10)}.pdf`;
 
@@ -54,6 +55,7 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
     hits: [searchHit({ doc_name: longName, snippet: 'long-source-text-'.repeat(30), ai_label: 'long-label-'.repeat(15) })] } }));
   await login(page);
   await expect(page).toHaveURL('/workspace');
+  await openWorkspaceControls(page);
   await expectNoOverflow(page);
   const workspaceLabelEditor = page.getByTestId('workspace-document-row').getByTestId('document-label-editor');
   await workspaceLabelEditor.getByRole('button', { name: 'Chỉnh sửa nhãn', exact: true }).tap();
@@ -66,18 +68,14 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
   await toggle.tap();
   await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
   await expectNoOverflow(page);
-  await page.getByRole('heading', { name: 'Không gian tài liệu', exact: true }).tap();
+  await page.locator('#new-document-heading').tap();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await toggle.tap();
   await page.keyboard.press('Escape');
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(toggle).toBeFocused();
-  await page.getByText('Tìm trong nội dung tài liệu', { exact: true }).click();
-  await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('contract');
-  await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).tap();
-  await expect(page.getByRole('list', { name: 'Danh sách kết quả tìm kiếm' })).toBeVisible();
-  await expectNoOverflow(page);
-  await page.getByRole('link', { name: 'Tải tài liệu', exact: true }).tap();
+  await expect(page.locator('.workspace-search')).toHaveCount(0);
+  await page.goto('/upload');
   await expect(page).toHaveURL('/upload');
   const picker = page.getByLabel('Chọn tệp tài liệu');
   await expect(picker).toBeEnabled();
@@ -110,7 +108,7 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
     await expectNoOverflow(page);
   } finally { release(); }
   await expect(page.locator('.upload-page').getByRole('alert')).toContainText('Không thể gửi tài liệu');
-  await expect(page.getByRole('listitem')).toHaveCount(5);
+  await expect(page.locator('.upload-files').getByRole('listitem')).toHaveCount(5);
   await expect(selector).toHaveValue('bullet');
   await expectNoOverflow(page);
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).tap();
@@ -208,6 +206,7 @@ test('seven-day expiry warnings and expired reader messages fit 375px', async ({
     last_accessed_at: '2026-03-01T00:00:00', expires_at: '2026-03-31T00:00:00',
   }] }));
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   await expect(page.getByTestId('expiry-warning')).toBeVisible();
   await expect(page.getByTestId('document-expiry')).toContainText('31/03/2026');
   await expectNoOverflow(page);

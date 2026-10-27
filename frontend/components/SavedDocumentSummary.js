@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import AnalysisResults from './AnalysisResults';
@@ -32,16 +33,16 @@ export default function SavedDocumentSummary({ documentId, jobId, readerVersion 
   }, [documentId, jobId, attempt]);
   const pending = loading;
   const stale = result?.document?.reader?.version !== readerVersion;
-  return <section className="reader-saved-summary" aria-label={t("Bản tóm tắt đã lưu")} aria-busy={pending}>
+  return <section className={ui('reader-saved-summary')} aria-label={t("Bản tóm tắt đã lưu")} aria-busy={pending}>
     <h2>{t("Bản tóm tắt đã lưu")}</h2>
-    <p className="search-help">{t("Nội dung của toàn bộ tài liệu từ lần phân tích trước.")}</p>
+    <p className={ui('search-help')}>{t("Nội dung của toàn bộ tài liệu từ lần phân tích trước.")}</p>
     {pending && <p role="status">{t("Đang tải bản tóm tắt…")}</p>}
-    {error && <div role="alert"><p className="error-box">{errorText(error)}</p><button className="btn" onClick={() => setAttempt(value => value + 1)}>{t("Thử lại bản tóm tắt")}</button></div>}
+    {error && <div role="alert"><p className={ui('error-box')}>{errorText(error)}</p><button className={ui('btn')} onClick={() => setAttempt(value => value + 1)}>{t("Thử lại bản tóm tắt")}</button></div>}
     {!pending && !error && !result?.document && <p role="status">{t("Tài liệu chưa có bản tóm tắt đã lưu")}{jobId ? t(" trong tác vụ này") : ''}.</p>}
     {!pending && !error && result?.document && <>
-      {stale ? <p className="analysis-warning" role="status">{t("Bản tóm tắt thuộc phiên bản tài liệu khác. Mở tác vụ cũ để xem kết quả.")}</p>
+      {stale ? <p className={ui('analysis-warning')} role="status">{t("Bản tóm tắt thuộc phiên bản tài liệu khác. Mở tác vụ cũ để xem kết quả.")}</p>
         : <AnalysisResults title="" data={{ documents: { [documentId]: result.document } }} mode={result.mode} jobId={result.job_id}/>}
-      <a className="btn" href={`/results/${result.job_id}`}>{t("Xem tác vụ #")}{result.job_id}</a>
+      <a className={ui('btn')} href={`/results/${result.job_id}`}>{t("Xem tác vụ #")}{result.job_id}</a>
     </>}
   </section>;
 }

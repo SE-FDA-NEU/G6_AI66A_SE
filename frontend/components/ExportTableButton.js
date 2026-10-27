@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { languageHeaders, useI18n } from '../lib/i18n';
 import { useEffect, useRef, useState } from 'react';
 
@@ -93,13 +94,13 @@ export default function ExportTableButton({ job, jobId }) {
     }
   }
 
-  return <section className="table-export" aria-label={t("Xuất bảng so sánh")}>
-    <button type="button" className="btn" onClick={download} disabled={!ready || pending}
+  return <section className={ui('table-export')} aria-label={t("Xuất bảng so sánh")}>
+    <button type="button" className={ui('btn')} onClick={download} disabled={!ready || pending}
       aria-busy={pending} aria-describedby="table-export-status">{t("Export Table")}</button>
-    <p id="table-export-status" role="status" aria-live="polite" className="muted">
+    <p id="table-export-status" role="status" aria-live="polite" className={ui('muted')}>
       {pending ? t("Đang tạo và tải PDF…") : !ready ? t("Chỉ xuất PDF khi tác vụ hoàn tất và có đủ tất cả dòng trong bảng.")
         : downloaded ? t("Đã gửi PDF để tải xuống.") : t("Tải bảng so sánh đã lưu dưới dạng PDF.")}
     </p>
-    {error && <p className="error-box" role="alert">{errorText(error)}</p>}
+    {error && <p className={ui('error-box')} role="alert">{errorText(error)}</p>}
   </section>;
 }

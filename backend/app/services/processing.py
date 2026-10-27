@@ -37,8 +37,9 @@ class DocumentInput:
 
 
 async def process_document(document, mode):
-    """Use Gemini when configured; otherwise persist an explicit extraction-only result."""
-    if settings.GEMINI_API_KEY.get_secret_value().strip():
+    """Use the selected provider, or persist an explicit extraction-only result."""
+    key = settings.GROQ_API_KEY if settings.ANALYSIS_PROVIDER == 'groq' else settings.GEMINI_API_KEY
+    if key.get_secret_value().strip():
         return await analyze_document(document, mode)
     outputs = {'bullet': BulletOutput, 'table': TableOutput, 'concept': ConceptOutput}
     warnings = ['analysis_not_configured']
@@ -160,12 +161,22 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                     logger.warning("job=%s document=%s attempt=%s/%s failed code=%s",
                                    job_id, source.id, attempt, MAX_ATTEMPTS, error.code)
                     break
-                except (InvalidAnalysisResult, ValidationError):
+                except (InvalidAnalysisResult, ValidationError) as error:
                     db.rollback()
                     file.status = JobStatus.FAILED
-                    file.error_message = 'invalid_result: Analysis output or evidence could not be validated.'
+                    validation = error if isinstance(error, ValidationError) else error.__cause__
+                    details = []
+                    if isinstance(validation, ValidationError):
+                        for item in validation.errors()[:5]:
+                            # Only structural paths/codes are needed, never
+                            # validation input values, source text or secrets.
+                            path = '.'.join(str(part)[:40] for part in item['loc'])[:120]
+                            details.append(f"{path} ({item['type']})")
+                    suffix = ' Fields: ' + '; '.join(details) if details else ''
+                    file.error_message = 'invalid_result: Analysis output or evidence could not be validated.' + suffix
                     db.commit()
-                    logger.exception("job=%s document=%s invalid_result", job_id, source.id)
+                    logger.error("job=%s document=%s invalid_result error_type=%s fields=%s",
+                                 job_id, source.id, type(error).__name__, details)
                     break
                 except Exception:
                     db.rollback()

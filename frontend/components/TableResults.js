@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import { ClaimSources, ClaimEvidence, UnverifiedBadge } from './CitationBadge';
 import AnalysisDocumentDetails from './AnalysisDocumentDetails';
@@ -23,8 +24,8 @@ export function TableResults({ documents = [], jobFiles = [], jobId }) {
   if (!rows.length) return null;
 
   return (
-    <div className="analysis-card analysis-table-wrap" role="region" tabIndex={0} aria-label={t("Bảng điều khoản hợp đồng")}>
-      <table className="financial-comparison-table">
+    <div className={ui('analysis-card analysis-table-wrap')} role="region" tabIndex={0} aria-label={t("Bảng điều khoản hợp đồng")}>
+      <table className={ui('financial-comparison-table')}>
         <caption>{t("So sánh điều khoản tài chính")}</caption>
         <thead>
           <tr>
@@ -41,11 +42,11 @@ export function TableResults({ documents = [], jobFiles = [], jobId }) {
             const name = file.original_filename || document?.original_filename || t("Tài liệu #{0}", file.document_id);
             return <tr key={file.document_id} data-document-id={file.document_id}>
               <th scope="row">
-                <a className="analysis-source" href={`/documents/${file.document_id}?page=1`}>{name}</a>
+                <a className={ui('analysis-source')} href={`/documents/${file.document_id}?page=1`}>{name}</a>
                 {document && <AnalysisDocumentDetails document={document} />}
               </th>
-              {hasResult ? <>{TABLE_FIELDS.map(([field, label]) => <td key={field} className={`table-field-${field}`}>
-                <span className="financial-field-label" aria-hidden="true">{t(label)}</span>
+              {hasResult ? <>{TABLE_FIELDS.map(([field, label]) => <td key={field} className={ui(`table-field-${field}`)}>
+                <span className={ui('financial-field-label')} aria-hidden="true">{t(label)}</span>
                 <ClaimEvidence
                   claim={document.output[field] || { text: null, evidence: [], unverified: true }}
                   documentName={name}
@@ -55,13 +56,13 @@ export function TableResults({ documents = [], jobFiles = [], jobId }) {
                   showEvidence={false}
                 />
                 {document.output[field]?.verification_issues?.includes('unsupported_fact') &&
-                  <p className="analysis-unverified">{t("Nguồn không hỗ trợ nội dung này.")}</p>}
-              </td>)}<td className="table-sources">
-                <span className="financial-field-label" aria-hidden="true">{t("Nguồn")}</span>
+                  <p className={ui('analysis-unverified')}>{t("Nguồn không hỗ trợ nội dung này.")}</p>}
+              </td>)}<td className={ui('table-sources')}>
+                <span className={ui('financial-field-label')} aria-hidden="true">{t("Nguồn")}</span>
                 {TABLE_FIELDS.map(([field, label]) => {
                   const claim = document.output[field];
-                  return <div key={field} className={`table-source-${field}`} role="group" aria-label={t("Nguồn: {0}", t(label))}>
-                    <p className="financial-source-label">{t(label)}</p>
+                  return <div key={field} className={ui(`table-source-${field}`)} role="group" aria-label={t("Nguồn: {0}", t(label))}>
+                    <p className={ui('financial-source-label')}>{t(label)}</p>
                     <ClaimSources
                       claim={claim}
                       documentName={name}
@@ -73,7 +74,7 @@ export function TableResults({ documents = [], jobFiles = [], jobId }) {
                   </div>;
                 })}
               </td></> : <td colSpan={4}>
-                <p className="analysis-unverified">{['pending', 'processing'].includes(file.status) ? t(fileStates[file.status]) :
+                <p className={ui('analysis-unverified')}>{['pending', 'processing'].includes(file.status) ? t(fileStates[file.status]) :
                   <UnverifiedBadge text={t(fileStates[file.status]) || t("Chưa có kết quả phân tích · Unverified")} note="" />}</p>
               </td>}
             </tr>;

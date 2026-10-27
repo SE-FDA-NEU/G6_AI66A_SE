@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { user, searchHit } from './helpers';
+import { openWorkspaceControls, user, searchHit } from './helpers';
 
 const folders = [{ id: 1, name: 'Economics 101' }, { id: 2, name: 'Research' }];
 const document = { id: 41, original_filename: 'economics-notes.pdf', folder_id: 1,
@@ -9,12 +9,43 @@ test.beforeEach(async ({ page }) => {
   expect((await page.request.post('/auth/login', { form: { username: user.email, password: user.password } })).status()).toBe(200);
 });
 
+test('history requires a saved folder before offering a move destination', async ({ page }) => {
+  let saved = { ...document, folder_id: null };
+  const writes = [];
+  await page.route('**/api/folders?*', route => route.fulfill({ json: [] }));
+  await page.route('**/api/documents?*', route => route.fulfill({ json: [saved] }));
+  await page.route('**/api/folders', route => {
+    writes.push('create');
+    expect(route.request().postDataJSON()).toEqual({ name: 'Research' });
+    return route.fulfill({ status: 201, json: { id: 2, name: 'Research' } });
+  });
+  await page.route('**/api/documents/41/folder', route => {
+    writes.push('move');
+    expect(route.request().postDataJSON()).toEqual({ folder_id: 2 });
+    saved = { ...saved, folder_id: 2 };
+    return route.fulfill({ json: saved });
+  });
+  await page.goto('/workspace');
+  const row = page.getByTestId('workspace-document-row');
+  await row.locator('summary').click();
+  await expect(row.getByLabel('Chuyển tài liệu tới', { exact: true })).toHaveCount(0);
+  await row.getByRole('button', { name: 'Tạo thư mục', exact: true }).click();
+  await expect(page.getByLabel('Tên thư mục mới')).toBeFocused();
+  await page.getByLabel('Tên thư mục mới').fill('Research');
+  await page.getByRole('region', { name: 'Tạo thư mục' }).getByRole('button', { name: 'Tạo thư mục', exact: true }).click();
+  await row.getByLabel('Chuyển tài liệu tới', { exact: true }).selectOption('2');
+  await row.getByRole('button', { name: 'Chuyển', exact: true }).click();
+  await expect(row.getByTestId('document-folder-placement')).toContainText('Research');
+  expect(writes).toEqual(['create', 'move']);
+});
+
 test('real APIs persist a move from Economics 101 to Research and unfile without changing labels', async ({ page }) => {
   await page.request.post('/auth/login', { form: { username: 'folder@example.com', password: user.password } });
   const before = (await (await page.request.get('/api/documents')).json())[0];
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
-  const panel = page.getByRole('region', { name: 'Quản lý thư mục' });
+  const panel = page.getByRole('region', { name: 'Tạo thư mục' });
   for (const name of ['Economics 101', 'Research']) {
     await panel.getByLabel('Tên thư mục mới').fill(name);
     await panel.getByRole('button', { name: 'Tạo thư mục', exact: true }).click();
@@ -27,14 +58,17 @@ test('real APIs persist a move from Economics 101 to Research and unfile without
   await row.getByLabel('Chuyển tài liệu tới', { exact: true }).selectOption(String(economics.id));
   await row.getByRole('button', { name: 'Chuyển', exact: true }).click();
   await expect(row.getByTestId('document-folder-placement')).toContainText('Economics 101');
-  await page.getByLabel('Thư mục hiển thị', { exact: true }).selectOption(String(economics.id));
+  await page.getByRole('button', { name: 'Mở thư mục Economics 101', exact: true }).click();
+  await openWorkspaceControls(page);
   await expect(row).toHaveCount(1);
   await row.getByLabel('Chuyển tài liệu tới', { exact: true }).selectOption(String(research.id));
   await row.getByRole('button', { name: 'Chuyển', exact: true }).click();
-  await expect(page.getByText('Thư mục này chưa có tài liệu.', { exact: true })).toBeVisible();
-  await page.getByLabel('Thư mục hiển thị', { exact: true }).selectOption(String(research.id));
+  await expect(page.locator(`section[data-folder-id="${new URL(page.url()).searchParams.get('folder')}"]`).getByText('Thư mục này chưa có tài liệu.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Mở thư mục Research', exact: true }).click();
+  await openWorkspaceControls(page);
   await expect(row.getByTestId('document-folder-placement')).toContainText('Research');
   await page.reload();
+  await openWorkspaceControls(page);
   await expect(row.getByTestId('document-folder-placement')).toContainText('Research');
   await expect(row.getByTestId('document-ai-label')).toHaveAttribute('data-original-label', 'Economics');
   await expect(row.getByTestId('document-ai-confidence')).toContainText('91%');
@@ -46,10 +80,12 @@ test('real APIs persist a move from Economics 101 to Research and unfile without
   expect(new Date(moved.expires_at + 'Z') - new Date(moved.last_accessed_at + 'Z')).toBe(30 * 86400000);
   expect(new Date(moved.last_accessed_at + 'Z').getTime()).toBeGreaterThanOrEqual(new Date(before.last_accessed_at + 'Z').getTime());
   await row.getByRole('button', { name: 'Bỏ thư mục', exact: true }).click();
-  await expect(page.getByText('Thư mục này chưa có tài liệu.', { exact: true })).toBeVisible();
-  await page.getByLabel('Thư mục hiển thị', { exact: true }).selectOption('unassigned');
+  await expect(page.locator(`section[data-folder-id="${new URL(page.url()).searchParams.get('folder')}"]`).getByText('Thư mục này chưa có tài liệu.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Recents', exact: true }).click();
+  await openWorkspaceControls(page);
   await expect(row.getByTestId('document-folder-placement')).toContainText('Chưa phân thư mục');
   await page.reload();
+  await openWorkspaceControls(page);
   const unfiled = (await (await page.request.get('/api/documents')).json())[0];
   expect(unfiled).toEqual({ ...before, folder_id: null,
     last_accessed_at: unfiled.last_accessed_at, expires_at: unfiled.expires_at });
@@ -73,9 +109,11 @@ test('create shows pending/error, preserves the name and selected folder, and ad
     return route.fulfill({ status: 201, json: folders[1] });
   });
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
-  await page.getByLabel('Thư mục hiển thị', { exact: true }).selectOption('1');
-  const panel = page.getByRole('region', { name: 'Quản lý thư mục' });
+  await page.getByRole('button', { name: 'Mở thư mục Economics 101', exact: true }).click();
+  await openWorkspaceControls(page);
+  const panel = page.getByRole('region', { name: 'Tạo thư mục' });
   const name = panel.getByLabel('Tên thư mục mới');
   await name.fill('   ');
   await expect(panel.getByRole('button', { name: 'Tạo thư mục', exact: true })).toBeDisabled();
@@ -89,12 +127,12 @@ test('create shows pending/error, preserves the name and selected folder, and ad
   await expect(name).toHaveValue(' Research ');
   await panel.getByRole('button', { name: 'Tạo thư mục', exact: true }).click();
   await expect(name).toHaveValue('');
-  await expect(page.getByLabel('Thư mục hiển thị', { exact: true })).toHaveValue('1');
-  await expect(page.getByLabel('Thư mục hiển thị').locator('option[value="2"]')).toHaveText('Research');
+  await expect(page).toHaveURL('/workspace?folder=1');
+  await expect(page.getByRole('button', { name: 'Mở thư mục Research', exact: true })).toBeVisible();
   expect(attempts).toBe(2);
 });
 
-test('move preserves metadata and destination through failure, then refreshes the list and active search', async ({ page }) => {
+test('move preserves metadata and destination through failure, then refreshes history without global content search', async ({ page }) => {
   let saved = { ...document };
   let searches = 0;
   let lists = 0;
@@ -116,11 +154,8 @@ test('move preserves metadata and destination through failure, then refreshes th
     return route.fulfill({ json: saved });
   });
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
-  await page.getByLabel('Tìm kiếm trong tài liệu', { exact: true }).fill('payment');
-  await page.getByLabel('Thư mục tìm kiếm', { exact: true }).selectOption('1');
-  await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
-  await expect(page.locator('.search-hit-card')).toHaveCount(1);
   const row = page.getByTestId('workspace-document-row');
   await row.getByLabel('Chuyển tài liệu tới', { exact: true }).selectOption('2');
   await row.getByRole('button', { name: 'Chuyển', exact: true }).click();
@@ -136,9 +171,7 @@ test('move preserves metadata and destination through failure, then refreshes th
   release();
   await expect(row.getByTestId('document-folder-placement')).toContainText('Research');
   await expect(row.getByTestId('document-user-label')).toContainText('Semester 1');
-  await expect(page.locator('.search-hit-card')).toHaveCount(0);
-  await expect(page.locator('.search-count')).toContainText('Không tìm thấy kết quả phù hợp');
-  expect(searches).toBe(2);
+  expect(searches).toBe(0);
   expect(lists).toBe(2);
   expect(moves).toBe(2);
 });
@@ -155,17 +188,17 @@ test('folder listing retries without hiding documents, then shows its empty stat
   });
   await page.route('**/api/documents?*', route => route.fulfill({ json: [document] }));
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
-  const panel = page.getByRole('region', { name: 'Quản lý thư mục' });
+  const panel = page.getByRole('region', { name: 'Lịch sử tài liệu' });
   await expect(panel.getByText('Đang tải thư mục…')).toBeVisible();
   await expect(page.getByTestId('workspace-document-row')).toBeVisible();
-  await expect(page.getByLabel('Thư mục hiển thị', { exact: true })).toBeDisabled();
   await expect.poll(() => typeof release).toBe('function');
   release();
   await expect(panel.getByRole('alert')).toContainText('Không thể tải thư mục');
   await panel.getByRole('button', { name: 'Thử lại thư mục', exact: true }).click();
   await expect(panel.getByText('Chưa có thư mục.', { exact: false })).toBeVisible();
-  await expect(page.getByLabel('Thư mục hiển thị', { exact: true })).toBeEnabled();
+  await expect(panel.getByRole('button', { name: 'Recents', exact: true })).toBeVisible();
 });
 
 test('folder selectors load every API page instead of truncating at one hundred folders', async ({ page }) => {
@@ -176,8 +209,10 @@ test('folder selectors load every API page instead of truncating at one hundred 
   });
   await page.route('**/api/documents?*', route => route.fulfill({ json: [] }));
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
-  await expect(page.getByLabel('Thư mục hiển thị').locator('option')).toHaveCount(103);
-  await page.getByLabel('Thư mục hiển thị', { exact: true }).selectOption('101');
-  await expect(page.getByText('Thư mục này chưa có tài liệu.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Mở thư mục Folder / })).toHaveCount(101);
+  await page.getByRole('button', { name: 'Mở thư mục Folder 101', exact: true }).click();
+  await openWorkspaceControls(page);
+  await expect(page.locator(`section[data-folder-id="${new URL(page.url()).searchParams.get('folder')}"]`).getByText('Thư mục này chưa có tài liệu.', { exact: true })).toBeVisible();
 });

@@ -1,7 +1,8 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 
-export default function DocumentFolderMove({ document, folders, foldersUnavailable, onMoved }) {
+export default function DocumentFolderMove({ document, folders, foldersUnavailable, onMoved, onCreateFolder }) {
   const { t, locale, errorText } = useI18n();
   const [target, setTarget] = useState(String(document.folder_id ?? ''));
   const [pending, setPending] = useState(false);
@@ -25,10 +26,14 @@ export default function DocumentFolderMove({ document, folders, foldersUnavailab
   }
 
   const unknownFolder = document.folder_id != null && !folders.some(folder => folder.id === document.folder_id);
+  if (!foldersUnavailable && folders.length === 0 && document.folder_id == null) return <div className="space-y-2 border-t border-line pt-3 text-xs text-zinc-400">
+    <p>{t('Tạo một thư mục trước khi thêm tài liệu vào.')}</p>
+    {onCreateFolder ? <button type="button" className={ui('btn')} onClick={onCreateFolder}>{t('Tạo thư mục')}</button> : <a className={ui('btn')} href="/workspace#folder-name">{t('Tạo thư mục')}</a>}
+  </div>;
   return (
-    <form className="document-folder-move" aria-label={t("Sắp xếp {0}", document.original_filename)} aria-busy={pending}
+    <form className={ui('document-folder-move')} aria-label={t("Sắp xếp {0}", document.original_filename)} aria-busy={pending}
       onSubmit={event => { event.preventDefault(); move(target ? Number(target) : null); }}>
-      <div className="folder-destination">
+      <div className={ui('folder-destination')}>
         <label htmlFor={`move-folder-${document.id}`}>{t("Chuyển tài liệu tới")}</label>
         <select id={`move-folder-${document.id}`} value={target} disabled={pending || foldersUnavailable} onChange={event => setTarget(event.target.value)}>
           <option value="">{t("Chưa phân thư mục")}</option>
@@ -36,14 +41,14 @@ export default function DocumentFolderMove({ document, folders, foldersUnavailab
           {folders.map(folder => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
         </select>
       </div>
-      <div className="folder-move-buttons">
-        <button className="btn" disabled={pending || foldersUnavailable || target === String(document.folder_id ?? '')}>
+      <div className={ui('folder-move-buttons')}>
+        <button className={ui('btn')} disabled={pending || foldersUnavailable || target === String(document.folder_id ?? '')}>
           {pending ? t("Đang chuyển…") : t("Chuyển")}
         </button>
-        {document.folder_id != null && <button type="button" className="btn" disabled={pending} onClick={() => move(null)}>{t("Bỏ thư mục")}</button>}
+        {document.folder_id != null && <button type="button" className={ui('btn')} disabled={pending} onClick={() => move(null)}>{t("Bỏ thư mục")}</button>}
       </div>
       {pending && <p role="status">{t("Đang cập nhật thư mục…")}</p>}
-      {error && <p role="alert" className="error-box">{errorText(error)}</p>}
+      {error && <p role="alert" className={ui('error-box')}>{errorText(error)}</p>}
     </form>
   );
 }

@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { translate } from '../lib/i18n-core';
 import { useI18n } from '../lib/i18n';
 /**
@@ -73,7 +74,7 @@ export function CitationBadge({ source, documentName, currentDocumentId, jobId, 
 
   return (
     <a
-      className="citation-badge analysis-source"
+      className={ui('citation-badge analysis-source')}
       href={href}
       title={source.quote || text}
       data-document-id={source.document_id}
@@ -88,7 +89,7 @@ export function CitationBadge({ source, documentName, currentDocumentId, jobId, 
 export function UnverifiedBadge({ text = 'Unverified', note = 'Cần kiểm tra' }) {
   const { t, locale, errorText } = useI18n();
   return (
-    <span className="unverified-badge analysis-unverified" role="status" aria-label={t("Khẳng định chưa được xác thực")}>
+    <span className={ui('unverified-badge analysis-unverified')} role="status" aria-label={t("Khẳng định chưa được xác thực")}>
       {t(text)}{note ? ` · ${t(note)}` : ''}
     </span>
   );
@@ -97,9 +98,9 @@ export function UnverifiedBadge({ text = 'Unverified', note = 'Cần kiểm tra'
 export function ClaimSources({ claim, documentName, documentId, jobId, pageKind = 'page', missingNote }) {
   const { t, locale, errorText } = useI18n();
   const { sources, unverified } = claimVerification(claim);
-  return <div className="claim-citations">
+  return <div className={ui('claim-citations')}>
     {unverified && <UnverifiedBadge note={!sources.length && missingNote ? missingNote : t("Cần kiểm tra")} />}
-    {sources.length > 0 && <div className="evidence-badges">
+    {sources.length > 0 && <div className={ui('evidence-badges')}>
       {sources.map((source, index) => <CitationBadge key={index} source={source} documentName={documentName}
         currentDocumentId={documentId} jobId={jobId} pageKind={pageKind} />)}
     </div>}
@@ -120,15 +121,15 @@ export function ClaimEvidence({
 
   if (!hasText) {
     return (
-      <div className={`analysis-claim ${className}`}>
+      <div className={ui(`analysis-claim ${className}`)}>
         <UnverifiedBadge text={t("Không có thông tin · Unverified")} note="" />
       </div>
     );
   }
 
   return (
-    <div className={`analysis-claim ${className}`}>
-      <p className="claim-text">{claim.text}</p>
+    <div className={ui(`analysis-claim ${className}`)}>
+      <p className={ui('claim-text')}>{claim.text}</p>
       {showEvidence ? <ClaimSources claim={claim} documentName={documentName} documentId={documentId}
         jobId={jobId} pageKind={pageKind} /> : unverified && <UnverifiedBadge />}
     </div>

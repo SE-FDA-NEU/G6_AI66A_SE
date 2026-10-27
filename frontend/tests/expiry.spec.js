@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { user } from './helpers';
+import { openWorkspaceControls, user } from './helpers';
 
 const old = { id: 61, original_filename: 'march-contract.pdf', ai_label: 'Contract', ai_confidence: .9,
   review_state: 'needs_review', folder_id: null, last_accessed_at: '2026-03-01T00:00:00', expires_at: '2026-03-31T00:00:00' };
@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
 async function list(page, getDocument = () => old) {
   await page.route('**/api/documents?*', route => route.fulfill({ json: [getDocument()] }));
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
 }
 
 test('March 1 access has March 31 expiry, with seven-day warning starting exactly March 24 UTC', async ({ page }) => {
@@ -22,6 +23,7 @@ test('March 1 access has March 31 expiry, with seven-day warning starting exactl
   await expect(page.getByTestId('expiry-warning')).toContainText('Sắp hết hạn');
   await expect(page.locator('time')).toHaveAttribute('datetime', '2026-03-31T00:00:00.000Z');
   await page.reload();
+  await openWorkspaceControls(page);
   await expect(page.getByTestId('expiry-warning')).toBeVisible();
 });
 
@@ -33,6 +35,7 @@ test('UTC dates are stable in another browser timezone; elapsed and unknown date
     await page.clock.install({ time: new Date('2026-03-31T00:00:00Z') });
     await page.route('**/api/documents?*', route => route.fulfill({ json: [old, { ...old, id: 62, expires_at: 'invalid' }] }));
     await page.goto('http://127.0.0.1:18000/workspace');
+    await openWorkspaceControls(page);
     await expect(page.getByTestId('document-expiry').first()).toContainText('31/03/2026');
     await expect(page.getByTestId('expiry-elapsed')).toContainText('Đã tới hạn lưu');
     await expect(page.getByTestId('expiry-warning')).toHaveCount(0);
@@ -60,6 +63,7 @@ test('real label and folder updates refresh persisted expiry in workspace and re
   const docs = await (await page.request.get('/api/documents')).json();
   const doc = docs.find(item => item.ai_confidence === .79);
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   const row = page.locator(`[data-document-id="${doc.id}"]`);
   await row.getByRole('button', { name: 'Chỉnh sửa nhãn', exact: true }).click();
   await row.getByLabel('Nhãn người dùng', { exact: true }).fill('Retention review');

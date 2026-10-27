@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 
@@ -23,11 +24,11 @@ export default function DocumentExpiry({ expiresAt }) {
   }, [timestamp, valid]);
   const expired = valid && now !== null && now >= timestamp;
   const soon = valid && now !== null && !expired && now >= timestamp - WEEK;
-  return <div className="document-expiry" data-testid="document-expiry" aria-live="polite">
+  return <div className={ui('document-expiry')} data-testid="document-expiry" aria-live="polite">
     {valid ? <span>{t("Hết hạn:") + " "}<time dateTime={new Date(timestamp).toISOString()}>
       {new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(timestamp)}
     </time>{" " + t("(UTC)")}</span> : <span>{t("Chưa có ngày hết hạn.")}</span>}
-    {soon && <span className="expiry-warning" data-testid="expiry-warning">{t("Sắp hết hạn · Còn tối đa 7 ngày. Mở, tải hoặc cập nhật tài liệu để gia hạn 30 ngày.")}</span>}
-    {expired && <span className="expiry-warning" data-testid="expiry-elapsed">{t("Đã tới hạn lưu. Nguồn có thể đã được xóa; hãy mở tài liệu để kiểm tra khả dụng.")}</span>}
+    {soon && <span className={ui('expiry-warning')} data-testid="expiry-warning">{t("Sắp hết hạn · Còn tối đa 7 ngày. Mở, tải hoặc cập nhật tài liệu để gia hạn 30 ngày.")}</span>}
+    {expired && <span className={ui('expiry-warning')} data-testid="expiry-elapsed">{t("Đã tới hạn lưu. Nguồn có thể đã được xóa; hãy mở tài liệu để kiểm tra khả dụng.")}</span>}
   </div>;
 }

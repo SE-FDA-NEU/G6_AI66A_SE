@@ -1,3 +1,6 @@
+import WorkflowSteps from '../../components/WorkflowSteps';
+import BeginnerGuide from '../../components/BeginnerGuide';
+import { ui } from '../../lib/ui';
 import { useI18n } from '../../lib/i18n';
 import { readLocale } from '../../lib/i18n';
 import Head from 'next/head';
@@ -16,7 +19,7 @@ const terminal = new Set(['completed', 'failed', 'timed_out']);
 
 function Badge({ status }) {
   const { t, locale, errorText } = useI18n();
-  return <span className={`job-badge job-${status}`}>{t(labels[status] || 'Unknown')}</span>;
+  return <span className={ui(`job-badge job-${status}`)}>{t(labels[status] || 'Unknown')}</span>;
 }
 
 export default function Results({ jobId }) {
@@ -80,38 +83,44 @@ export default function Results({ jobId }) {
 
   return <>
     <Head><title>{t("DocuMind · Tiến độ xử lý")}</title></Head>
-    <main className="workspace results-page">
-      <header><a href="/workspace" className="brand">{t("DocuMind")}<span className="brand-dot">.</span></a>
-        <WorkspaceNavigation><a className="btn" href="/workspace">{t("Về không gian tài liệu")}</a></WorkspaceNavigation></header>
-      <section className="results-content">
-        <p className="eyebrow">{t("TÁC VỤ #")}{jobId}</p>
+    <main className={ui('workspace results-page')}>
+      <header><a href="/workspace" className={ui('brand')}>{t("DocuMind")}<span className={ui('brand-dot')}>.</span></a>
+        <WorkspaceNavigation><a className={ui('btn')} href="/workspace">{t("Về không gian tài liệu")}</a></WorkspaceNavigation></header>
+      <WorkflowSteps step={3}/>
+      <section id="results" className={ui('results-content')}>
+        <p className={ui('eyebrow')}>{t("TÁC VỤ #")}{jobId}</p>
         <h1>{t("Tiến độ xử lý")}</h1>
+        <BeginnerGuide context="results" />
+        <div className="flex flex-wrap gap-2">
+          {Object.keys(job?.result_data?.documents || {}).length > 0 && <a href="#analysis-output" className={ui('btn primary')}>{t('Đọc kết quả')} ↓</a>}
+          <a href="/upload" className={ui('btn')}>{t('Tải thêm tài liệu')}</a>
+        </div>
         {!job && !error && <p role="status">{t("Đang tải tiến độ…")}</p>}
-        {error && <p className="error-box" role="alert">{errorText(error)}</p>}
-        {error && <button className="btn" onClick={() => setRevision(value => value + 1)}>{t("Thử lại bản tóm tắt")}</button>}
+        {error && <p className={ui('error-box')} role="alert">{errorText(error)}</p>}
+        {error && <button className={ui('btn')} onClick={() => setRevision(value => value + 1)}>{t("Thử lại bản tóm tắt")}</button>}
         {job && <>
-          <section className="job-progress-card" aria-label={t("Tiến độ tác vụ")}>
-            <div className="job-progress-heading"><h2>{t("Trạng thái xử lý")}</h2>
+          <section className={ui('job-progress-card')} aria-label={t("Tiến độ tác vụ")}>
+            <div className={ui('job-progress-heading')}><h2>{t("Trạng thái xử lý")}</h2>
               <span aria-label={t("Trạng thái job")} role="status"><Badge status={job.status} /></span></div>
-            <p className="job-count" aria-live="polite">{completed}/{total}{" " + t("tệp đã xử lý thành công")}</p>
+            <p className={ui('job-count')} aria-live="polite">{completed}/{total}{" " + t("tệp đã xử lý thành công")}</p>
             <progress aria-label={t("Tiến độ xử lý")} max={total || 1} value={completed}
               aria-valuetext={t("{0}/{1} tệp đã xử lý thành công", completed, total)} />
-            <p className="job-progress-note">{job.status === 'completed'
+            <p className={ui('job-progress-note')}>{job.status === 'completed'
               ? t("Tất cả tài liệu đã được xử lý xong.")
               : job.status === 'failed' ? t("Tác vụ kết thúc với lỗi. Xem chi tiết từng tệp bên dưới.")
               : job.status === 'timed_out' ? t("Tác vụ đã vượt quá thời gian xử lý cho phép.")
               : t("Tiến độ tự cập nhật mỗi 3 giây. Bạn có thể quay lại trang này sau.")}</p>
           </section>
-          <h2 className="job-files-heading">{t("Trạng thái từng tệp")}</h2>
-          {job.job_files?.some(file => file.error_message?.includes('source_expired')) && <p className="error-box" role="alert">{t("Nguồn đã hết hạn và không còn khả dụng. Kết quả liên quan không thể hiển thị hoặc xuất PDF.")}</p>}
-          {job.job_files?.length ? <ul className="job-files" aria-label={t("Trạng thái từng tệp")}>
-            {job.job_files.map(file => <li key={file.id} className="job-file">
-              <div className="job-file-details"><strong>{file.original_filename || t("Tài liệu #{0}", file.document_id)}</strong>
-                <p className="job-file-attempts">{t("Lần thử") + " "}{file.attempt_count}/3{file.timeout_seconds != null && t(" · Giới hạn {0} giây", file.timeout_seconds)}</p>
-                {file.error_message && <p className="job-file-error">{errorText(file.error_message)}</p>}</div>
+          <h2 className={ui('job-files-heading')}>{t("Trạng thái từng tệp")}</h2>
+          {job.job_files?.some(file => file.error_message?.includes('source_expired')) && <p className={ui('error-box')} role="alert">{t("Nguồn đã hết hạn và không còn khả dụng. Kết quả liên quan không thể hiển thị hoặc xuất PDF.")}</p>}
+          {job.job_files?.length ? <ul className={ui('job-files')} aria-label={t("Trạng thái từng tệp")}>
+            {job.job_files.map(file => <li key={file.id} className={ui('job-file')}>
+              <div className={ui('job-file-details')}><strong>{file.original_filename || t("Tài liệu #{0}", file.document_id)}</strong>
+                <p className={ui('job-file-attempts')}>{t("Lần thử") + " "}{file.attempt_count}/3{file.timeout_seconds != null && t(" · Giới hạn {0} giây", file.timeout_seconds)}</p>
+                {file.error_message && <p className={ui('job-file-error')}>{errorText(file.error_message)}</p>}</div>
               <Badge status={file.status} />
             </li>)}
-          </ul> : <p className="muted">{t("Chưa có thông tin tệp.")}</p>}
+          </ul> : <p className={ui('muted')}>{t("Chưa có thông tin tệp.")}</p>}
           {job.mode === 'table' && <ExportTableButton job={job} jobId={jobId} />}
           <AnalysisResults data={job.result_data} jobId={jobId} mode={job.mode} jobFiles={job.job_files} />
         </>}

@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.main import app
 from app.core.config import settings
 from app.core.security import create_access_token
-from app.models import Document, Job, JobFile, JobMode, JobStatus
+from app.models import Document, Folder, Job, JobFile, JobMode, JobStatus
 from app.services import uploads
 from app.services.job_queue import JobQueue, get_job_queue
 
@@ -22,6 +22,61 @@ def assert_empty(session_factory, job_queue):
             assert db.query(model).count() == 0
     assert job_queue.enqueued == []
     assert not list(settings.STORAGE_DIR.rglob('*.*'))
+
+
+def test_upload_destination_is_committed_before_enqueue_and_survives_processing(client, session_factory, job_queue, monkeypatch):
+    from app.services.processing import process_job
+    with session_factory() as db:
+        folder = Folder(owner_id=123, name='Research')
+        db.add(folder); db.commit()
+        folder_id = folder.id
+    enqueue = job_queue.enqueue
+    def inspect_committed_destination(job_id):
+        with session_factory() as db:
+            job = db.get(Job, job_id)
+            assert job.status == JobStatus.PENDING
+            assert len(job.job_files) == 2
+            assert all(link.document.folder_id == folder_id for link in job.job_files)
+        enqueue(job_id)
+    monkeypatch.setattr(job_queue, 'enqueue', inspect_committed_destination)
+    response = client.post('/upload', files=parts('first.pdf', 'second.pdf'), data={'folder_id': folder_id})
+    assert response.status_code == 202
+    job_id = int(response.json()['jobId'])
+    assert job_queue.enqueued == [job_id]
+    async def processor(source, mode):
+        return {'text': 'Saved summary'}
+    process_job(job_id, session_factory, processor=processor)
+    assert client.get(f'/jobs/{job_id}').json()['status'] == 'completed'
+    with session_factory() as db:
+        assert all(doc.folder_id == folder_id for doc in db.query(Document).all())
+    assert len(client.get('/documents', params={'folder_id': folder_id}).json()) == 2
+    assert client.get('/documents', params={'unassigned': 'true'}).json() == []
+
+
+def test_upload_without_destination_stays_outside_existing_folders(client, session_factory):
+    with session_factory() as db:
+        db.add(Folder(owner_id=123, name='Existing folder')); db.commit()
+    assert client.post('/upload', files=parts('outside.pdf')).status_code == 202
+    with session_factory() as db:
+        assert db.query(Document).one().folder_id is None
+
+
+@pytest.mark.parametrize('destination,status', [('missing', 404), ('foreign', 403)])
+def test_invalid_destination_writes_no_files_or_jobs(client, session_factory, job_queue, destination, status):
+    folder_id = 99999
+    if destination == 'foreign':
+        with session_factory() as db:
+            folder = Folder(owner_id=124, name='Private folder')
+            db.add(folder); db.commit(); folder_id = folder.id
+    response = client.post('/upload', files=parts('a.pdf'), data={'folder_id': folder_id})
+    assert response.status_code == status
+    assert_empty(session_factory, job_queue)
+
+
+@pytest.mark.parametrize('folder_id', ['0', '-1', 'invalid', '1.5'])
+def test_malformed_upload_destination_is_rejected(client, session_factory, job_queue, folder_id):
+    assert client.post('/upload', files=parts('a.pdf'), data={'folder_id': folder_id}).status_code == 422
+    assert_empty(session_factory, job_queue)
 
 
 @pytest.mark.parametrize('mode', ['bullet', 'table', 'concept'])

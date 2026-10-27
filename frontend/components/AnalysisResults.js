@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import BulletResults from './BulletResults';
 import ActionResults from './ActionResults';
@@ -11,10 +12,11 @@ export default function AnalysisResults({ data, jobId, mode, jobFiles = [], titl
   const tableDocuments = documents.filter(document => document.output?.type === 'table');
   const showTable = mode === 'table' || tableDocuments.length > 0;
   if (!documents.length && !showTable) return null;
-  return <section className="analysis-results" aria-label={t("Kết quả phân tích AI")}>
+  return <section id={title ? 'analysis-output' : undefined} className={ui('analysis-results')} aria-label={t("Kết quả phân tích AI")}>
+    {title && <p className="font-mono text-[10px] tracking-widest text-zinc-500">04 // ANALYSIS_OUTPUT</p>}
     {title && <h2>{t(title)}</h2>}
     {showTable && <TableResults documents={tableDocuments} jobId={jobId} jobFiles={jobFiles} />}
-    {documents.filter(document => document.output?.type !== 'table').map(document => <article className="analysis-card" key={document.document_id}>
+    {documents.filter(document => document.output?.type !== 'table').map(document => <article className={ui('analysis-card')} key={document.document_id}>
       <h3>{document.original_filename}</h3>
       <a href={`/documents/${document.document_id}?page=1`}>{t("Mở tài liệu nguồn")}</a>
       <AnalysisDocumentDetails document={document} />

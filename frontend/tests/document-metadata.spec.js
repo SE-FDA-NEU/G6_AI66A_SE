@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { user, searchHit } from './helpers';
+import { openWorkspaceControls, user, searchHit } from './helpers';
 
 function makePageData(overrides = {}) {
   const version = 'b'.repeat(64);
@@ -165,20 +165,21 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
 
     await page.route('**/api/documents?*', route => route.fulfill({ json: mockDocs }));
     await page.goto('/workspace');
+  await openWorkspaceControls(page);
     for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
 
     const rows = page.locator('.workspace-document-row');
     await expect(rows).toHaveCount(2);
 
     // Row 1: High confidence suggestion, unassigned folder
-    const row1 = rows.first();
+    const row1 = page.locator('.workspace-document-row[data-document-id="101"]');
     await expect(row1.locator('.document-row-title')).toContainText('hop_dong_thue_nha.pdf');
     await expect(row1.locator('[data-testid="document-ai-label"]')).toHaveAttribute('data-original-label', 'Hợp đồng thuê');
     await expect(row1.locator('[data-testid="document-ai-confidence"]')).toContainText('88%');
     await expect(row1.locator('[data-testid="document-folder-placement"]')).toContainText('Chưa phân thư mục');
 
     // Row 2: Low confidence suggestion (Cần kiểm tra), assigned folder, user label
-    const row2 = rows.nth(1);
+    const row2 = page.locator('.workspace-document-row[data-document-id="102"]');
     await expect(row2.locator('.document-row-title')).toContainText('hoa_don_vat.pdf');
     await expect(row2.locator('[data-testid="document-ai-confidence"]')).toContainText('74%');
     await expect(row2.locator('[data-testid="document-review-state"]')).toContainText('Cần kiểm tra');
@@ -186,35 +187,13 @@ test.describe('Document Metadata UI - Integration & Verification Distinctness', 
     await expect(row2.locator('[data-testid="document-user-label"]')).toContainText('Chi phí Q3');
   });
 
-  test('workspace search hits display metadata distinct from claim verification citations', async ({ page }) => {
-    await page.route('**/api/search?*', route => route.fulfill({
-      json: { query: 'tài chính', total_hits: 1, hits: [searchHit()] },
-    }));
-
+  test('workspace history does not run global content search or display fabricated source citations', async ({ page }) => {
+    let calls = 0;
+    await page.route('**/api/search?*', route => { calls++; return route.abort(); });
     await page.goto('/workspace');
-    for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
-    await page.getByLabel('Tìm kiếm trong tài liệu').fill('tài chính');
-    await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
-
-    const hitCard = page.locator('.search-hit-card').first();
-    await expect(hitCard).toBeVisible();
-
-    // Check DocumentMetadata inside search hit
-    const hitMetadata = hitCard.locator('[data-testid="document-metadata"]');
-    await expect(hitMetadata).toBeVisible();
-    await expect(hitMetadata.locator('[data-testid="document-ai-label"]')).toHaveAttribute('data-original-label', 'Báo cáo');
-    await expect(hitMetadata.locator('[data-testid="document-ai-confidence"]')).toHaveCount(0);
-    await expect(hitMetadata.locator('[data-testid="document-review-state"]')).toContainText('Chưa có điểm tin cậy');
-
-    // Check CitationBadge is distinct and separate
-    const citationBadge = hitCard.locator('.citation-badge');
-    await expect(citationBadge).toBeVisible();
-    await expect(citationBadge).toContainText('bao_cao_tai_chinh.pdf — trang 1');
-
-    // Crucial requirement: AI confidence is NOT a claim citation badge
-    const labelBadge = hitMetadata.locator('[data-testid="document-ai-label"]');
-    const isCitationBadge = await labelBadge.evaluate(el => el.classList.contains('citation-badge'));
-    expect(isCitationBadge).toBe(false);
+    await expect(page.locator('.workspace-search')).toHaveCount(0);
+    await expect(page.locator('main .citation-badge')).toHaveCount(0);
+    expect(calls).toBe(0);
   });
 
   test('read-only metadata and the single shared reader label editor remain separate', async ({ page }) => {

@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import DocumentMetadata from './DocumentMetadata';
 
@@ -14,17 +15,17 @@ export default function AnalysisDocumentDetails({ document }) {
   const { t, locale, errorText } = useI18n();
   return <>
     {document.label && (document.label.ai_label || document.label.user_label || document.label.ai_confidence != null) &&
-      <DocumentMetadata document={document} showFolder={false} className="analysis-label" />}
+      <DocumentMetadata document={document} showFolder={false} className={ui('analysis-label')} />}
     {document.warnings?.filter(warning => !(warning === 'insufficient_actions' &&
-      document.analysis_status === 'completed' && document.output?.type === 'bullet')).map(warning => <p className="analysis-warning" key={warning}>
+      document.analysis_status === 'completed' && document.output?.type === 'bullet')).map(warning => <p className={ui('analysis-warning')} key={warning}>
       {t(warnings[warning] || t("Có lưu ý khi xử lý tài liệu."))}
     </p>)}
-    {document.error_message && <p className="analysis-error error-box" role="alert" data-testid="document-analysis-error">
+    {document.error_message && <p className={ui('analysis-error error-box')} role="alert" data-testid="document-analysis-error">
       {errorText(document.error_message)}
     </p>}
     {document.analysis_status === 'failed' && !document.error_message && <p
-      className="analysis-error error-box" role="alert" data-testid="document-analysis-failed">{t("Xử lý phân tích tài liệu thất bại.")}</p>}
+      className={ui('analysis-error error-box')} role="alert" data-testid="document-analysis-failed">{t("Xử lý phân tích tài liệu thất bại.")}</p>}
     {document.analysis_status === 'completed' && document.analysis_metadata?.cache_hit &&
-      <p className="analysis-note">{t("Đã dùng kết quả lưu sẵn, không gọi lại Gemini.")}</p>}
+      <p className={ui('analysis-note')}>{t("Đã dùng kết quả lưu sẵn, không gọi lại Gemini.")}</p>}
   </>;
 }
