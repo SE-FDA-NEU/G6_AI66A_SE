@@ -50,9 +50,12 @@ def backup_tables(connection, names, directory):
     try:
         with os.fdopen(descriptor, 'w', encoding='utf-8', newline='\n') as handle:
             mode = connection.exec_driver_sql('SELECT @@SESSION.sql_mode').scalar_one()
+            sql_mode = escape_cursor.mogrify('%s', (mode,))
+            if isinstance(sql_mode, bytes):
+                sql_mode = sql_mode.decode('utf-8')
             handle.write('-- DocuMind table backup. Restore into the intended database with the app stopped.\n')
             handle.write('SET NAMES utf8mb4;\nSET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS;\nSET FOREIGN_KEY_CHECKS=0;\n')
-            handle.write(f'SET @OLD_SQL_MODE=@@SQL_MODE;\nSET SQL_MODE={escape_cursor.mogrify('%s', (mode,))};\n')
+            handle.write(f'SET @OLD_SQL_MODE=@@SQL_MODE;\nSET SQL_MODE={sql_mode};\n')
             for name in sorted(names):
                 quoted = quote(name)
                 ddl = connection.exec_driver_sql(f'SHOW CREATE TABLE {quoted}').one()[1]
@@ -63,9 +66,16 @@ def backup_tables(connection, names, directory):
                 try:
                     columns = ', '.join(quote(column) for column in ordinary)
                     for row in rows:
-                        values = ', '.join('0x' + value.hex() if isinstance(value, bytes) and value else
-                                           "X''" if isinstance(value, bytes) else escape_cursor.mogrify('%s', (value,))
-                                           for value in row) if ordinary else ''
+                        rendered = []
+                        for value in row:
+                            if isinstance(value, bytes):
+                                rendered.append('0x' + value.hex() if value else "X''")
+                            else:
+                                literal = escape_cursor.mogrify('%s', (value,))
+                                if isinstance(literal, bytes):
+                                    literal = literal.decode('utf-8')
+                                rendered.append(str(literal))
+                        values = ', '.join(rendered) if ordinary else ''
                         handle.write(f'INSERT INTO {quoted} ({columns}) VALUES ({values});\n')
                 finally:
                     rows.close()
