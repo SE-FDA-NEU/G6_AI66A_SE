@@ -191,7 +191,7 @@ for (const failure of ['server', 'network', 'invalid job']) {
       });
       await page.locator('.upload-picker').dispatchEvent('drop', { dataTransfer: transfer });
       await transfer.dispose();
-      await expect(page.getByRole('listitem')).toHaveCount(5);
+      await expect(page.locator('.upload-files').getByRole('listitem')).toHaveCount(5);
     } finally {
       releaseUpload();
     }

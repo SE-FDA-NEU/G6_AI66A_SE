@@ -1,3 +1,4 @@
+import { ui } from './ui';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LOCALE_COOKIE, readLocale, translate, isLocalizedMessage } from './i18n-core';
 
@@ -30,7 +31,7 @@ export function useI18n() {
 export function languageHeaders(locale) { return { 'X-DocuMind-Language': locale }; }
 export function LanguageSwitcher() {
   const { locale, setLocale, t } = useI18n();
-  return <div className="language-switcher"><label htmlFor="app-language">{t('Ngôn ngữ')}</label><select id="app-language" value={locale} onChange={event => setLocale(event.target.value)}>
+  return <div className={ui('language-switcher')}><label htmlFor="app-language">{t('Ngôn ngữ')}</label><select id="app-language" value={locale} onChange={event => setLocale(event.target.value)}>
     <option value="vi">{t('Tiếng Việt')}</option><option value="en">{t('Tiếng Anh')}</option>
   </select></div>;
 }

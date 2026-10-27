@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import DocumentMetadata from './DocumentMetadata';
@@ -51,23 +52,24 @@ export default function WorkspaceDocumentList({ folderId = '', aiLabel = '', fol
   }, [page, attempt, folderId, aiLabel, refreshKey, filename]);
 
   return (
-    <section className="workspace-documents" aria-label={t("Danh sách tài liệu")} aria-busy={loading}>
-      <div className="section-heading"><h2>{t("Tài liệu của bạn")}</h2><span className="view-caption"><WorkspaceIcon name="grid" size={16}/>{" " + t("Dạng thẻ")}</span></div>
-      {loading && <p role="status" className="muted">{t("Đang tải danh sách tài liệu…")}</p>}
-      {error && <div role="alert"><p className="error-box">{errorText(error)}</p>
-        <button className="btn" onClick={() => setAttempt(value => value + 1)}>{t("Thử lại danh sách")}</button></div>}
+    <section className={ui('workspace-documents')} aria-label={t("Danh sách tài liệu")} aria-busy={loading}>
+      <div className={ui('section-heading')}><h2>{t("Tài liệu của bạn")}</h2><span className={ui('view-caption')}><WorkspaceIcon name="grid" size={16}/>{" " + t("Dạng thẻ")}</span></div>
+      {loading && <p role="status" className={ui('muted')}>{t("Đang tải danh sách tài liệu…")}</p>}
+      {error && <div role="alert"><p className={ui('error-box')}>{errorText(error)}</p>
+        <button className={ui('btn')} onClick={() => setAttempt(value => value + 1)}>{t("Thử lại danh sách")}</button></div>}
       {!loading && !error && <>
-        {documents.length === 0 ? <p className="muted">{page === 0
+        {documents.length === 0 ? <p className={ui('muted')}>{page === 0
           ? (filename ? t("Không tìm thấy tệp có tên chứa “{0}”.", filename) : aiLabel ? (folderId ? t("Không có tài liệu khớp đồng thời thư mục và nhãn AI đã chọn.") : t("Không có tài liệu khớp nhãn AI đã chọn."))
             : folderId ? t("Thư mục này chưa có tài liệu.") : t("Chưa có tài liệu nào trong không gian làm việc. Tải tài liệu để bắt đầu."))
           : t("Không còn tài liệu trên trang này. Hãy quay về trang trước.")}</p> : (
-          <ul className="workspace-document-list" aria-label={t("Danh sách tài liệu workspace")}>
-            {documents.map(doc => <li key={doc.id} className="workspace-document-row"
+          <ul className={ui('workspace-document-list')} aria-label={t("Danh sách tài liệu workspace")}>
+            {documents.map((doc, index) => <li key={doc.id} className={ui('workspace-document-row')}
               data-testid="workspace-document-row" data-document-id={doc.id}>
-              <div className="document-row-main">
-                <a href={`/documents/${doc.id}?page=1`} className="document-row-title" aria-label={doc.original_filename}><span className={`file-cover file-cover-${doc.original_filename.split('.').pop().toLowerCase()}`}><WorkspaceIcon name="file" size={45}/><span>{doc.original_filename.split('.').pop().toUpperCase()}</span></span>
+              <p className="font-mono text-[10px] text-zinc-600">{String(page * PAGE_SIZE + index + 1).padStart(2, '0')} // DOCUMENT</p>
+              <div className={ui('document-row-main')}>
+                <a href={`/documents/${doc.id}?page=1`} className={ui('document-row-title')} aria-label={doc.original_filename}><span className={ui(`file-cover file-cover-${doc.original_filename.split('.').pop().toLowerCase()}`)}><WorkspaceIcon name="file" size={45}/><span>{doc.original_filename.split('.').pop().toUpperCase()}</span></span>
                 <strong>{doc.original_filename}</strong></a>
-                <DocumentMetadata document={doc} folderName={folders.find(folder => folder.id === doc.folder_id)?.name} className="workspace-metadata-row" />
+                <DocumentMetadata document={doc} folderName={folders.find(folder => folder.id === doc.folder_id)?.name} className={ui('workspace-metadata-row')} />
                 <DocumentExpiry expiresAt={doc.expires_at} />
               </div>
               <DocumentLabelEditor documentId={doc.id} document={doc} onSaved={onLabelSaved} />

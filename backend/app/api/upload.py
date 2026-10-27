@@ -30,13 +30,14 @@ async def upload_file(
     ),
     mode: JobMode = Form(JobMode.BULLET),
     language: Literal["en", "vi"] = Form("vi"),
+    folder_id: int | None = Form(None, ge=1),
     db: Session = Depends(get_db),
     queue=Depends(get_job_queue),
 ):
     validated = await validate_uploads(files or [])
     try:
         job_id = await run_in_threadpool(save_upload_job, db, user_id, files,
-                                        validated, mode, settings.STORAGE_DIR, language)
+                                        validated, mode, settings.STORAGE_DIR, language, folder_id)
     except HTTPException:
         raise
     except Exception:

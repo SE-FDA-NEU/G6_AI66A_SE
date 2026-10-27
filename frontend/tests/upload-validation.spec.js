@@ -28,7 +28,7 @@ test.describe('upload page', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
     await expect(page).toHaveURL('/workspace');
-    await page.getByRole('link', { name: 'Tải tài liệu', exact: true }).click();
+    await page.goto('/upload');
     await expect(page).toHaveURL('/upload');
     await expect(page.getByLabel('Chọn tệp tài liệu')).toBeEnabled();
   });
@@ -38,7 +38,7 @@ test.describe('upload page', () => {
       file('report.PDF'), file('notes.docx'), file('slides.pptx'),
     ]);
     await expect(page.getByRole('status')).toContainText('3/5 tệp hợp lệ');
-    await expect(page.getByRole('listitem')).toHaveCount(3);
+    await expect(page.locator('.upload-files').getByRole('listitem')).toHaveCount(3);
     await expect(page.getByText('Hợp lệ', { exact: true })).toHaveCount(3);
     await expect(page.getByRole('list', { name: 'Tệp đã chọn' }).getByRole('alert')).toHaveCount(0);
   });
@@ -49,13 +49,13 @@ test.describe('upload page', () => {
     );
     await expect(page.getByRole('status')).toContainText('5/5 tệp hợp lệ · 25.00 MB');
     await page.getByLabel('Chọn tệp tài liệu').setInputFiles(file('sixth.pdf'));
-    await expect(page.getByRole('listitem')).toHaveCount(6);
-    await expect(page.getByRole('listitem').filter({ hasText: 'sixth.pdf' }))
+    await expect(page.locator('.upload-files').getByRole('listitem')).toHaveCount(6);
+    await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'sixth.pdf' }))
       .toContainText('Tối đa 5 tệp mỗi lần.');
     await expect(page.getByText('Hợp lệ', { exact: true })).toHaveCount(5);
     await expect(page.getByRole('status')).toContainText('5/5 tệp hợp lệ · 25.00 MB');
     await page.getByRole('button', { name: 'Xóa sixth.pdf', exact: true }).click();
-    await expect(page.getByRole('listitem')).toHaveCount(5);
+    await expect(page.locator('.upload-files').getByRole('listitem')).toHaveCount(5);
   });
 
   test('shows per-file size and format errors, keeps valid selections and sends no upload', async ({ page }) => {
@@ -69,11 +69,11 @@ test.describe('upload page', () => {
       file('oversize.pdf', Math.ceil(5.1 * MB), 'application/pdf'),
       file('valid.docx'),
     ]);
-    await expect(page.getByRole('listitem').filter({ hasText: 'malware.exe' }))
+    await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'malware.exe' }))
       .toContainText('Chỉ chấp nhận PDF, DOCX hoặc PPTX.');
-    await expect(page.getByRole('listitem').filter({ hasText: 'oversize.pdf' }))
+    await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'oversize.pdf' }))
       .toContainText('Tệp vượt quá 5 MB.');
-    await expect(page.getByRole('listitem').filter({ hasText: 'keep.pdf' })).toContainText('Hợp lệ');
+    await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'keep.pdf' })).toContainText('Hợp lệ');
     await expect(page.getByRole('status')).toContainText('2/5 tệp hợp lệ');
     await expect(page.getByRole('status')).toContainText('2 tệp cần kiểm tra');
     expect(uploads).toEqual([]);
@@ -86,7 +86,7 @@ test.describe('upload page', () => {
     await expect(page.getByRole('list', { name: 'Tệp đã chọn' }).getByRole('alert')).toContainText('Tối đa 5 tệp mỗi lần.');
     await page.getByRole('button', { name: 'Xóa a.pdf', exact: true }).click();
     await expect(page.getByRole('list', { name: 'Tệp đã chọn' }).getByRole('alert')).toHaveCount(0);
-    await expect(page.getByRole('listitem').filter({ hasText: 'f.pdf' })).toContainText('Hợp lệ');
+    await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'f.pdf' })).toContainText('Hợp lệ');
     await expect(page.getByText('Hợp lệ', { exact: true })).toHaveCount(5);
   });
 
@@ -104,7 +104,7 @@ test.describe('upload page', () => {
     await expect(page.getByRole('list', { name: 'Tệp đã chọn' }).getByRole('alert')).toContainText('Chỉ chấp nhận PDF, DOCX hoặc PPTX.');
     await page.getByRole('button', { name: 'Xóa keep.pdf', exact: true }).click();
     await page.getByLabel('Chọn tệp tài liệu').setInputFiles(file('keep.pdf'));
-    await expect(page.getByRole('listitem').filter({ hasText: 'keep.pdf' })).toHaveCount(1);
+    await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'keep.pdf' })).toHaveCount(1);
     await expect(page.getByRole('status')).toContainText('2/5 tệp hợp lệ');
   });
 

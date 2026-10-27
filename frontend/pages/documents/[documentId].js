@@ -1,3 +1,5 @@
+import { ui } from '../../lib/ui';
+import BeginnerGuide from '../../components/BeginnerGuide';
 import { useI18n } from '../../lib/i18n';
 import { readLocale } from '../../lib/i18n';
 import Head from 'next/head';
@@ -354,26 +356,27 @@ export default function Reader({
       <Head>
         <title>{t("DocuMind · Đọc tài liệu")}</title>
       </Head>
-      <main className="workspace reader-page">
+      <main className={ui('workspace reader-page')}>
         <header>
-          <a href="/workspace" className="brand">{t("DocuMind.")}</a>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <a href="/workspace" className={ui('brand')}>{t("DocuMind.")}</a>
+          <div className={ui('flex flex-wrap items-center gap-2')}>
             {currentReturnJobId && (
               <a
                 href={`/results/${currentReturnJobId}`}
-                className="btn return-job-link"
+                className={ui('btn return-job-link')}
                 aria-label={t("Back to Results · Quay lại tác vụ #{0}", currentReturnJobId)}
               >{t("Back to Results")}</a>
             )}
             <a
               href="/workspace"
-              className="btn return-workspace-link"
+              className={ui('btn return-workspace-link')}
               aria-label={t("Back to Workspace · Về thư viện")}
             >{t("Back to Workspace")}</a>
           </div>
         </header>
 
         <h1>{t("Đọc tài liệu")}</h1>
+        <BeginnerGuide context="reader" />
         {data?.reader_layout === 'text' && (
           <p role="note">
             {data.file_format === 'DOCX'
@@ -391,7 +394,7 @@ export default function Reader({
             reviewState={data.review_state}
             userLabel={data.user_label}
             folderId={data.folder_id}
-            className="reader-document-metadata"
+            className={ui('reader-document-metadata')}
           />
           <DocumentExpiry expiresAt={data.expires_at} />
           <DocumentLabelEditor key={documentId} documentId={documentId} document={data}
@@ -405,54 +408,54 @@ export default function Reader({
 
         {/* Loading state */}
         {loading && !error && !busy && (
-          <p role="status" className="reader-loading">{t("Đang mở tài liệu…")}</p>
+          <p role="status" className={ui('reader-loading')}>{t("Đang mở tài liệu…")}</p>
         )}
 
         {/* Missing state (404) */}
         {errorStatus === 404 && (
-          <div className="reader-error error-box" role="alert">
+          <div className={ui('reader-error error-box')} role="alert">
             <p>{t("Không tìm thấy tài liệu.")}</p>
-            <a href="/workspace" className="btn">{t("Về thư viện")}</a>
+            <a href="/workspace" className={ui('btn')}>{t("Về thư viện")}</a>
           </div>
         )}
 
         {/* Access denied state (403) */}
         {errorStatus === 403 && (
-          <div className="reader-error error-box" role="alert">
+          <div className={ui('reader-error error-box')} role="alert">
             <p>{t("Bạn không có quyền truy cập tài liệu này (Access denied).")}</p>
-            <a href="/workspace" className="btn">{t("Về thư viện")}</a>
+            <a href="/workspace" className={ui('btn')}>{t("Về thư viện")}</a>
           </div>
         )}
 
         {/* Generic or conversion errors */}
-        {errorStatus === 410 && <div className="reader-error error-box" role="alert">
+        {errorStatus === 410 && <div className={ui('reader-error error-box')} role="alert">
           <p>{t("Nguồn đã hết hạn và không còn khả dụng. Nội dung cũ không thể mở hoặc khôi phục từ liên kết này.")}</p>
-          <a className="btn" href="/workspace">{t("Về thư viện")}</a>
+          <a className={ui('btn')} href="/workspace">{t("Về thư viện")}</a>
         </div>}
         {error && errorStatus !== 404 && errorStatus !== 403 && errorStatus !== 410 && (
-          <p role="alert" className="error-box">{errorText(error)}</p>
+          <p role="alert" className={ui('error-box')}>{errorText(error)}</p>
         )}
 
         {needsPreparation && (
-          <button className="btn" disabled={busy} onClick={prepare}>
+          <button className={ui('btn')} disabled={busy} onClick={prepare}>
             {busy ? t("Đang chuyển đổi…") : t("Chuẩn bị bản đọc")}
           </button>
         )}
 
         {/* Invalid page state */}
         {!error && data && isInvalidPage && (
-          <div className="reader-invalid-page error-box" role="alert">
+          <div className={ui('reader-invalid-page error-box')} role="alert">
             <p>{t("Trang nguồn không tồn tại trong bản đọc này (Tài liệu có") + " "}{data.page_count} {pageName.toLowerCase()}).</p>
-            <button className="btn" onClick={() => changePage(1)}>{t("Về trang 1")}</button>
+            <button className={ui('btn')} onClick={() => changePage(1)}>{t("Về trang 1")}</button>
           </div>
         )}
 
         {/* Valid reader content */}
         {!error && data && !isInvalidPage && (
           <>
-            <div className="reader-controls">
+            <div className={ui('reader-controls')}>
               <button
-                className="btn"
+                className={ui('btn')}
                 disabled={page <= 1}
                 onClick={() => changePage(page - 1)}
               >{t("Trước")}</button>
@@ -470,27 +473,27 @@ export default function Reader({
                   ))}
                 </select>
               </label>
-              <span className="reader-page-indicator">
+              <span className={ui('reader-page-indicator')}>
                 {pageName} {page}/{data.page_count}
               </span>
               <button
-                className="btn"
+                className={ui('btn')}
                 disabled={page >= data.page_count}
                 onClick={() => changePage(page + 1)}
               >{t("Sau")}</button>
-              <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn">{t("Mở bản PDF")}</a>
+              <a href={pdfUrl} target="_blank" rel="noreferrer" className={ui('btn')}>{t("Mở bản PDF")}</a>
             </div>
 
             {/* In-Document Search Bar (US04) */}
-            <div className="reader-search-bar" role="search" aria-label={t("Tìm kiếm trong tài liệu")}>
+            <div className={ui('reader-search-bar')} role="search" aria-label={t("Tìm kiếm trong tài liệu")}>
               <form
-                className="reader-search-form"
+                className={ui('reader-search-form')}
                 onSubmit={(e) => {
                   e.preventDefault();
                   executeSearch();
                 }}
               >
-                <div className="search-input-group">
+                <div className={ui('search-input-group')}>
                   <input
                     id="reader-search-input"
                     data-testid="reader-search-input"
@@ -507,14 +510,14 @@ export default function Reader({
                   />
                   <button
                     type="submit"
-                    className="btn btn-search"
+                    className={ui('btn btn-search')}
                     data-testid="reader-search-button"
                     aria-label={t("Tìm")}
                   >{t("Tìm")}</button>
                   {searchInput && (
                     <button
                       type="button"
-                      className="btn btn-clear-search"
+                      className={ui('btn btn-clear-search')}
                       data-testid="reader-search-clear"
                       onClick={clearSearch}
                       aria-label={t("Xóa tìm kiếm")}
@@ -525,13 +528,13 @@ export default function Reader({
 
               {/* Match Counter & Navigation */}
               {searchPerformed && searchMatches.length > 0 && (
-                <div className="reader-search-nav" aria-label={t("Điều hướng kết quả tìm kiếm")}>
-                  <span className="search-match-count" data-testid="search-match-count">
+                <div className={ui('reader-search-nav')} aria-label={t("Điều hướng kết quả tìm kiếm")}>
+                  <span className={ui('search-match-count')} data-testid="search-match-count">
                     {activeMatchIndex + 1}/{searchMatches.length}{" " + t("kết quả")}</span>
-                  <div className="search-nav-buttons">
+                  <div className={ui('search-nav-buttons')}>
                     <button
                       type="button"
-                      className="btn btn-nav-match prev-match-btn"
+                      className={ui('btn btn-nav-match prev-match-btn')}
                       data-testid="prev-match-btn"
                       onClick={goToPrevMatch}
                       aria-label={t("Kết quả trước")}
@@ -539,7 +542,7 @@ export default function Reader({
                     >{t("Trước")}</button>
                     <button
                       type="button"
-                      className="btn btn-nav-match next-match-btn"
+                      className={ui('btn btn-nav-match next-match-btn')}
                       data-testid="next-match-btn"
                       onClick={goToNextMatch}
                       aria-label={t("Kết quả tiếp theo")}
@@ -551,24 +554,24 @@ export default function Reader({
 
               {/* No results state */}
               {searchPerformed && searchMatches.length === 0 && (
-                <p className="search-no-results" role="status" data-testid="search-no-results">{t("Không tìm thấy kết quả phù hợp cho \"")}{searchQuery}".
+                <p className={ui('search-no-results')} role="status" data-testid="search-no-results">{t("Không tìm thấy kết quả phù hợp cho \"")}{searchQuery}".
                 </p>
               )}
             </div>
 
             {/* Fallback notice for scanned pages or unresolved evidence spans */}
             {highlightInfo.requested && highlightInfo.status === 'fallback' && (
-              <div className="highlight-fallback-notice" role="status">
-                <p className="fallback-message">{t("Exact highlight not available for this passage.")}</p>
+              <div className={ui('highlight-fallback-notice')} role="status">
+                <p className={ui('fallback-message')}>{t("Exact highlight not available for this passage.")}</p>
               </div>
             )}
 
-            {(span || pdfParams.size > 0) && hasHighlightGeometry && <p className="reader-highlight-note" role="status">{t("Kết quả được tô sáng trực tiếp trên tài liệu; vị trí đang chọn có màu cam.")}</p>}
+            {(span || pdfParams.size > 0) && hasHighlightGeometry && <p className={ui('reader-highlight-note')} role="status">{t("Kết quả được tô sáng trực tiếp trên tài liệu; vị trí đang chọn có màu cam.")}</p>}
 
-            {(span || pdfParams.size > 0) && !hasHighlightGeometry && <p role="status" className="highlight-fallback-notice">{t("Trang này chưa có đủ tọa độ chữ để tô sáng trực tiếp. Bạn vẫn có thể xem tài liệu và bản tóm tắt bên dưới.")}</p>}
+            {(span || pdfParams.size > 0) && !hasHighlightGeometry && <p role="status" className={ui('highlight-fallback-notice')}>{t("Trang này chưa có đủ tọa độ chữ để tô sáng trực tiếp. Bạn vẫn có thể xem tài liệu và bản tóm tắt bên dưới.")}</p>}
 
             <iframe
-              className="reader-pdf"
+              className={ui('reader-pdf')}
               src={pdfUrl}
               title={t("Bản đọc PDF — {0} {1}", pageName, page)}
             />

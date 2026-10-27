@@ -93,7 +93,7 @@ class LabelSuggestion(Payload):
 
 
 class AnalysisMetadata(Payload):
-    provider: Literal['gemini'] = 'gemini'
+    provider: Literal['gemini', 'groq'] = 'gemini'
     model: str
     prompt_version: str
     cache_hit: bool = False

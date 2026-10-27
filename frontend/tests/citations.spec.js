@@ -317,28 +317,13 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     );
   });
 
-  test('workspace search renders matching hits with citation badges', async ({ page }) => {
-    await page.route('**/api/search?*', route => route.fulfill({
-      json: { query: 'tài chính', total_hits: 1, hits: [searchHit()] },
-    }));
-
+  test('workspace history does not run global content search or display fabricated source citations', async ({ page }) => {
+    let calls = 0;
+    await page.route('**/api/search?*', route => { calls++; return route.abort(); });
     await page.goto('/workspace');
-    for (const summary of await page.locator('.library-disclosure > summary').all()) await summary.click();
-
-    // Fill in search input
-    const searchInput = page.getByLabel('Tìm kiếm trong tài liệu');
-    await searchInput.fill('tài chính');
-    await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).click();
-
-    // Verify search hit count and snippet
-    await expect(page.getByText('Tìm thấy 1 kết quả')).toBeVisible();
-    await expect(page.locator('.search-snippet')).toContainText('1,200,000,000 VND');
-
-    // Verify citation badge rendered in search results
-    const searchCitation = page.getByRole('link', { name: 'bao_cao_tai_chinh.pdf — trang 1', exact: true });
-    await expect(searchCitation).toBeVisible();
-    const href = await searchCitation.getAttribute('href');
-    expect(href).toContain('/documents/61?page=1');
+    await expect(page.locator('.workspace-search')).toHaveCount(0);
+    await expect(page.locator('main .citation-badge')).toHaveCount(0);
+    expect(calls).toBe(0);
   });
 
   test('citation link with return job ID displays return button in document reader', async ({ page }) => {

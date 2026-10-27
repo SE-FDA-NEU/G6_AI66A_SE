@@ -1,4 +1,8 @@
-import messages from '../locales/messages.json';
+import existingMessages from '../locales/messages.json';
+import uxMessages from '../locales/ux.json';
+import guideMessages from '../locales/guides.json';
+import historyMessages from '../locales/history.json';
+const messages = { ...Object.fromEntries([...uxMessages, ...guideMessages, ...historyMessages].map(([vi, en]) => [vi, { vi, en }])), ...existingMessages };
 
 export const LOCALE_COOKIE = 'documind_language';
 export function readLocale(cookie = '') {

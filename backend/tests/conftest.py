@@ -6,6 +6,9 @@ from pathlib import Path
 os.environ["DB_PASSWORD"] = "unused-test-value"
 os.environ["SECRET_KEY"] = "isolated-upload-validation-test-key"
 os.environ['GEMINI_API_KEY'] = ''  # tests never spend a developer's real quota
+os.environ['GROQ_API_KEY'] = ''
+os.environ['ANALYSIS_PROVIDER'] = 'gemini'
+os.environ['GROQ_FALLBACK_ENABLED'] = 'false'
 os.environ['RETENTION_CLEANUP_ENABLED'] = 'false'  # explicit cleanup tests use isolated storage
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

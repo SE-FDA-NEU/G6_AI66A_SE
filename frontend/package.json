@@ -9,7 +9,21 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui"
   },
-  "dependencies": {"next": "16.4.0", "react": "19.3.0", "react-dom": "19.3.0"},
-  "devDependencies": {"@playwright/test": "^1.58.0"},
-  "engines": {"node": ">=20.9.0"}
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "lucide-react": "^1.61.0",
+    "next": "16.4.0",
+    "postcss": "^8.5.31",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
 }

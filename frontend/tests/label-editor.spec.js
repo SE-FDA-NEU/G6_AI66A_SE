@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { user } from './helpers';
+import { openWorkspaceControls, user } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   expect((await page.request.post('/auth/login', { form: { username: user.email, password: user.password } })).status()).toBe(200);
@@ -10,6 +10,7 @@ test('real workspace confirmation at 79/80 and reader edits persist after reload
   const documents = await (await page.request.get('/api/documents')).json();
   expect(documents).toHaveLength(2);
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   for (const document of documents) {
     const row = page.locator(`[data-testid="workspace-document-row"][data-document-id="${document.id}"]`);
     const confidence = row.getByTestId('document-ai-confidence');
@@ -23,6 +24,7 @@ test('real workspace confirmation at 79/80 and reader edits persist after reload
     await expect(row.getByTestId('document-folder-placement')).toContainText('Economics 101');
   }
   await page.reload();
+  await openWorkspaceControls(page);
   await expect(page.getByTestId('document-user-label')).toHaveCount(2);
   const original = documents.find(document => document.ai_confidence === .79);
   const row = page.locator(`[data-testid="workspace-document-row"][data-document-id="${original.id}"]`);
@@ -32,6 +34,7 @@ test('real workspace confirmation at 79/80 and reader edits persist after reload
   await expect(row.getByTestId('document-user-label')).toContainText('My reviewed classification');
   await expect(row.getByTestId('document-user-decision')).toHaveText('Người dùng đã chỉnh sửa và xác nhận');
   await page.reload();
+  await openWorkspaceControls(page);
   await expect(row.getByTestId('document-user-label')).toContainText('My reviewed classification');
   await row.getByRole('link').click();
   await page.getByRole('combobox', { name: 'Chọn trang nguồn', exact: true }).selectOption('2');
@@ -44,6 +47,7 @@ test('real workspace confirmation at 79/80 and reader edits persist after reload
   await expect(metadata.getByTestId('document-user-label')).toContainText('Reader classification');
   await expect(page.getByText('Trang 2/2', { exact: true })).toBeVisible();
   await page.reload();
+  await openWorkspaceControls(page);
   await expect(metadata.getByTestId('document-user-label')).toContainText('Reader classification');
   await expect(metadata.getByTestId('document-ai-confidence')).toContainText('79%');
   await expect(metadata.getByTestId('document-folder-placement')).toHaveAttribute('data-folder-id', String(original.folder_id));
@@ -71,6 +75,7 @@ test('pending/error preserves the draft and metadata; retry saves only human fie
     return route.fulfill({ json: saved });
   });
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   const row = page.getByTestId('workspace-document-row');
   await row.getByRole('button', { name: 'Chỉnh sửa nhãn', exact: true }).click();
   const input = row.getByLabel('Nhãn người dùng', { exact: true });

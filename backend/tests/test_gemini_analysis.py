@@ -67,7 +67,7 @@ def test_one_compact_request_maps_real_source_offsets_and_metadata(document, api
     assert not request.url.params and request.headers['x-goog-api-key'] == 'test-only-secret-never-live'
     body = json.loads(request.content)
     config = body['generationConfig']
-    assert config['maxOutputTokens'] == 1024 and config['candidateCount'] == 1
+    assert config['maxOutputTokens'] == settings.GEMINI_MAX_OUTPUT_TOKENS and config['candidateCount'] == 1
     assert config['thinkingConfig'] == {'thinkingLevel': 'minimal'}
     assert config['responseFormat']['text']['mimeType'] == 'APPLICATION_JSON'
     prompt = body['contents'][0]['parts'][0]['text']
@@ -114,7 +114,7 @@ def test_cache_is_scoped_by_owner_mode_budget_and_model(document, api, monkeypat
     state['response'] = response('table')
     asyncio.run(gemini.analyze_document(document, JobMode.TABLE))
     assert len(calls) == 5
-    assert json.loads(calls[3].content)['generationConfig']['thinkingConfig'] == {'thinkingBudget': 0}
+    assert json.loads(calls[3].content)['generationConfig']['thinkingConfig'] == {'thinkingBudget': 256}
 
 
 def test_missing_key_and_textless_pages_make_no_network_calls(document, api, monkeypatch):
@@ -193,7 +193,7 @@ def test_api_errors_are_sanitized_and_do_not_retry_or_cache(document, api, statu
 
 @pytest.mark.parametrize('payload, code', [
     ({'candidates': []}, 'gemini_invalid_response'),
-    ({'promptFeedback': {'blockReason': 'SAFETY'}}, 'gemini_invalid_response'),
+    ({'promptFeedback': {'blockReason': 'SAFETY'}}, 'gemini_blocked'),
     ({'candidates': [{'finishReason': 'MAX_TOKENS'}]}, 'gemini_output_limit'),
     ({'candidates': [{'finishReason': 'SAFETY'}]}, 'gemini_blocked'),
     ({'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': 'broken JSON'}]}}]}, 'gemini_invalid_response'),
@@ -204,7 +204,7 @@ def test_blocked_truncated_or_invalid_output_is_never_a_success(document, api, p
     state['response'] = payload
     with pytest.raises(gemini.GeminiAnalysisError) as error:
         asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
-    assert error.value.code == code and len(calls) == 1
+    assert error.value.code == code and len(calls) == (1 if code == 'gemini_blocked' else 2)
     assert not list(settings.STORAGE_DIR.rglob('*.json'))
 
 
@@ -223,8 +223,71 @@ def test_oversized_bullet_wire_is_rejected_before_it_can_be_cached(document, api
     state['response'] = {'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': json.dumps(raw)}]}}]}
     with pytest.raises(gemini.GeminiAnalysisError) as error:
         asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
-    assert error.value.code == 'gemini_invalid_response' and len(calls) == 1
+    assert error.value.code == 'gemini_invalid_response' and len(calls) == 2
     assert not list(settings.STORAGE_DIR.rglob('*.json'))
+
+
+@pytest.mark.parametrize('first', ['malformed_json', 'too_many_concepts', 'word_budget'])
+def test_invalid_first_draft_is_corrected_once_and_only_valid_results_are_cached(document, api, first):
+    state, calls = api
+    mode = JobMode.CONCEPT if first == 'too_many_concepts' else JobMode.BULLET
+    async def handler(request):
+        if len(calls) > 1:
+            return httpx.Response(200, json=response(mode.value))
+        if first == 'malformed_json':
+            text = '{unfinished'
+        elif first == 'too_many_concepts':
+            text = json.dumps({'label': None, 'confidence': None, 'concepts': [
+                {'n': f'Concept {i}', 't': 'Late fee 0.05% per day.', 's': [0]} for i in range(6)]})
+        else:
+            text = json.dumps({'label': None, 'confidence': None,
+                'bullets': [{'t': 'a ' * 399, 's': [0]}] * 3, 'actions': []})
+        return httpx.Response(200, json={'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': text}]}}]})
+    state['handler'] = handler
+    result = asyncio.run(gemini.analyze_document(document, mode))
+    assert result.analysis_status == 'completed' and len(calls) == 2
+    assert list(settings.STORAGE_DIR.rglob('*.json'))
+    if mode == JobMode.CONCEPT:
+        assert len(result.output.concepts) <= 5
+        config = json.loads(calls[0].content)['generationConfig']
+        schema = config['responseFormat']['text']['schema']
+        assert schema['properties']['concepts']['maxItems'] == 5
+
+
+def test_groq_input_budget_is_independent_of_gemini_budget(monkeypatch):
+    monkeypatch.setattr(settings, 'GEMINI_MAX_INPUT_CHARS', 24000)
+    monkeypatch.setattr(settings, 'GROQ_MAX_INPUT_CHARS', 8000)
+    token = gemini._provider.set('groq')
+    try:
+        assert gemini.input_budget() == 8000
+    finally:
+        gemini._provider.reset(token)
+    assert gemini.input_budget() == 24000
+
+
+def test_many_source_topics_do_not_force_more_than_five_concepts():
+    from app.services.summary_quality import coverage_instructions, quality_issues
+    names = ['AAA', 'BBB', 'CCC', 'DDD', 'EEE', 'FFF']
+    wire = [(i, f'Method ({name})\nThis method extracts local spatial patterns from the original input data.')
+            for i, name in enumerate(names)]
+    raw = gemini.WireConcepts.model_validate({'label': None, 'confidence': None, 'concepts': [
+        {'n': name, 't': 'This method extracts local spatial patterns from the original input data.', 's': [i]}
+        for i, name in enumerate(names[:3])]})
+    assert '3-5' in coverage_instructions(wire, 'concept')
+    assert quality_issues(raw, wire, 'concept') == []
+
+
+@pytest.mark.parametrize('limitation', ['', '   '])
+def test_empty_optional_limitation_does_not_fail_an_otherwise_valid_analysis(document, api, limitation):
+    state, calls = api
+    payload = response()
+    raw = json.loads(payload['candidates'][0]['content']['parts'][0]['text'])
+    raw['limitation'] = limitation
+    payload['candidates'][0]['content']['parts'][0]['text'] = json.dumps(raw)
+    state['response'] = payload
+    result = asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
+    assert result.analysis_status == 'completed' and len(calls) == 1
+    assert result.output.limitation
 
 
 def test_inflight_gemini_request_is_cancelled_before_retry(document, api):

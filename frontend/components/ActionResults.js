@@ -1,3 +1,4 @@
+import { ui } from '../lib/ui';
 import { useI18n } from '../lib/i18n';
 import { ClaimEvidence } from './CitationBadge';
 
@@ -9,12 +10,12 @@ export function ActionResults({ actions = [], limitation, documentName, document
     ? t("Tài liệu không đủ căn cứ nguồn để hỗ trợ hai hành động đề xuất.") : null);
 
   return (
-    <section className="analysis-section analysis-actions" aria-label={t("Recommended actions")}>
+    <section className={ui('analysis-section analysis-actions')} aria-label={t("Recommended actions")}>
       <h4>{t("Recommended actions")}</h4>
-      {sourceLimitation && <p className="analysis-warning" data-testid="action-limitation">{sourceLimitation}</p>}
-      {recommendations.length > 0 && <ul className="actions-list">
+      {sourceLimitation && <p className={ui('analysis-warning')} data-testid="action-limitation">{sourceLimitation}</p>}
+      {recommendations.length > 0 && <ul className={ui('actions-list')}>
         {recommendations.map((claim, index) => (
-          <li key={index} className="action-item">
+          <li key={index} className={ui('action-item')}>
             <ClaimEvidence
               claim={claim}
               documentName={documentName}

@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@theme {
+  --color-canvas: #09090b;
+  --color-surface: #111114;
+  --color-hover: #16161a;
+  --color-line: #222226;
+  --font-sans: 'Inter Variable', Inter, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+@layer utilities {
+  @media (hover: hover) {
+    button:enabled:hover:not(:where(.workspace-sidebar *)), a.btn:hover:not(:where(.workspace-sidebar *)), summary:hover:not(:where(.workspace-sidebar *)) { @apply bg-white text-black; }
+    button.primary:enabled:hover:not(:where(.workspace-sidebar *)), a.primary:hover:not(:where(.workspace-sidebar *)) { @apply bg-canvas text-white; }
+    input[type="file"]:enabled::file-selector-button:hover { @apply bg-canvas text-white; }
+    button:enabled:hover:not(:where(.workspace-sidebar *)) *, a.btn:hover:not(:where(.workspace-sidebar *)) *, summary:hover:not(:where(.workspace-sidebar *)) * { @apply text-inherit; }
+  }
+}
+@layer base {
+  html { @apply bg-canvas text-zinc-100 font-sans antialiased scheme-dark scroll-smooth; }
+  body { @apply m-0; }
+  button, a, input, select, summary { @apply focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500; }
+  button, summary { @apply cursor-pointer transition-colors duration-150 motion-reduce:transition-none; }
+  button:disabled { @apply cursor-not-allowed opacity-40; }
+  input, select, textarea { @apply min-h-11 w-full min-w-0 border border-line bg-canvas px-3 py-2.5 text-base text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 md:text-sm; }
+  label { @apply mb-2 block text-xs font-medium text-zinc-400; }
+  h1 { @apply text-3xl font-semibold tracking-tight md:text-4xl; }
+  h2 { @apply text-xl font-medium tracking-tight; }
+  h3 { @apply text-base font-medium; }
+  p { @apply leading-relaxed; }
+  svg { @apply shrink-0; }
+  details > summary { @apply min-h-11 list-none; }
+}

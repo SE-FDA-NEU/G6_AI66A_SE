@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { user } from './helpers';
+import { openWorkspaceControls, user } from './helpers';
 
 const vietnamese = /[ăâđêôơưĂÂĐÊÔƠƯàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]/;
 
@@ -19,9 +19,10 @@ test('English applies to sign-in, persisted workspace, upload validation and ana
   await page.locator('#password').fill(user.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL('/workspace');
-  await expect(page.getByRole('heading', { name: 'Document space', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What would you like to explore?', exact: true })).toBeVisible();
   expect(await page.locator('main').innerText()).not.toMatch(vietnamese);
   await page.reload();
+  await openWorkspaceControls(page);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await page.goto('/upload');
   await expect(page.getByRole('heading', { name: 'Upload document', exact: true })).toBeVisible();
@@ -33,6 +34,7 @@ test('English applies to sign-in, persisted workspace, upload validation and ana
   await expect(page.getByTestId('analysis-mode-selector')).toContainText('Tóm tắt điểm chính');
   await expect(page.getByRole('alert').filter({ hasText: 'Chỉ chấp nhận PDF' })).toBeVisible();
   await page.reload();
+  await openWorkspaceControls(page);
   await expect(page.locator('html')).toHaveAttribute('lang', 'vi');
 });
 
@@ -91,6 +93,7 @@ test('AI labels are preserved without translation requests', async ({ page }) =>
   let calls = 0;
   await page.route('**/api/localization/**', route => { calls++; return route.abort(); });
   await page.goto('/workspace');
+  await openWorkspaceControls(page);
   await expect(page.getByTestId('document-ai-label').first()).toContainText('Education');
   await page.locator('#app-language').selectOption('en');
   await expect(page.getByTestId('document-ai-label').first()).toContainText('Education');
