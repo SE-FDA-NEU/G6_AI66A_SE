@@ -4,7 +4,7 @@ from copy import deepcopy
 import pytest
 
 from app.core.security import create_access_token
-from app.models import Document, Job
+from app.models import Citation, Document, Job
 from app.services.evidence import literal_facts
 from app.services.processing import process_job
 from app.services.reader_extraction import extract_document_for_reader
@@ -67,14 +67,19 @@ def run_claim(client, session_factory, context, claim, mode='bullet'):
 
 
 @pytest.mark.parametrize('mode', ['bullet', 'table', 'concept'])
-@pytest.mark.parametrize('state', ['valid', 'missing', 'invalid'])
+@pytest.mark.parametrize('state', [
+    pytest.param('valid', id='TC-US08-01-correct-document-page'),
+    pytest.param('missing', id='TC-US08-02-missing-evidence-unverified'),
+    pytest.param('invalid', id='TC-US08-03-invalid-page-rejected'),
+])
 def test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode(client, session_factory, evidence_job, mode, state):
-    _, ids, pages = evidence_job
+    job_id, ids, pages = evidence_job
     evidence = reference(pages, ids[0], 2, '0.05% per day')
     if state == 'invalid':
         evidence['page'] = 5  # real textless page cannot support a factual amount
     claim = {'text': '0.05% per day', 'evidence': [] if state == 'missing' else [evidence], 'unverified': False}
     actual, saved = run_claim(client, session_factory, evidence_job, claim, mode)
+    assert actual['text'] == claim['text'] == '0.05% per day'
     assert actual['kind'] == ('percentage' if state == 'valid' else 'general')
     assert actual['unverified'] == (state != 'valid')
     if state == 'valid':
@@ -84,6 +89,28 @@ def test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode(
         assert ('missing_evidence' if state == 'missing' else 'invalid_evidence') in actual['verification_issues']
         assert 'unverified_claims' in saved['result_data']['documents'][str(ids[0])]['warnings']
         assert all(citation['unverified'] and citation['page'] is None for citation in saved['citations'])
+    assert len(saved['citations']) == 1
+    citation = saved['citations'][0]
+    assert citation['document_id'] == ids[0]
+    assert citation['doc_name'] == 'first.pdf'
+    assert citation['claim_text'] == claim['text']
+    assert citation['unverified'] == (state != 'valid')
+    assert citation['page'] == (2 if state == 'valid' else None)
+    assert citation['text_span'] == (evidence['quote'] if state == 'valid' else None)
+    if state == 'valid':
+        page_response = client.get(f'/documents/{ids[0]}/pages/2/text')
+        assert page_response.status_code == 200
+        source = page_response.json()
+        assert source['document_id'] == evidence['document_id']
+        assert source['page'] == evidence['page']
+        assert source['text'][evidence['start']:evidence['end']] == evidence['quote']
+    with session_factory() as db:
+        persisted = db.query(Citation).filter_by(job_id=job_id).one()
+        assert persisted.document_id == citation['document_id']
+        assert persisted.page == citation['page']
+        assert persisted.text_span == citation['text_span']
+        assert persisted.claim_text == claim['text']
+        assert persisted.unverified == actual['unverified']
 
 
 @pytest.mark.parametrize('kind,text,page', [
