@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { user, searchHit } from './helpers';
 
 test.beforeEach(async ({ page }) => {
@@ -346,8 +347,95 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
     await page.goto('/documents/88?page=2&evidence=88-2-0-10&job=105');
 
     // Verify return button is visible and points to /results/105
-    const returnLink = page.getByRole('link', { name: 'Quay lại tác vụ #105' });
+    const returnLink = page.getByRole('link', { name: 'Về kết quả · Quay lại tác vụ #105', exact: true });
     await expect(returnLink).toBeVisible();
     await expect(returnLink).toHaveAttribute('href', '/results/105');
   });
 });
+
+test('TC-US09-14 citation jumps to the real evidence page, highlights it and returns to its originating job', async ({ page }) => {
+  const source = readFileSync(new URL('../../backend/test/fixtures/acceptance/report-15-pages.pdf', import.meta.url));
+  const uploaded = await page.request.post('/api/upload', {
+    multipart: { files: { name: 'citation-report.pdf', mimeType: 'application/pdf', buffer: source }, mode: 'bullet' },
+  });
+  expect(uploaded.status()).toBe(202);
+  const { jobId } = await uploaded.json();
+  let saved;
+  await expect.poll(async () => {
+    saved = await (await page.request.get(`/jobs/${jobId}`)).json();
+    return saved.status;
+  }).toBe('completed');
+  const documentId = saved.job_files[0].document_id;
+  const metadata = await (await page.request.get(`/api/documents/${documentId}/pages`)).json();
+  const sourcePage = metadata.pages[1];
+  expect(sourcePage.page).toBe(2);
+  expect(sourcePage.positions.length).toBeGreaterThan(0);
+  const start = sourcePage.positions[0].start;
+  const end = sourcePage.positions[Math.min(14, sourcePage.positions.length - 1)].end;
+  const quote = Array.from(sourcePage.text).slice(start, end).join('');
+  const evidence = { document_id: documentId, page: 2, start, end, quote, reader_version: metadata.reader_version };
+  const claimText = 'Fixed claim supported by the report on page 2.';
+  const job = { ...saved, result_data: { schema_version: 1, documents: {
+    [documentId]: { ...saved.result_data.documents[String(documentId)], analysis_status: 'completed',
+      output: { type: 'bullet', bullets: [{ text: claimText, unverified: false, evidence: [evidence] }], actions: [] } },
+  } } };
+  // Pin the actual highlighted response before browser navigation so the
+  // in-memory E2E database is not accessed by concurrent PDF download tasks.
+  const highlightedUrl = `/api${metadata.reader_url}&highlight_page=2&start=${start}&end=${end}`;
+  const highlighted = await page.request.get(highlightedUrl);
+  expect(highlighted.status()).toBe(200);
+  expect(highlighted.headers()['content-type']).toBe('application/pdf');
+  expect(highlighted.headers()['x-reader-version']).toBe(metadata.reader_version);
+  const highlightedBytes = await highlighted.body();
+  expect(highlightedBytes).not.toEqual(source);
+  const original = await page.request.get(`/api${metadata.reader_url}`);
+  expect(await original.body()).toEqual(source);
+  await page.route(`**/api/documents/${documentId}/reader.pdf?*`, route => route.fulfill({
+    contentType: 'application/pdf', body: highlightedBytes,
+  }));
+  await page.route(`**/api/documents/${documentId}/summary*`, route => route.fulfill({ json: { document: null } }));
+  await page.route(`**/jobs/${jobId}`, route => route.fulfill({ json: job }));
+  await page.goto(`/results/${jobId}`);
+  await expect(page.getByText(claimText, { exact: true })).toBeVisible();
+  const citation = page.locator(`.citation-badge[data-document-id="${documentId}"][data-page="2"]`).first();
+  await expect(citation).toBeVisible();
+  await expect(citation).toHaveAttribute('title', quote);
+  await expect(citation).toHaveAttribute('data-evidence-id', `${documentId}-2-${start}-${end}`);
+  await citation.click();
+  await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?page=2&start=${start}&end=${end}&evidence=.*&job=${jobId}$`));
+  await expect(page.getByRole('combobox', { name: 'Chọn trang nguồn' })).toHaveValue('2');
+  const frame = page.getByTitle('Bản đọc PDF — Trang 2');
+  await expect(frame).toBeVisible();
+  await expect(frame).toHaveAttribute('src', `/api${metadata.reader_url}&highlight_page=2&start=${start}&end=${end}#page=2`);
+  await expect(page.locator('.reader-highlight-note')).toBeVisible();
+  await expect(page.locator('.highlight-fallback-notice')).toHaveCount(0);
+  const back = page.getByRole('link', { name: `Về kết quả · Quay lại tác vụ #${jobId}`, exact: true });
+  await expect(back).toHaveAttribute('href', `/results/${jobId}`);
+  await back.click();
+  await expect(page).toHaveURL(`/results/${jobId}`);
+  await expect(page.getByText(claimText, { exact: true })).toBeVisible();
+});
+
+for (const [caseId, overrides] of [
+  ['TC-US09-15', { page: 0 }],
+  ['TC-US09-16', { start: 20, end: 10 }],
+  ['TC-US09-17', { reader_version: 'invalid' }],
+]) {
+  test(`${caseId} invalid citation is Unverified and has no navigation link`, async ({ page }) => {
+    const evidence = { document_id: 25, page: 2, start: 0, end: 12,
+      quote: '0.05 per day', reader_version: 'a'.repeat(64), ...overrides };
+    const text = 'Claim with an invalid citation.';
+    await page.route('**/jobs/109', route => route.fulfill({ json: {
+      id: 109, status: 'completed', file_count: 1, completed_count: 1,
+      job_files: [{ id: 1, document_id: 25, original_filename: 'invalid.pdf', status: 'completed' }],
+      result_data: { schema_version: 1, documents: { '25': { schema_version: 1, document_id: 25, original_filename: 'invalid.pdf', mode: 'bullet',
+        analysis_status: 'completed', reader: { page_count: 3, page_kind: 'page' },
+        output: { type: 'bullet', bullets: [{ text, unverified: false, evidence: [evidence] }], actions: [] } } } },
+    } }));
+    await page.goto('/results/109');
+    const region = page.getByRole('region', { name: 'Kết quả phân tích AI' });
+    await expect(region.getByText(text, { exact: true })).toBeVisible();
+    await expect(region.locator('.unverified-badge')).toBeVisible();
+    await expect(region.locator('.citation-badge')).toHaveCount(0);
+  });
+}

@@ -174,7 +174,7 @@ test('access-denied document state shows 403 message and library link without if
   await expect(page.locator('.reader-error').getByRole('link', { name: 'Về thư viện' })).toBeVisible();
 });
 
-test('invalid-page state displays out-of-range error and allows returning to page 1', async ({ page }) => {
+test('TC-US09-18 invalid-page state displays out-of-range error and allows returning to page 1', async ({ page }) => {
   const contract = mockContract24();
   await page.route('**/api/documents/99/pages', route => route.fulfill({ json: contract }));
   await page.route('**/api/documents/99/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
@@ -193,7 +193,7 @@ test('invalid-page state displays out-of-range error and allows returning to pag
   await expect(page.getByTitle('Bản đọc PDF — Trang 1')).toBeVisible();
 });
 
-test('precise highlighting resolves evidence passage using stored positions and avoids earlier repeated text occurrence', async ({ page }) => {
+test('TC-US09-19 precise highlighting resolves evidence passage using stored positions and avoids earlier repeated text occurrence', async ({ page }) => {
   const version = 'e'.repeat(64);
   const repeatedPhrase = 'Phí dịch vụ 0.05% mỗi ngày';
   // Occurrence 1 starts at index 18; Occurrence 2 starts at index 72
@@ -243,7 +243,7 @@ test('precise highlighting resolves evidence passage using stored positions and 
   await expect(page.locator('.highlight-fallback-notice')).toHaveCount(0);
 });
 
-test('scanned page fallback still opens the correct page and displays exact highlight not available message', async ({ page }) => {
+test('TC-US09-20 scanned page fallback still opens the correct page and displays exact highlight not available message', async ({ page }) => {
   const version = 'f'.repeat(64);
   const docData = {
     page_count: 3,
@@ -261,7 +261,7 @@ test('scanned page fallback still opens the correct page and displays exact high
   await page.route('**/api/documents/66/reader.pdf?*', route => route.fulfill({ contentType: 'application/pdf', body: pdfFixture() }));
 
   // Citation link pointing to page 2 (scanned page)
-  await page.goto('/documents/66?page=2&evidence=66-2-0-30&start=0&end=30');
+  await page.goto('/documents/66?page=2&evidence=66-2-0-30&start=0&end=30&job=105');
 
   // Reader still opens the correct page (page 2)
   await expect(page.getByText('Trang 2/3', { exact: true })).toBeVisible();
@@ -272,6 +272,13 @@ test('scanned page fallback still opens the correct page and displays exact high
   const fallbackNotice = page.locator('.highlight-fallback-notice');
   await expect(fallbackNotice).toBeVisible();
   await expect(fallbackNotice).toContainText('Không có điểm nổi bật chính xác cho đoạn văn này.');
+  await expect(page.locator('.reader-pdf')).toBeVisible();
+  await expect(page.locator('.reader-highlight-note')).toHaveCount(0);
+  await expect(page.locator('.return-job-link')).toHaveAttribute('href', '/results/105');
+  await page.reload();
+  await expect(page.getByTitle('Bản đọc PDF — Trang 2')).toBeVisible();
+  await expect(fallbackNotice).toBeVisible();
+  await expect(page.locator('.return-job-link')).toHaveAttribute('href', '/results/105');
 
   // Text layer informs that no text layer is available
   await expect(page.locator('.reader-text-layer')).toHaveCount(0);
@@ -281,7 +288,7 @@ test('scanned page fallback still opens the correct page and displays exact high
   await expect(page.getByRole('button', { name: 'Sau', exact: true })).toBeEnabled();
 });
 
-test('unresolved span fallback still opens the correct page and displays exact highlight not available message', async ({ page }) => {
+test('TC-US09-21 unresolved span fallback still opens the correct page and displays exact highlight not available message', async ({ page }) => {
   const version = 'f'.repeat(64);
   const docData = {
     page_count: 3,
@@ -319,7 +326,7 @@ test('unresolved span fallback still opens the correct page and displays exact h
   await expect(page.getByRole('region', { name: 'Bản tóm tắt đã lưu', exact: true })).toBeVisible();
 });
 
-test('originating job ID displays Về kết quả, survives reader refresh and page navigation, and returns to /results/:jobId with saved results', async ({ page }) => {
+test('TC-US09-22 originating job ID displays Về kết quả, survives reader refresh and page navigation, and returns to /results/:jobId with saved results', async ({ page }) => {
   const version = '7'.repeat(64); // Persisted reader versions are hexadecimal SHA-256 digests.
   const jobId = 105;
   const docId = 88;
@@ -368,7 +375,8 @@ test('originating job ID displays Về kết quả, survives reader refresh and 
     reader_url: `/documents/${docId}/reader.pdf?version=${version}`,
     pages: [
       { page: 1, text: 'Trang 1 nội dung' },
-      { page: 2, text: '1.500.000.000 VNĐ là giá trị hợp đồng', positions: [] },
+      { page: 2, text: '1.500.000.000 VNĐ là giá trị hợp đồng',
+        positions: [{ start: 0, end: 17, text: '1.500.000.000 VNĐ', bbox: [72, 60, 200, 75] }] },
       { page: 3, text: 'Trang 3 điều khoản bổ sung' },
     ],
   } }));
@@ -390,9 +398,11 @@ test('originating job ID displays Về kết quả, survives reader refresh and 
   // Reader opens at page 2
   await expect(page).toHaveURL(new RegExp(`/documents/${docId}.*job=${jobId}`));
   await expect(page.getByText('Trang 2/3', { exact: true })).toBeVisible();
+  await expect(page.locator('.reader-highlight-note')).toBeVisible();
+  await expect(page.locator('.reader-pdf')).toHaveAttribute('src', new RegExp('highlight_page=2&start=0&end=17#page=2$'));
 
   // "Về kết quả" link is displayed and points to /results/105
-  const backToResults = page.getByRole('link', { name: 'Về kết quả' });
+  const backToResults = page.getByRole('link', { name: 'Về kết quả · Quay lại tác vụ #105', exact: true });
   await expect(backToResults).toBeVisible();
   await expect(backToResults).toHaveAttribute('href', `/results/${jobId}`);
 
@@ -405,7 +415,7 @@ test('originating job ID displays Về kết quả, survives reader refresh and 
   // Step 3: Reader refresh retains Về kết quả button and return job ID
   await page.reload();
   await expect(page.getByText('Trang 3/3', { exact: true })).toBeVisible();
-  const backAfterReload = page.getByRole('link', { name: 'Về kết quả' });
+  const backAfterReload = page.getByRole('link', { name: 'Về kết quả · Quay lại tác vụ #105', exact: true });
   await expect(backAfterReload).toBeVisible();
   await expect(backAfterReload).toHaveAttribute('href', `/results/${jobId}`);
 

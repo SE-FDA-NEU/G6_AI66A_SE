@@ -14,6 +14,64 @@ from app.services.pdf_highlights import highlighted_pdf
 from app.services.reader_extraction import extract_document_for_reader
 from test_pdf_extraction import make_pdf
 from test_reader_extraction import keyword_reader
+from test_evidence import evidence_job, reference, run_claim
+
+
+@pytest.mark.parametrize('source_page', [pytest.param(2, id='TC-US09-01-citation-opens-exact-source')])
+def test_saved_citation_opens_matching_document_page_and_visible_highlight(
+        client, session_factory, evidence_job, source_page):
+    job_id, ids, pages = evidence_job
+    evidence = reference(pages, ids[0], source_page, '0.05% per day')
+    claim, saved = run_claim(client, session_factory, evidence_job,
+                             {'text': '0.05% per day', 'evidence': [evidence], 'unverified': False})
+    assert claim['text'] == evidence['quote']
+    assert claim['evidence'] == [evidence]
+    summary = client.get(f'/documents/{ids[0]}/summary', params={'job_id': job_id})
+    assert summary.status_code == 200
+    assert summary.json()['job_id'] == job_id
+    assert summary.json()['document'] == saved['result_data']['documents'][str(ids[0])]
+    response = client.get(f'/documents/{evidence["document_id"]}/reader.pdf', params={
+        'version': evidence['reader_version'], 'highlight_page': evidence['page'],
+        'start': evidence['start'], 'end': evidence['end'],
+    })
+    assert response.status_code == 200
+    pdf = PdfReader(BytesIO(response.content))
+    assert len(pdf.pages) == 5
+    assert evidence['quote'] in pdf.pages[source_page - 1].extract_text()
+    assert highlight_rectangles(pdf.pages[source_page - 1])
+    assert all(not highlight_rectangles(page) for index, page in enumerate(pdf.pages)
+               if index != source_page - 1)
+    with pypdfium2.PdfDocument(response.content) as rendered:
+        image = rendered[source_page - 1].render(scale=1).to_pil().convert('RGB')
+        boxes = [position['bbox'] for position in pages[ids[0]][source_page - 1]['positions']
+                 if position['start'] < evidence['end'] and position['end'] > evidence['start']]
+        crop = image.crop((int(min(box[0] for box in boxes)), int(min(box[1] for box in boxes)),
+                           int(max(box[2] for box in boxes)) + 1, int(max(box[3] for box in boxes)) + 1))
+        assert any(red > 220 and 130 < green < 245 and blue < 210
+                   for red, green, blue in (crop.getpixel((x, y))
+                                           for y in range(crop.height) for x in range(crop.width)))
+
+
+@pytest.mark.parametrize('invalid_source', [
+    pytest.param('page', id='TC-US09-02-reject-invalid-citation-page'),
+    pytest.param('document', id='TC-US09-03-reject-invalid-citation-document'),
+    pytest.param('version', id='TC-US09-04-reject-stale-citation'),
+])
+def test_invalid_citation_is_removed_from_saved_reader_summary(
+        client, session_factory, evidence_job, invalid_source):
+    job_id, ids, pages = evidence_job
+    evidence = reference(pages, ids[0], 2, '0.05% per day')
+    evidence[{'page': 'page', 'document': 'document_id', 'version': 'reader_version'}[invalid_source]] = (
+        '0' * 64 if invalid_source == 'version' else 999999)
+    actual, _ = run_claim(client, session_factory, evidence_job,
+                          {'text': '0.05% per day', 'evidence': [evidence], 'unverified': False})
+    assert actual['text'] == '0.05% per day'
+    assert actual['unverified'] is True
+    assert actual['evidence'] == []
+    assert 'invalid_evidence' in actual['verification_issues']
+    response = client.get(f'/documents/{ids[0]}/summary', params={'job_id': job_id})
+    assert response.status_code == 200
+    assert response.json()['document']['output']['bullets'][0] == actual
 
 
 def highlight_rectangles(page):
