@@ -10,6 +10,7 @@ import asyncio
 from dataclasses import replace
 import json
 import pytest
+from pydantic import ValidationError
 
 from app.core.config import settings
 from app.models import Citation, Document, FileFormat, Job, JobMode
@@ -67,8 +68,15 @@ def build_evidence(pages, doc_id, page_num, quote):
     }
 
 
-@pytest.mark.parametrize('concept_count', [3, 4, 5])
-def test_three_to_five_concepts_persisted_with_grounded_evidence(client, session_factory, concept_job, concept_count):
+@pytest.mark.parametrize('concept_count,limitation', [
+    pytest.param(2, None, id='TC-US04-10-two-concepts-generated-limitation'),
+    pytest.param(2, 'The source supports only two core concepts.', id='TC-US04-11-two-concepts-explicit-limitation'),
+    pytest.param(3, None, id='TC-US04-12-three-concepts'),
+    pytest.param(4, None, id='TC-US04-13-four-concepts'),
+    pytest.param(5, None, id='TC-US04-14-five-concepts'),
+])
+def test_three_to_five_concepts_persisted_with_grounded_evidence(
+        client, session_factory, concept_job, concept_count, limitation):
     job_id, doc_id, pages = concept_job
 
     concept_definitions = [
@@ -97,18 +105,36 @@ def test_three_to_five_concepts_persisted_with_grounded_evidence(client, session
             'output': {
                 'type': 'concept',
                 'concepts': concepts,
+                'limitation': limitation,
             },
             'label': {'ai_label': 'Macroeconomics', 'ai_confidence': 0.88},
         }
 
     process_job(job_id, session_factory, analyzer=analyzer)
 
-    saved = client.get(f'/jobs/{job_id}').json()
+    response = client.get(f'/jobs/{job_id}')
+    assert response.status_code == 200
+    saved = response.json()
     assert saved['status'] == 'completed'
     doc_result = saved['result_data']['documents'][str(doc_id)]
     assert doc_result['output']['type'] == 'concept'
     persisted_concepts = doc_result['output']['concepts']
     assert len(persisted_concepts) == concept_count
+    assert doc_result['document_id'] == doc_id
+    assert doc_result['original_filename'] == 'macro_paper.pdf'
+    assert doc_result['mode'] == 'concept'
+    assert doc_result['language'] == 'vi'
+    assert doc_result['label'] == {
+        'ai_label': 'Macroeconomics', 'ai_confidence': 0.88,
+        'confidence_level': 'high', 'review_state': 'needs_review', 'user_label': None,
+    }
+    if concept_count < 3:
+        assert doc_result['output']['limitation'] == (
+            limitation or 'Nội dung nguồn không đủ để hỗ trợ tổng quan 3-5 khái niệm cốt lõi.')
+        assert 'insufficient_concepts' in doc_result['warnings']
+    else:
+        assert doc_result['output']['limitation'] is None
+        assert 'insufficient_concepts' not in doc_result['warnings']
 
     # Verify each concept is grounded and verified
     for idx, c in enumerate(persisted_concepts):
@@ -116,7 +142,8 @@ def test_three_to_five_concepts_persisted_with_grounded_evidence(client, session
         assert c['description']['text'] == selected_concepts[idx][1]
         assert c['description']['unverified'] is False
         assert len(c['description']['evidence']) == 1
-        assert c['description']['evidence'][0]['quote'] == selected_concepts[idx][1]
+        assert c['description']['evidence'][0] == concepts[idx]['description']['evidence'][0]
+        assert c['description']['verification_issues'] == []
 
     # Verify citations in DB
     citations = saved['citations']
@@ -127,12 +154,13 @@ def test_three_to_five_concepts_persisted_with_grounded_evidence(client, session
         assert cit['doc_name'] == 'macro_paper.pdf'
 
 
-def test_more_than_five_concepts_rejected_by_shared_contract(client, session_factory, concept_job):
+@pytest.mark.parametrize('concept_count', [pytest.param(6, id='TC-US04-15-six-concepts')])
+def test_more_than_five_concepts_rejected_by_shared_contract(client, session_factory, concept_job, concept_count):
     job_id, doc_id, pages = concept_job
 
     # Attempt to submit 6 concepts (exceeding BR04 3-5 limit)
     six_concepts = []
-    for i in range(1, 7):
+    for i in range(1, concept_count + 1):
         ev = build_evidence(pages, doc_id, 1, 'Demand-pull inflation')
         six_concepts.append({
             'name': f'Concept {i}',
@@ -157,15 +185,43 @@ def test_more_than_five_concepts_rejected_by_shared_contract(client, session_fac
     assert saved['status'] == 'failed'
     assert saved['job_files'][0]['status'] == 'failed'
     assert 'invalid_result' in saved['job_files'][0]['error_message']
+    assert str(doc_id) not in saved['result_data']['documents']
+    assert saved['citations'] == []
 
     # Also directly verify schema rejects 6 concepts
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError, match='at most 5'):
         parse_analysis({
             'output': {
                 'type': 'concept',
                 'concepts': six_concepts,
             },
         })
+
+
+@pytest.mark.parametrize('concept', [
+    pytest.param({'name': '', 'description': {'text': 'Fixed description'}},
+                 id='TC-US04-16-empty-concept-name'),
+    pytest.param({'name': 'Monetary Policy'}, id='TC-US04-17-missing-description'),
+    pytest.param({'name': 'Monetary Policy', 'description': {'text': ''}},
+                 id='TC-US04-18-empty-description'),
+])
+def test_invalid_mocked_concepts_are_not_published(client, session_factory, concept_job, concept):
+    job_id, doc_id, pages = concept_job
+    fixed_output = {'output': {'type': 'concept', 'concepts': [concept]}}
+
+    async def analyzer(document, mode):
+        return fixed_output
+
+    with pytest.raises(ValidationError):
+        parse_analysis(fixed_output)
+    process_job(job_id, session_factory, analyzer=analyzer)
+    response = client.get(f'/jobs/{job_id}')
+    assert response.status_code == 200
+    saved = response.json()
+    assert saved['status'] == saved['job_files'][0]['status'] == 'failed'
+    assert 'invalid_result' in saved['job_files'][0]['error_message']
+    assert str(doc_id) not in saved['result_data']['documents']
+    assert saved['citations'] == []
 
 
 def test_short_source_returns_clear_limitation_without_inventing_concepts(client, session_factory, concept_job):
