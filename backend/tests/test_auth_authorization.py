@@ -4,6 +4,7 @@ Reuse conftest's SQLite database, temporary storage and recording queue.
 No authentication dependency is replaced: requests exercise JWT verification.
 """
 from datetime import datetime, timedelta
+import secrets
 
 import pytest
 from jose import jwt
@@ -15,7 +16,7 @@ from app.models import Document, FileFormat, Job, JobMode, JobStatus, User
 
 @pytest.fixture
 def login_user(session_factory):
-    password = ''
+    password = secrets.token_urlsafe(24)
     with session_factory() as db:
         user = db.get(User, 123)
         user.password_hash = get_password_hash(password)
