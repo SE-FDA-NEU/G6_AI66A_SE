@@ -15,7 +15,7 @@ from app.models import Document, FileFormat, Job, JobMode, JobStatus, User
 
 @pytest.fixture
 def login_user(session_factory):
-    password = 'US05-test-password'
+    password = ''
     with session_factory() as db:
         user = db.get(User, 123)
         user.password_hash = get_password_hash(password)
