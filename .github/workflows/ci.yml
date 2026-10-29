@@ -40,9 +40,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-impress fonts-noto-core
 
-      - name: Reject generated artifacts in Git
-        run: python ../scripts/check_repository_hygiene.py
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

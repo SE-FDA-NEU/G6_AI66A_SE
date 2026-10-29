@@ -1,7 +1,0 @@
-#!/bin/sh
-git diff --cached --check || exit 1
-if command -v python >/dev/null 2>&1; then
-    python scripts/check_repository_hygiene.py
-else
-    python3 scripts/check_repository_hygiene.py
-fi

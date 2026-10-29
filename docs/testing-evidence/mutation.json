@@ -1,7 +1,0 @@
-{
-  "rule": "confidence >= .8 is high",
-  "mutation": ">= changed to >",
-  "exit_code": 1,
-  "restored_byte_for_byte": true,
-  "sha256_before_and_after": "ee6f5aa1e6bc11bc6f09b03be8de9e9b5d0996a820de2ea854cf0459b316af31"
-}
