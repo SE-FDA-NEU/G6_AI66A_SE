@@ -58,7 +58,7 @@ $hygieneTemp = Join-Path ([IO.Path]::GetTempPath()) ('documind-hygiene-' + [guid
 git diff --check
 ```
 
-Actual captured results, not illustrative output:
+Actual captured results, not illustrative output. Log line endings and trailing whitespace are normalized for Git; assertion text, results and exit codes are preserved:
 
 | Run | Actual output | Exit | Full output |
 |---|---|---|---|
@@ -107,6 +107,7 @@ PR-to-commit mapping was verified against GitHub `refs/pull/*/head` using `git l
 | US08 evidence integrity | [53e992a](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/53e992a1c2ff262a9476c5ead51c4c9599e4eff0) | [#226](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/226) |
 | US09 citation reader navigation | [d340083](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/d340083c99f22e045d18f64d9607bcd803bdd1f1) | [#227](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/227) |
 | Remove tracked temporary PDFs | [ff34386](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/ff3438619c718ce6ad06abc0f0b600280d858a57) | [#231](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/231) |
-| Ignore rules, Git hooks, CI guard and guard tests | [1a9fccd](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/1a9fccd836367263a91de2659613f54a6720b769) | Handover PR linked below. |
+| Ignore rules, Git hooks, CI guard and guard tests | [1a9fccd](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/1a9fccd836367263a91de2659613f54a6720b769) | [#234](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/234) |
+| Case matrix, captured failure/pass output and agent guidance | [72f0257](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/72f0257) | [#234](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/234) |
 
-The handover branch is `chore/us04-us08-us09-test-handover`, based on `215_Extend_citation_to_reader_navigation_tests` (the head of PR #231). Its draft PR is stacked on that branch to keep this review limited to hygiene and evidence.
+The handover branch is `chore/us04-us08-us09-test-handover`, based on `215_Extend_citation_to_reader_navigation_tests` (the head of PR #231). [Draft PR #234](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/234) is stacked on that branch to keep this review limited to hygiene and evidence. No PR was merged as part of this handover.
