@@ -26,7 +26,12 @@ build/
 
 # Python
 __pycache__/
-.tmp-us04-tests/
+.tmp*/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
 *.py[cod]
 *$py.class
 venv/
