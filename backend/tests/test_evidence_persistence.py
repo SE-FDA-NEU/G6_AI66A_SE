@@ -61,11 +61,16 @@ def build_evidence(pages, document_id, page=1, quote=None):
     }
 
 
-def test_two_documents_supporting_one_bullet_claim_persist_distinct_citations(client, session_factory, multi_doc_job):
+@pytest.mark.parametrize('second_page', [
+    pytest.param(1, id='TC-US08-04-same-claim-two-documents'),
+    pytest.param(3, id='TC-US08-05-same-claim-distinct-document-pages'),
+])
+def test_two_documents_supporting_one_bullet_claim_persist_distinct_citations(
+        client, session_factory, multi_doc_job, second_page):
     job_id, (doc1_id, doc2_id), pages = multi_doc_job
 
     ev1 = build_evidence(pages, doc1_id, page=1, quote='0.05% per day')
-    ev2 = build_evidence(pages, doc2_id, page=1, quote='0.05% per day')
+    ev2 = build_evidence(pages, doc2_id, page=second_page, quote='0.05% per day')
 
     claim = {
         'text': 'Late fee is 0.05% per day.',
@@ -95,7 +100,7 @@ def test_two_documents_supporting_one_bullet_claim_persist_distinct_citations(cl
     assert doc_names == {'doc1.pdf', 'doc2.pdf'}
     assert all(c['claim_text'] == 'Late fee is 0.05% per day.' for c in citations)
     assert all(not c['unverified'] for c in citations)
-    assert all(c['page'] == 1 for c in citations)
+    assert {(c['document_id'], c['page']) for c in citations} == {(doc1_id, 1), (doc2_id, second_page)}
     assert all(c['text_span'] == '0.05% per day' for c in citations)
 
     # 2. Verify direct Database persistence
@@ -105,14 +110,93 @@ def test_two_documents_supporting_one_bullet_claim_persist_distinct_citations(cl
         assert {c.document_id for c in db_citations} == {doc1_id, doc2_id}
         assert {c.doc_name for c in db_citations} == {'doc1.pdf', 'doc2.pdf'}
         assert all(c.claim_text == 'Late fee is 0.05% per day.' for c in db_citations)
+        assert len({c.id for c in db_citations}) == 2
+        assert {(c.document_id, c.page, c.text_span, c.unverified) for c in db_citations} == {
+            (doc1_id, 1, '0.05% per day', False),
+            (doc2_id, second_page, '0.05% per day', False),
+        }
+        assert db.get(Job, job_id).result_data == saved['result_data']
 
     # 3. Verify retrievable evidence in result_data
     doc1_result = saved['result_data']['documents'][str(doc1_id)]
     bullets = doc1_result['output']['bullets']
     assert len(bullets) == 1
-    assert len(bullets[0]['evidence']) == 2
-    assert bullets[0]['evidence'][0]['document_id'] == doc1_id
-    assert bullets[0]['evidence'][1]['document_id'] == doc2_id
+    assert bullets[0]['text'] == claim['text']
+    assert bullets[0]['unverified'] is False
+    assert bullets[0]['verification_issues'] == []
+    assert bullets[0]['evidence'] == [ev1, ev2]
+    for evidence in bullets[0]['evidence']:
+        source = client.get(f'/documents/{evidence["document_id"]}/pages')
+        assert source.status_code == 200
+        metadata = source.json()
+        assert metadata['reader_version'] == evidence['reader_version']
+        page = metadata['pages'][evidence['page'] - 1]
+        assert page['page'] == evidence['page']
+        assert page['text'][evidence['start']:evidence['end']] == evidence['quote']
+    assert client.get(f'/jobs/{job_id}').json() == saved
+
+
+@pytest.mark.parametrize('source_state', [
+    pytest.param('missing', id='TC-US08-06-persist-missing-source-unverified'),
+    pytest.param('unknown_document', id='TC-US08-07-reject-nonexistent-source-document'),
+    pytest.param('wrong_page', id='TC-US08-08-reject-source-page-with-different-text'),
+    pytest.param('wrong_quote', id='TC-US08-09-reject-mismatched-source-quote'),
+    pytest.param('wrong_version', id='TC-US08-10-reject-stale-reader-source'),
+    pytest.param('mixed', id='TC-US08-11-preserve-valid-source-reject-invalid-source'),
+])
+def test_unverified_claim_persists_without_invalid_source_links(
+        client, session_factory, multi_doc_job, source_state):
+    job_id, (doc1_id, doc2_id), pages = multi_doc_job
+    valid = build_evidence(pages, doc2_id, page=3, quote='0.05% per day')
+    invalid = deepcopy(valid)
+    if source_state in ('unknown_document', 'mixed'):
+        invalid['document_id'] = 999999
+    elif source_state == 'wrong_page':
+        invalid['page'] = 2
+    elif source_state == 'wrong_quote':
+        invalid['quote'] = 'X' * len(invalid['quote'])
+    elif source_state == 'wrong_version':
+        invalid['reader_version'] = '0' * 64
+    evidence = [] if source_state == 'missing' else [invalid]
+    if source_state == 'mixed':
+        evidence.append(valid)
+    claim = {'text': 'Late fee is 0.05% per day.', 'evidence': evidence, 'unverified': False}
+
+    async def analyzer(document, mode):
+        return {'output': {'type': 'bullet', 'bullets': [claim] if document.id == doc1_id else []}}
+
+    process_job(job_id, session_factory, analyzer=analyzer)
+    response = client.get(f'/jobs/{job_id}')
+    assert response.status_code == 200
+    saved = response.json()
+    assert saved['status'] == 'completed'
+    assert saved['completed_count'] == 2
+    result = saved['result_data']['documents'][str(doc1_id)]
+    actual = result['output']['bullets'][0]
+    assert actual['text'] == claim['text']
+    assert actual['unverified'] is True
+    assert actual['evidence'] == ([valid] if source_state == 'mixed' else [])
+    expected_issues = (['missing_evidence'] if source_state == 'missing' else
+                       ['invalid_evidence'] if source_state == 'mixed' else
+                       ['invalid_evidence', 'missing_evidence'])
+    assert actual['verification_issues'] == expected_issues
+    assert 'unverified_claims' in result['warnings']
+    # With no accepted source, the citation belongs to the result document
+    # and has no page/span; it must not imply a validated source link.
+    expected_source = ((doc2_id, 'doc2.pdf', 3, valid['quote']) if source_state == 'mixed' else
+                       (doc1_id, 'doc1.pdf', None, None))
+    assert len(saved['citations']) == 1
+    citation = saved['citations'][0]
+    assert (citation['document_id'], citation['doc_name'], citation['page'], citation['text_span']) == expected_source
+    assert citation['claim_text'] == claim['text']
+    assert citation['unverified'] is True
+    with session_factory() as db:
+        persisted = db.query(Citation).filter_by(job_id=job_id).one()
+        assert (persisted.document_id, persisted.doc_name, persisted.page, persisted.text_span) == expected_source
+        assert persisted.claim_text == claim['text']
+        assert persisted.unverified is True
+        assert db.get(Job, job_id).result_data['documents'][str(doc1_id)] == result
+    assert client.get(f'/jobs/{job_id}').json() == saved
 
 
 def test_two_documents_supporting_table_cell_persist_distinct_citations(client, session_factory, multi_doc_job):

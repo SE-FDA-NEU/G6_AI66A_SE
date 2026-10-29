@@ -11,14 +11,92 @@ Verifies:
 """
 from datetime import datetime, timedelta
 from pathlib import Path
+from io import BytesIO
 
 import pytest
 from docx import Document as WordDocument
 from pptx import Presentation
+from pypdf import PdfReader
 
 from app.core.security import create_access_token
 from app.models import Document, FileFormat
+from app.services.reader_extraction import extract_document_for_reader
 from test_pdf_extraction import make_pdf
+
+
+@pytest.mark.parametrize('endpoint', ['file', 'rendered-file'])
+@pytest.mark.parametrize('page', [
+    pytest.param(1, id='TC-US09-05-first-citation-page'),
+    pytest.param(3, id='TC-US09-06-last-citation-page'),
+])
+def test_citation_page_selects_readable_original_without_changing_source(
+        client, session_factory, test_files, endpoint, page):
+    source = test_files[FileFormat.PDF]
+    doc_id = create_document(session_factory, 123, source, FileFormat.PDF)
+    response = client.get(f'/documents/{doc_id}/{endpoint}', params={'page': page})
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/pdf'
+    assert response.headers['x-initial-page'] == str(page)
+    assert response.headers['x-page-count'] == '3'
+    assert response.content == source.read_bytes()
+    assert PdfReader(BytesIO(response.content)).pages[page - 1].extract_text().strip() == f'Page {page} text'
+
+
+@pytest.mark.parametrize('endpoint', ['file', 'rendered-file'])
+@pytest.mark.parametrize('page,detail', [
+    pytest.param('0', 'Page must be greater than or equal to 1', id='TC-US09-07-page-zero'),
+    pytest.param('-1', 'Page must be greater than or equal to 1', id='TC-US09-08-negative-page'),
+    pytest.param('4', 'Page outside document', id='TC-US09-09-page-past-last'),
+    pytest.param('invalid', None, id='TC-US09-10-nonnumeric-page'),
+    pytest.param('1.5', None, id='TC-US09-11-fractional-page'),
+])
+def test_invalid_citation_page_is_rejected_without_serving_file(
+        client, session_factory, test_files, endpoint, page, detail):
+    source = test_files[FileFormat.PDF]
+    doc_id = create_document(session_factory, 123, source, FileFormat.PDF)
+    response = client.get(f'/documents/{doc_id}/{endpoint}', params={'page': page})
+    assert response.status_code == 422
+    assert response.headers['content-type'] == 'application/json'
+    assert str(source) not in response.text
+    assert 'x-initial-page' not in response.headers
+    if detail:
+        assert response.json()['detail'] == detail
+    else:
+        assert any(error['loc'] == ['query', 'page'] for error in response.json()['detail'])
+
+
+@pytest.mark.parametrize('content', [
+    pytest.param(b'q 100 0 0 100 72 600 cm /Im0 Do Q', id='TC-US09-12-image-only-page-readable'),
+    pytest.param(b'', id='TC-US09-13-blank-page-readable'),
+])
+def test_textless_page_remains_readable_but_cannot_accept_citation_span(
+        client, session_factory, tmp_path, content):
+    source = make_pdf(tmp_path / 'textless.pdf', [
+        b'BT /F1 12 Tf 72 720 Td (Text on first page) Tj ET', content,
+    ])
+    doc_id = create_document(session_factory, 123, source, FileFormat.PDF, page_count=2)
+    extract_document_for_reader(doc_id, session_factory)
+    response = client.get(f'/documents/{doc_id}/pages')
+    assert response.status_code == 200
+    metadata = response.json()
+    assert metadata['pages'][1]['page'] == 2
+    assert metadata['pages'][1]['text'] == ''
+    assert metadata['pages'][1]['positions'] == []
+    for endpoint in ('file', 'rendered-file'):
+        readable = client.get(f'/documents/{doc_id}/{endpoint}', params={'page': 2})
+        assert readable.status_code == 200
+        assert readable.headers['x-initial-page'] == '2'
+        assert readable.content == source.read_bytes()
+        pdf = PdfReader(BytesIO(readable.content))
+        assert len(pdf.pages) == 2 and pdf.pages[1].extract_text() == ''
+        if content:
+            assert len(pdf.pages[1].images) == 1
+    # Textless pages are valid source pages; invented text spans are not.
+    invalid = client.get(f'/documents/{doc_id}/reader.pdf', params={
+        'version': metadata['reader_version'], 'highlight_page': 2, 'start': 0, 'end': 1,
+    })
+    assert invalid.status_code == 422
+    assert invalid.json()['detail'] == 'Highlight span is outside the page text.'
 
 
 @pytest.fixture
