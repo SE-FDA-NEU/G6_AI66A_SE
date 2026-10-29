@@ -1,0 +1,2 @@
+# Keep PDF fixtures byte-for-byte identical across Windows and Linux checkouts.
+*.pdf binary

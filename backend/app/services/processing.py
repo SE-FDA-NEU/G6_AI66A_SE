@@ -18,6 +18,7 @@ from pydantic import ValidationError
 logger = logging.getLogger(__name__)
 MAX_ATTEMPTS = 3
 BULLET_TARGET_SECONDS = 180
+TABLE_TARGET_SECONDS = 300
 
 
 def document_timeout(page_count):
@@ -61,6 +62,14 @@ async def _process_job(job_id, session_factory, processor, analyzer):
         job.finished_at = None
         db.commit()
 
+        # Table mode has one budget for the entire batch, including queue time
+        # and retries. Per-document timeouts still cap each individual attempt.
+        loop = asyncio.get_running_loop()
+        batch_deadline = None
+        if job.mode == JobMode.TABLE:
+            queued_for = max(0, (utcnow() - job.created_at).total_seconds())
+            batch_deadline = loop.time() + TABLE_TARGET_SECONDS - queued_for
+
         for file in job.job_files:
             if file.status in (JobStatus.COMPLETED, JobStatus.FAILED):
                 continue
@@ -76,10 +85,12 @@ async def _process_job(job_id, session_factory, processor, analyzer):
             timeout = document_timeout(document.page_count)
             file.timeout_seconds = timeout
             loop = asyncio.get_running_loop()
-            deadline = None
+            deadline = batch_deadline
+            target_error = f'Contract batch processing exceeded the {TABLE_TARGET_SECONDS}-second target.'
             if job.mode == JobMode.BULLET and source.file_format == FileFormat.PDF:
                 queued_for = max(0, (utcnow() - job.created_at).total_seconds())
                 deadline = loop.time() + BULLET_TARGET_SECONDS - queued_for
+                target_error = f'Bullet processing exceeded the {BULLET_TARGET_SECONDS}-second target.'
 
             def remaining_budget(seconds):
                 return min(seconds, deadline - loop.time()) if deadline is not None else seconds
@@ -144,7 +155,7 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                     db.rollback()
                     if deadline is not None and loop.time() >= deadline:
                         file.status = JobStatus.FAILED
-                        file.error_message = f'Bullet processing exceeded the {BULLET_TARGET_SECONDS}-second target.'
+                        file.error_message = target_error
                         db.commit()
                         break
                     file.status = JobStatus.TIMED_OUT
