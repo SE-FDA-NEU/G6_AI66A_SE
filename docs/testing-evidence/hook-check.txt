@@ -1,0 +1,28 @@
+$ sh .githooks/pre-push (stdin local revision: bf111d8)
+Generated artifacts must not be committed:
+.tmp-us04-tests/test_confidence_threshold_valu0/metadata_test.pdf
+.tmp-us04-tests/test_confidence_threshold_valu0/uploads/123/bc942fdd23f446718b84189d508a25db/.reader/1/4fc1791fa9b82632f76bda820aa4e80501710b43613c186b52ca452624844cbe.pdf
+.tmp-us04-tests/test_confidence_threshold_valu0/uploads/123/bc942fdd23f446718b84189d508a25db/0de1fbe3466a4dc0a45ec9412dd75697.pdf
+.tmp-us04-tests/test_confidence_threshold_valu1/metadata_test.pdf
+.tmp-us04-tests/test_confidence_threshold_valu1/uploads/123/af0e30613fb34b56b8a2961f6ada7c5b/.reader/1/4fc1791fa9b82632f76bda820aa4e80501710b43613c186b52ca452624844cbe.pdf
+.tmp-us04-tests/test_confidence_threshold_valu1/uploads/123/af0e30613fb34b56b8a2961f6ada7c5b/e45fe0f4f73443adb45de859c20150f7.pdf
+.tmp-us04-tests/test_confidence_threshold_valu2/metadata_test.pdf
+.tmp-us04-tests/test_confidence_threshold_valu2/uploads/123/b7bd34c7fc1a44cb88cf3bc88f856924/.reader/1/4fc1791fa9b82632f76bda820aa4e80501710b43613c186b52ca452624844cbe.pdf
+.tmp-us04-tests/test_confidence_threshold_valu2/uploads/123/b7bd34c7fc1a44cb88cf3bc88f856924/2982c8cfe0de4264818290f750746d7d.pdf
+.tmp-us04-tests/test_confidence_threshold_valu3/metadata_test.pdf
+.tmp-us04-tests/test_confidence_threshold_valu3/uploads/123/1a0a2082aded4760bc734c35ef022b26/.reader/1/4fc1791fa9b82632f76bda820aa4e80501710b43613c186b52ca452624844cbe.pdf
+.tmp-us04-tests/test_confidence_threshold_valu3/uploads/123/1a0a2082aded4760bc734c35ef022b26/aa098c5f90ec4ec2ae4fbbc0b3254a8f.pdf
+.tmp-us04-tests/test_confidence_threshold_valu4/metadata_test.pdf
+.tmp-us04-tests/test_confidence_threshold_valu4/uploads/123/c40d3dff8067401da95cec11260638aa/.reader/1/4fc1791fa9b82632f76bda820aa4e80501710b43613c186b52ca452624844cbe.pdf
+.tmp-us04-tests/test_confidence_threshold_valu4/uploads/123/c40d3dff8067401da95cec11260638aa/fc4484d8045b441e8a966be8ae83942b.pdf
+.tmp-us04-tests/test_confidence_threshold_valu5/metadata_test.pdf
+.tmp-us04-tests/test_confidence_threshold_valu5/uploads/123/396a0221e7dc43bfa353afae9851d753/c69c5f3897de47b087ab234861f2221c.pdf
+.tmp-us04-tests/test_reader_pages_exposes_meta0/.reader/1/4fc1791fa9b82632f76bda820aa4e80501710b43613c186b52ca452624844cbe.pdf
+.tmp-us04-tests/test_reader_pages_exposes_meta0/.reader/2/4fc1791fa9b82632f76bda820aa4e80501710b43613c186b52ca452624844cbe.pdf
+.tmp-us04-tests/test_reader_pages_exposes_meta0/metadata_test.pdf
+Unstage/untrack these files and keep runtime output outside source folders.
+Exit code: 1
+
+$ sh .githooks/pre-push (stdin local revision: HEAD)
+Repository hygiene: no generated test artifacts tracked.
+Exit code: 0

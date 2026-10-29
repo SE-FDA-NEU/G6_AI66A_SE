@@ -1,0 +1,983 @@
+[
+  {
+    "case_id": "TC-US04-01",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-01-below-80]",
+    "parameters": {
+      "assigned_folder": false,
+      "review_state": "confirmed",
+      "confidence": 0.79,
+      "confidence_level": "low"
+    }
+  },
+  {
+    "case_id": "TC-US04-02",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-02-at-80]",
+    "parameters": {
+      "assigned_folder": false,
+      "review_state": "confirmed",
+      "confidence": 0.8,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-03",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-03-above-80]",
+    "parameters": {
+      "assigned_folder": false,
+      "review_state": "confirmed",
+      "confidence": 0.81,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-01",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-01-below-80]",
+    "parameters": {
+      "assigned_folder": false,
+      "review_state": "needs_review",
+      "confidence": 0.79,
+      "confidence_level": "low"
+    }
+  },
+  {
+    "case_id": "TC-US04-02",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-02-at-80]",
+    "parameters": {
+      "assigned_folder": false,
+      "review_state": "needs_review",
+      "confidence": 0.8,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-03",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-03-above-80]",
+    "parameters": {
+      "assigned_folder": false,
+      "review_state": "needs_review",
+      "confidence": 0.81,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-01",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-01-below-80]",
+    "parameters": {
+      "assigned_folder": true,
+      "review_state": "confirmed",
+      "confidence": 0.79,
+      "confidence_level": "low"
+    }
+  },
+  {
+    "case_id": "TC-US04-02",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-02-at-80]",
+    "parameters": {
+      "assigned_folder": true,
+      "review_state": "confirmed",
+      "confidence": 0.8,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-03",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-03-above-80]",
+    "parameters": {
+      "assigned_folder": true,
+      "review_state": "confirmed",
+      "confidence": 0.81,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-01",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-01-below-80]",
+    "parameters": {
+      "assigned_folder": true,
+      "review_state": "needs_review",
+      "confidence": 0.79,
+      "confidence_level": "low"
+    }
+  },
+  {
+    "case_id": "TC-US04-02",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-02-at-80]",
+    "parameters": {
+      "assigned_folder": true,
+      "review_state": "needs_review",
+      "confidence": 0.8,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-03",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-03-above-80]",
+    "parameters": {
+      "assigned_folder": true,
+      "review_state": "needs_review",
+      "confidence": 0.81,
+      "confidence_level": "high"
+    }
+  },
+  {
+    "case_id": "TC-US04-04",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-04-empty-label]",
+    "parameters": {
+      "label": {
+        "ai_label": "",
+        "ai_confidence": 0.8
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-05",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-05-long-label]",
+    "parameters": {
+      "label": {
+        "ai_label": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "ai_confidence": 0.8
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-06",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-06-missing-confidence]",
+    "parameters": {
+      "label": {
+        "ai_label": "Fixed AI label"
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-07",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-07-missing-label]",
+    "parameters": {
+      "label": {
+        "ai_confidence": 0.8
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-08",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-08-negative-confidence]",
+    "parameters": {
+      "label": {
+        "ai_label": "Fixed AI label",
+        "ai_confidence": -0.01
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-09",
+    "nodeid": "backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-09-confidence-over-100]",
+    "parameters": {
+      "label": {
+        "ai_label": "Fixed AI label",
+        "ai_confidence": 1.01
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-10",
+    "nodeid": "backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-10-two-concepts-generated-limitation]",
+    "parameters": {
+      "concept_count": 2,
+      "limitation": null
+    }
+  },
+  {
+    "case_id": "TC-US04-11",
+    "nodeid": "backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-11-two-concepts-explicit-limitation]",
+    "parameters": {
+      "concept_count": 2,
+      "limitation": "The source supports only two core concepts."
+    }
+  },
+  {
+    "case_id": "TC-US04-12",
+    "nodeid": "backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-12-three-concepts]",
+    "parameters": {
+      "concept_count": 3,
+      "limitation": null
+    }
+  },
+  {
+    "case_id": "TC-US04-13",
+    "nodeid": "backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-13-four-concepts]",
+    "parameters": {
+      "concept_count": 4,
+      "limitation": null
+    }
+  },
+  {
+    "case_id": "TC-US04-14",
+    "nodeid": "backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-14-five-concepts]",
+    "parameters": {
+      "concept_count": 5,
+      "limitation": null
+    }
+  },
+  {
+    "case_id": "TC-US04-15",
+    "nodeid": "backend/tests/test_concept_processing.py::test_more_than_five_concepts_rejected_by_shared_contract[TC-US04-15-six-concepts]",
+    "parameters": {
+      "concept_count": 6
+    }
+  },
+  {
+    "case_id": "TC-US04-16",
+    "nodeid": "backend/tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-16-empty-concept-name]",
+    "parameters": {
+      "concept": {
+        "name": "",
+        "description": {
+          "text": "Fixed description"
+        }
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-17",
+    "nodeid": "backend/tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-17-missing-description]",
+    "parameters": {
+      "concept": {
+        "name": "Monetary Policy"
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-18",
+    "nodeid": "backend/tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-18-empty-description]",
+    "parameters": {
+      "concept": {
+        "name": "Monetary Policy",
+        "description": {
+          "text": ""
+        }
+      }
+    }
+  },
+  {
+    "case_id": "TC-US04-19",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-19-known-page-keyword]",
+    "parameters": {
+      "query": "keyword",
+      "page_number": 2,
+      "spans": [
+        [
+          7,
+          14
+        ],
+        [
+          15,
+          22
+        ]
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-20",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-20-first-page-first-character]",
+    "parameters": {
+      "query": "Alpha",
+      "page_number": 1,
+      "spans": [
+        [
+          0,
+          5
+        ]
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-21",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-21-last-page-last-character]",
+    "parameters": {
+      "query": "Omega",
+      "page_number": 3,
+      "spans": [
+        [
+          10,
+          15
+        ]
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-22",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_search_no_match_is_a_valid_empty_result[TC-US04-22-no-matches]",
+    "parameters": {
+      "query": "absentword"
+    }
+  },
+  {
+    "case_id": "TC-US04-23",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-23-missing-query]",
+    "parameters": {
+      "params": {},
+      "error_location": [
+        "query",
+        "q"
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-24",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-24-empty-query]",
+    "parameters": {
+      "params": {
+        "q": ""
+      },
+      "error_location": [
+        "query",
+        "q"
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-25",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-25-overlong-query]",
+    "parameters": {
+      "params": {
+        "q": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "error_location": [
+        "query",
+        "q"
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-26",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-26-whitespace-query]",
+    "parameters": {
+      "params": {
+        "q": " \t\n"
+      },
+      "error_location": null
+    }
+  },
+  {
+    "case_id": "TC-US04-27",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-27-punctuation-query]",
+    "parameters": {
+      "params": {
+        "q": "!!!"
+      },
+      "error_location": null
+    }
+  },
+  {
+    "case_id": "TC-US04-28",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-28-first-page-text]",
+    "parameters": {
+      "page_number": 1,
+      "expected_text": "Alpha first page."
+    }
+  },
+  {
+    "case_id": "TC-US04-29",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-29-middle-page-text]",
+    "parameters": {
+      "page_number": 2,
+      "expected_text": "Middle keyword keyword."
+    }
+  },
+  {
+    "case_id": "TC-US04-30",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-30-last-page-text]",
+    "parameters": {
+      "page_number": 3,
+      "expected_text": "Last page Omega"
+    }
+  },
+  {
+    "case_id": "TC-US04-31",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-31-page-zero]",
+    "parameters": {
+      "page_input": "0",
+      "status": 404,
+      "detail": "Page not found"
+    }
+  },
+  {
+    "case_id": "TC-US04-32",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-32-negative-page]",
+    "parameters": {
+      "page_input": "-1",
+      "status": 404,
+      "detail": "Page not found"
+    }
+  },
+  {
+    "case_id": "TC-US04-33",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-33-one-past-last-page]",
+    "parameters": {
+      "page_input": "4",
+      "status": 404,
+      "detail": "Page not found"
+    }
+  },
+  {
+    "case_id": "TC-US04-34",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-34-nonnumeric-page]",
+    "parameters": {
+      "page_input": "invalid",
+      "status": 422,
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US04-35",
+    "nodeid": "backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-35-fractional-page]",
+    "parameters": {
+      "page_input": "1.5",
+      "status": 422,
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US09-01",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_saved_citation_opens_matching_document_page_and_visible_highlight[TC-US09-01-citation-opens-exact-source]",
+    "parameters": {
+      "source_page": 2
+    }
+  },
+  {
+    "case_id": "TC-US09-02",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-02-reject-invalid-citation-page]",
+    "parameters": {
+      "invalid_source": "page"
+    }
+  },
+  {
+    "case_id": "TC-US09-03",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-03-reject-invalid-citation-document]",
+    "parameters": {
+      "invalid_source": "document"
+    }
+  },
+  {
+    "case_id": "TC-US09-04",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-04-reject-stale-citation]",
+    "parameters": {
+      "invalid_source": "version"
+    }
+  },
+  {
+    "case_id": "TC-US04-36",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-36-known-page-repeated-highlight]",
+    "parameters": {
+      "page_number": 2,
+      "query": "KEYWORD",
+      "spans": [
+        [
+          7,
+          14
+        ],
+        [
+          15,
+          22
+        ]
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-37",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-37-first-page-highlight]",
+    "parameters": {
+      "page_number": 1,
+      "query": "Alpha",
+      "spans": [
+        [
+          0,
+          5
+        ]
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-38",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-38-last-page-highlight]",
+    "parameters": {
+      "page_number": 3,
+      "query": "Omega",
+      "spans": [
+        [
+          10,
+          15
+        ]
+      ]
+    }
+  },
+  {
+    "case_id": "TC-US04-39",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_valid_query_without_highlights_returns_readable_pdf[TC-US04-39-highlight-no-match]",
+    "parameters": {
+      "query": "absentword"
+    }
+  },
+  {
+    "case_id": "TC-US04-40",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_valid_query_without_highlights_returns_readable_pdf[TC-US04-40-empty-highlight-query-clears-marks]",
+    "parameters": {
+      "query": ""
+    }
+  },
+  {
+    "case_id": "TC-US04-55",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_exact_match_span_accepts_first_and_last_character_boundaries[TC-US04-55-valid-span-starts-at-zero]",
+    "parameters": {
+      "page_number": 1,
+      "start": 0,
+      "end": 5,
+      "query": "Alpha"
+    }
+  },
+  {
+    "case_id": "TC-US04-56",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_exact_match_span_accepts_first_and_last_character_boundaries[TC-US04-56-valid-span-ends-at-text-length]",
+    "parameters": {
+      "page_number": 3,
+      "start": 10,
+      "end": 15,
+      "query": "Omega"
+    }
+  },
+  {
+    "case_id": "TC-US04-41",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-41-overlong-highlight-query]",
+    "parameters": {
+      "params": {
+        "highlight_page": 2,
+        "q": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "error_field": "q",
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US04-42",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-42-highlight-page-zero]",
+    "parameters": {
+      "params": {
+        "highlight_page": 0,
+        "q": "keyword"
+      },
+      "error_field": "highlight_page",
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US04-43",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-43-highlight-negative-page]",
+    "parameters": {
+      "params": {
+        "highlight_page": -1,
+        "q": "keyword"
+      },
+      "error_field": "highlight_page",
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US04-44",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-44-highlight-one-past-last-page]",
+    "parameters": {
+      "params": {
+        "highlight_page": 4,
+        "q": "keyword"
+      },
+      "error_field": null,
+      "detail": "Highlight page is outside the document."
+    }
+  },
+  {
+    "case_id": "TC-US04-45",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-45-highlight-nonnumeric-page]",
+    "parameters": {
+      "params": {
+        "highlight_page": "invalid",
+        "q": "keyword"
+      },
+      "error_field": "highlight_page",
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US04-46",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-46-highlight-fractional-page]",
+    "parameters": {
+      "params": {
+        "highlight_page": "1.5",
+        "q": "keyword"
+      },
+      "error_field": "highlight_page",
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US04-47",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-47-highlight-missing-page]",
+    "parameters": {
+      "params": {
+        "q": "keyword"
+      },
+      "error_field": null,
+      "detail": "A highlight page is required."
+    }
+  },
+  {
+    "case_id": "TC-US04-48",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-48-negative-match-start]",
+    "parameters": {
+      "params": {
+        "highlight_page": 1,
+        "start": -1,
+        "end": 5
+      },
+      "error_field": "start",
+      "detail": null
+    }
+  },
+  {
+    "case_id": "TC-US04-49",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-49-match-end-past-text]",
+    "parameters": {
+      "params": {
+        "highlight_page": 3,
+        "start": 10,
+        "end": 16
+      },
+      "error_field": null,
+      "detail": "Highlight span is outside the page text."
+    }
+  },
+  {
+    "case_id": "TC-US04-50",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-50-match-start-at-text-end]",
+    "parameters": {
+      "params": {
+        "highlight_page": 3,
+        "start": 15,
+        "end": 16
+      },
+      "error_field": null,
+      "detail": "Highlight span is outside the page text."
+    }
+  },
+  {
+    "case_id": "TC-US04-51",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-51-empty-match-span]",
+    "parameters": {
+      "params": {
+        "highlight_page": 2,
+        "start": 7,
+        "end": 7
+      },
+      "error_field": null,
+      "detail": "Highlight span is outside the page text."
+    }
+  },
+  {
+    "case_id": "TC-US04-52",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-52-reversed-match-span]",
+    "parameters": {
+      "params": {
+        "highlight_page": 2,
+        "start": 14,
+        "end": 7
+      },
+      "error_field": null,
+      "detail": "Highlight span is outside the page text."
+    }
+  },
+  {
+    "case_id": "TC-US04-53",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-53-missing-match-end]",
+    "parameters": {
+      "params": {
+        "highlight_page": 2,
+        "start": 7
+      },
+      "error_field": null,
+      "detail": "Highlight span is outside the page text."
+    }
+  },
+  {
+    "case_id": "TC-US04-54",
+    "nodeid": "backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-54-missing-match-start]",
+    "parameters": {
+      "params": {
+        "highlight_page": 2,
+        "end": 14
+      },
+      "error_field": null,
+      "detail": "Highlight requires both start and end."
+    }
+  },
+  {
+    "case_id": "TC-US08-01",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-bullet]",
+    "parameters": {
+      "state": "valid",
+      "mode": "bullet"
+    }
+  },
+  {
+    "case_id": "TC-US08-01",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-table]",
+    "parameters": {
+      "state": "valid",
+      "mode": "table"
+    }
+  },
+  {
+    "case_id": "TC-US08-01",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-concept]",
+    "parameters": {
+      "state": "valid",
+      "mode": "concept"
+    }
+  },
+  {
+    "case_id": "TC-US08-02",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-bullet]",
+    "parameters": {
+      "state": "missing",
+      "mode": "bullet"
+    }
+  },
+  {
+    "case_id": "TC-US08-02",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-table]",
+    "parameters": {
+      "state": "missing",
+      "mode": "table"
+    }
+  },
+  {
+    "case_id": "TC-US08-02",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-concept]",
+    "parameters": {
+      "state": "missing",
+      "mode": "concept"
+    }
+  },
+  {
+    "case_id": "TC-US08-03",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-bullet]",
+    "parameters": {
+      "state": "invalid",
+      "mode": "bullet"
+    }
+  },
+  {
+    "case_id": "TC-US08-03",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-table]",
+    "parameters": {
+      "state": "invalid",
+      "mode": "table"
+    }
+  },
+  {
+    "case_id": "TC-US08-03",
+    "nodeid": "backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-concept]",
+    "parameters": {
+      "state": "invalid",
+      "mode": "concept"
+    }
+  },
+  {
+    "case_id": "TC-US08-04",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_two_documents_supporting_one_bullet_claim_persist_distinct_citations[TC-US08-04-same-claim-two-documents]",
+    "parameters": {
+      "second_page": 1
+    }
+  },
+  {
+    "case_id": "TC-US08-05",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_two_documents_supporting_one_bullet_claim_persist_distinct_citations[TC-US08-05-same-claim-distinct-document-pages]",
+    "parameters": {
+      "second_page": 3
+    }
+  },
+  {
+    "case_id": "TC-US08-06",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-06-persist-missing-source-unverified]",
+    "parameters": {
+      "source_state": "missing"
+    }
+  },
+  {
+    "case_id": "TC-US08-07",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-07-reject-nonexistent-source-document]",
+    "parameters": {
+      "source_state": "unknown_document"
+    }
+  },
+  {
+    "case_id": "TC-US08-08",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-08-reject-source-page-with-different-text]",
+    "parameters": {
+      "source_state": "wrong_page"
+    }
+  },
+  {
+    "case_id": "TC-US08-09",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-09-reject-mismatched-source-quote]",
+    "parameters": {
+      "source_state": "wrong_quote"
+    }
+  },
+  {
+    "case_id": "TC-US08-10",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-10-reject-stale-reader-source]",
+    "parameters": {
+      "source_state": "wrong_version"
+    }
+  },
+  {
+    "case_id": "TC-US08-11",
+    "nodeid": "backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-11-preserve-valid-source-reject-invalid-source]",
+    "parameters": {
+      "source_state": "mixed"
+    }
+  },
+  {
+    "case_id": "TC-US09-05",
+    "nodeid": "backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-05-first-citation-page-file]",
+    "parameters": {
+      "page": 1,
+      "endpoint": "file"
+    }
+  },
+  {
+    "case_id": "TC-US09-05",
+    "nodeid": "backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-05-first-citation-page-rendered-file]",
+    "parameters": {
+      "page": 1,
+      "endpoint": "rendered-file"
+    }
+  },
+  {
+    "case_id": "TC-US09-06",
+    "nodeid": "backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-06-last-citation-page-file]",
+    "parameters": {
+      "page": 3,
+      "endpoint": "file"
+    }
+  },
+  {
+    "case_id": "TC-US09-06",
+    "nodeid": "backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-06-last-citation-page-rendered-file]",
+    "parameters": {
+      "page": 3,
+      "endpoint": "rendered-file"
+    }
+  },
+  {
+    "case_id": "TC-US09-07",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-file]",
+    "parameters": {
+      "page": "0",
+      "detail": "Page must be greater than or equal to 1",
+      "endpoint": "file"
+    }
+  },
+  {
+    "case_id": "TC-US09-07",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-rendered-file]",
+    "parameters": {
+      "page": "0",
+      "detail": "Page must be greater than or equal to 1",
+      "endpoint": "rendered-file"
+    }
+  },
+  {
+    "case_id": "TC-US09-08",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-file]",
+    "parameters": {
+      "page": "-1",
+      "detail": "Page must be greater than or equal to 1",
+      "endpoint": "file"
+    }
+  },
+  {
+    "case_id": "TC-US09-08",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-rendered-file]",
+    "parameters": {
+      "page": "-1",
+      "detail": "Page must be greater than or equal to 1",
+      "endpoint": "rendered-file"
+    }
+  },
+  {
+    "case_id": "TC-US09-09",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-file]",
+    "parameters": {
+      "page": "4",
+      "detail": "Page outside document",
+      "endpoint": "file"
+    }
+  },
+  {
+    "case_id": "TC-US09-09",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-rendered-file]",
+    "parameters": {
+      "page": "4",
+      "detail": "Page outside document",
+      "endpoint": "rendered-file"
+    }
+  },
+  {
+    "case_id": "TC-US09-10",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-10-nonnumeric-page-file]",
+    "parameters": {
+      "page": "invalid",
+      "detail": null,
+      "endpoint": "file"
+    }
+  },
+  {
+    "case_id": "TC-US09-10",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-10-nonnumeric-page-rendered-file]",
+    "parameters": {
+      "page": "invalid",
+      "detail": null,
+      "endpoint": "rendered-file"
+    }
+  },
+  {
+    "case_id": "TC-US09-11",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-11-fractional-page-file]",
+    "parameters": {
+      "page": "1.5",
+      "detail": null,
+      "endpoint": "file"
+    }
+  },
+  {
+    "case_id": "TC-US09-11",
+    "nodeid": "backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-11-fractional-page-rendered-file]",
+    "parameters": {
+      "page": "1.5",
+      "detail": null,
+      "endpoint": "rendered-file"
+    }
+  },
+  {
+    "case_id": "TC-US09-12",
+    "nodeid": "backend/tests/test_document_file.py::test_textless_page_remains_readable_but_cannot_accept_citation_span[TC-US09-12-image-only-page-readable]",
+    "parameters": {
+      "content": "b'q 100 0 0 100 72 600 cm /Im0 Do Q'"
+    }
+  },
+  {
+    "case_id": "TC-US09-13",
+    "nodeid": "backend/tests/test_document_file.py::test_textless_page_remains_readable_but_cannot_accept_citation_span[TC-US09-13-blank-page-readable]",
+    "parameters": {
+      "content": "b''"
+    }
+  }
+]
