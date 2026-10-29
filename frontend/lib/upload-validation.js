@@ -19,6 +19,7 @@ export function validateFile(file, accepted) {
   const extension = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
   const errors = [];
   if (!ACCEPTED_EXTENSIONS.includes(extension)) errors.push('Chỉ chấp nhận PDF, DOCX hoặc PPTX.');
+  if (file.size === 0) errors.push('Tệp không được rỗng.');
   if (file.size > MAX_FILE_BYTES) errors.push('Tệp vượt quá 5 MB.');
   return [...errors, ...batchErrors([...accepted, file])];
 }

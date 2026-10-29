@@ -40,6 +40,8 @@ async def validate_uploads(files: list[UploadFile]) -> list[dict]:
         finally:
             await file.seek(0)
         total_bytes += size_bytes
+        if size_bytes == 0:
+            errors.append(error("empty_file", "File must not be empty."))
         if size_bytes > MAX_FILE_BYTES:
             errors.append(error("file_too_large", "Each file must be at most 5 MB."))
         results.append({"index": index, "filename": filename, "size_bytes": size_bytes, "errors": errors})
