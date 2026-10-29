@@ -17,6 +17,64 @@ from app.services import search_index as index
 from app.services.processing import process_job
 from app.services.reader_extraction import extract_document_for_reader
 from test_pdf_extraction import make_pdf
+from test_cross_document_search import add_document, search_corpus
+
+
+def test_large_corpus_hits_round_trip_to_exact_reader_pages_and_evidence(
+        client, session_factory, search_corpus):
+    """TC-US02-05: every matching span belongs to its physical page and reader version."""
+    response = client.get('/search', params={'q': 'Amber escrow release', 'limit': 100})
+    assert response.status_code == 200
+    hits = response.json()['hits']
+    assert len(hits) == 21
+    with session_factory() as db:
+        assert db.query(Document).filter_by(owner_id=123).count() == 25
+        assert db.query(Document).filter_by(owner_id=124).count() == 2
+        for raw in hits:
+            hit = SearchHit.model_validate(raw)
+            document = db.get(Document, hit.document_id)
+            assert hit.doc_name == search_corpus['names'][document.id] == document.original_filename
+            assert hit.page == 3 and document.page_count == 3
+            assert document.extracted_text[1]['text'] == ''
+            page = document.extracted_text[hit.page - 1]
+            assert page['text'][hit.start:hit.end] == hit.snippet == search_corpus['pages'][document.id][2]
+            assert hit.reader_version == page['reader']['sha256']
+            assert hit.highlight_url == (
+                f'/documents/{document.id}?page=3&start={hit.start}&end={hit.end}')
+            evidence = search_hit_to_evidence(hit)
+            assert (evidence.document_id, evidence.page, evidence.start, evidence.end,
+                    evidence.quote, evidence.reader_version) == (
+                        document.id, 3, hit.start, hit.end, hit.snippet, hit.reader_version)
+            opened = client.get(f'/documents/{document.id}/pages/3/text')
+            assert opened.status_code == 200
+            assert opened.json()['text'][hit.start:hit.end] == hit.snippet
+        # Content searches do not create semantic caches or modify the source text.
+        assert all('search' not in page for document in db.query(Document)
+                   for page in document.extracted_text)
+
+
+def test_new_document_is_searchable_beyond_the_initial_twenty_without_rebuilding_old_sources(
+        client, session_factory, search_corpus, add_document):
+    """TC-US02-06: growing the account must not truncate the corpus or stale the results."""
+    params = {'q': 'Amber escrow release', 'limit': 100}
+    before = client.get('/search', params=params).json()
+    assert before['total_hits'] == 21
+    with session_factory() as db:
+        saved_pages = {document.id: deepcopy(document.extracted_text)
+                       for document in db.query(Document)}
+    clause = 'Amber escrow release requires signed delivery acceptance. Added after the first search.'
+    added = add_document(['New contract cover.', '', 'Administrative annex.', clause], name='new-contract.pdf')
+    after = client.get('/search', params=params).json()
+    assert after['total_hits'] == len(after['hits']) == 22
+    assert {hit['document_id'] for hit in after['hits']} == set(search_corpus['relevant']) | {added}
+    hit = next(hit for hit in after['hits'] if hit['document_id'] == added)
+    assert hit['doc_name'] == 'new-contract.pdf' and hit['page'] == 4 and hit['snippet'] == clause
+    last_page = client.get('/search', params={**params, 'limit': 20, 'offset': 20}).json()
+    assert last_page['total_hits'] == 22 and last_page['hits'] == after['hits'][20:]
+    with session_factory() as db:
+        assert db.query(Document).filter_by(owner_id=123).count() == 26
+        for document_id, pages in saved_pages.items():
+            assert db.get(Document, document_id).extracted_text == pages
 
 
 @pytest.fixture

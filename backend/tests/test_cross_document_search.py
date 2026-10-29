@@ -16,8 +16,10 @@ def add_document(session_factory, tmp_path):
     def add(text, *, owner=123, name=None, label=None, user_label=None, folder=None):
         with session_factory() as db:
             number = db.query(Document).count()
+            pages = text if isinstance(text, list) else [text]
             source = make_pdf(tmp_path / f'search-{number}.pdf', [
-                f'BT /F1 12 Tf 30 720 Td ({text}) Tj ET'.encode('ascii')])
+                f'BT /F1 12 Tf 30 720 Td ({page}) Tj ET'.encode('ascii') if page else b''
+                for page in pages])
             document = Document(owner_id=owner, original_filename=name or f'search-{number}.pdf',
                                 storage_path=str(source), file_format=FileFormat.PDF,
                                 file_size_bytes=source.stat().st_size, ai_label=label,
@@ -30,6 +32,153 @@ def add_document(session_factory, tmp_path):
         extract_document_for_reader(document_id, session_factory)
         return document_id
     return add
+
+
+@pytest.fixture
+def search_corpus(add_document, session_factory):
+    """27 real PDFs: 25 owned (21 relevant), four distractors and two peer sources."""
+    with session_factory() as db:
+        contracts = Folder(owner_id=123, name='US02 Contracts')
+        notes = Folder(owner_id=123, name='US02 Notes')
+        private = Folder(owner_id=124, name='US02 Private')
+        db.add_all([contracts, notes, private])
+        db.commit()
+        folder_id, notes_id, peer_folder_id = contracts.id, notes.id, private.id
+    result = {'owned': [], 'relevant': [], 'unrelated': [], 'peer': [], 'pages': {}, 'names': {},
+              'filtered_candidates': [], 'filtered_hits': [],
+              'folder_id': folder_id, 'peer_folder_id': peer_folder_id}
+    distractors = [
+        'Quarterly weather observations and rainfall records.',
+        'Amber gemstones are displayed in a museum.',
+        'Escrow account glossary and banking contacts.',
+        'Delivery notes describe packaging and addresses.',
+    ]
+    for number in range(25):
+        relevant = number < 21
+        clause = (f'Amber escrow release requires signed delivery acceptance. Contract {number:02}.'
+                  if relevant else distractors[number - 21])
+        pages = [f'Public administrative cover {number:02}.', '', clause]
+        # A matching filename and partial keyword overlaps are not source evidence.
+        name = f'us02-contract-{number:02}.pdf' if number != 24 else 'Amber escrow release.pdf'
+        document_id = add_document(pages, name=name,
+                                   folder=folder_id if number % 2 == 0 else notes_id,
+                                   label='Contract' if number % 2 == 0 else 'Report',
+                                   user_label='Contract' if number == 1 else 'Report' if number == 2 else None)
+        result['owned'].append(document_id)
+        result['relevant' if relevant else 'unrelated'].append(document_id)
+        result['pages'][document_id] = pages
+        result['names'][document_id] = name
+        if number % 2 == 0 and number != 2:
+            result['filtered_candidates'].append(document_id)
+            if relevant:
+                result['filtered_hits'].append(document_id)
+    for number in range(2):
+        pages = [f'Peer private cover {number}.', '',
+                 f'Peer private. Amber escrow release requires signed delivery acceptance. Record {number}.']
+        # A peer can have the same filename and query terms as an owned document.
+        name = f'us02-contract-{number:02}.pdf'
+        document_id = add_document(pages, owner=124, name=name, label='Contract', folder=peer_folder_id)
+        result['peer'].append(document_id)
+        result['pages'][document_id] = pages
+        result['names'][document_id] = name
+    return result
+
+
+def test_search_pagination_returns_all_relevant_documents_beyond_twenty(client, search_corpus):
+    """TC-US02-01: 20 is a page size, not a corpus or result-count maximum."""
+    expected = set(search_corpus['relevant'])
+    visible = client.get('/documents', params={'limit': 20}).json()
+    assert len(visible) == 20 and expected - {row['id'] for row in visible}
+    next_documents = client.get('/documents', params={'limit': 20, 'skip': 20}).json()
+    assert len(next_documents) == 5
+    assert {row['id'] for row in visible + next_documents} == set(search_corpus['owned'])
+    params = {'q': 'Amber escrow release'}
+    response = client.get('/search', params={**params, 'limit': 100})
+    assert response.status_code == 200
+    full = response.json()
+    assert full['total_hits'] == len(full['hits']) == 21
+    assert {hit['document_id'] for hit in full['hits']} == expected
+    for hit in full['hits']:
+        assert hit['page'] == 3
+        assert hit['snippet'] == search_corpus['pages'][hit['document_id']][2]
+        assert hit['doc_name'] == search_corpus['names'][hit['document_id']]
+    default = client.get('/search', params=params).json()
+    assert default['total_hits'] == 21 and default['hits'] == full['hits'][:20]
+    for limit in (7, 20):
+        collected = []
+        for offset in range(0, 21, limit):
+            page = client.get('/search', params={**params, 'limit': limit, 'offset': offset}).json()
+            assert page['total_hits'] == 21 and page['hits'] == full['hits'][offset:offset + limit]
+            collected.extend(page['hits'])
+        assert collected == full['hits']
+    for offset in (21, 22, 100):
+        page = client.get('/search', params={**params, 'offset': offset}).json()
+        assert page['total_hits'] == 21 and page['hits'] == []
+    assert client.get('/search', params={'q': 'volcanic astronomy'}).json()['hits'] == []
+
+
+def test_large_corpus_filters_apply_before_search_pagination(client, search_corpus):
+    """TC-US02-02: combine folder and effective label, then paginate the matching sources."""
+    params = {'q': 'Amber escrow release', 'folder_id': search_corpus['folder_id'], 'label': ' contract '}
+    full = client.get('/search', params={**params, 'limit': 100}).json()
+    assert full['total_hits'] == len(full['hits']) == 10
+    assert {hit['document_id'] for hit in full['hits']} == set(search_corpus['filtered_hits'])
+    collected = []
+    for offset in range(0, 10, 3):
+        page = client.get('/search', params={**params, 'limit': 3, 'offset': offset}).json()
+        assert page['total_hits'] == 10 and page['hits'] == full['hits'][offset:offset + 3]
+        collected.extend(page['hits'])
+    assert collected == full['hits']
+    labels = client.get('/search', params={'q': params['q'], 'label': 'Contract', 'limit': 100}).json()
+    assert {hit['document_id'] for hit in labels['hits']} == (
+        set(search_corpus['filtered_hits']) | {search_corpus['owned'][1]})
+    for filters in ({'folder_id': search_corpus['peer_folder_id']}, {'folder_id': 99999},
+                    {'label': '%'}, {'label': "' OR 1=1 --"}):
+        empty = client.get('/search', params={'q': params['q'], **filters})
+        assert empty.status_code == 200 and empty.json()['total_hits'] == 0 and empty.json()['hits'] == []
+
+
+def test_large_corpus_invalid_queries_and_filters_never_invoke_embeddings(client, search_corpus, monkeypatch):
+    """TC-US02-03: reject malformed inputs before retrieval, even with a populated account."""
+    class ForbiddenEmbedder:
+        def embed(self, *args, **kwargs):
+            pytest.fail('Invalid queries and filters must not invoke a provider')
+
+    monkeypatch.setitem(app.dependency_overrides, get_search_embedder, lambda: ForbiddenEmbedder())
+    invalid = [
+        {'q': ''}, {'q': ' \t\n'}, {'q': 'x' * 501}, {'q': '%_!!!'}, {'q': '\U0001f642'},
+        {'folder_id': 0}, {'folder_id': -1}, {'folder_id': 'invalid'},
+        {'label': ''}, {'label': '   '}, {'label': 'x' * 101},
+        {'limit': 0}, {'limit': 101}, {'limit': 'invalid'}, {'offset': -1}, {'offset': 'invalid'},
+    ]
+    for mode in ('content', 'semantic'):
+        assert client.get('/search', params={'mode': mode}).status_code == 422
+        for override in invalid:
+            response = client.get('/search', params={'q': 'Amber escrow release', 'mode': mode, **override})
+            assert response.status_code == 422, (mode, override, response.text)
+    assert client.get('/search', params={'q': 'Amber', 'mode': 'invalid'}).status_code == 422
+    # Valid input boundaries must not be rejected as malformed.
+    for params in ({'q': 'x'}, {'q': 'x' * 500}, {'q': 'Amber', 'label': 'x' * 100},
+                   {'q': 'Amber', 'limit': 1, 'offset': 0}, {'q': 'Amber', 'limit': 100}):
+        assert client.get('/search', params=params).status_code == 200
+
+
+def test_large_corpus_search_and_source_pages_are_isolated_between_accounts(client, search_corpus):
+    """TC-US02-04: matching names/text and a forged owner parameter cannot cross accounts."""
+    peer_headers = {'Authorization': f"Bearer {create_access_token({'sub': '124'})}"}
+    params = {'q': 'Amber escrow release', 'limit': 100}
+    own = client.get('/search', params={**params, 'owner_id': 124}).json()
+    peer = client.get('/search', params={**params, 'owner_id': 123}, headers=peer_headers).json()
+    assert own['total_hits'] == 21 and peer['total_hits'] == 2
+    assert {hit['document_id'] for hit in own['hits']} == set(search_corpus['relevant'])
+    assert {hit['document_id'] for hit in peer['hits']} == set(search_corpus['peer'])
+    assert all('Peer private' not in hit['snippet'] for hit in own['hits'])
+    for hits, denied_headers in ((own['hits'], peer_headers), (peer['hits'], {})):
+        for hit in hits:
+            assert client.get(f"/documents/{hit['document_id']}/pages/{hit['page']}/text",
+                              headers=denied_headers).status_code == 403
+    assert client.get('/search', params={**params, 'folder_id': search_corpus['folder_id']},
+                      headers=peer_headers).json()['hits'] == []
 
 
 def test_ranked_search_scans_beyond_visible_document_page(client, add_document):
