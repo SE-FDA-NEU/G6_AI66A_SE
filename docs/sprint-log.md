@@ -6,6 +6,83 @@ evidence that the process was real.
 
 ---
 
+## Sprint 4 - October 2026
+
+### Sprint goal
+
+Establish an isolated regression test suite covering all P0 stories (US01-US09), verify clean-clone test instructions and existing CI, collect mutation and defect detection evidence, and compile the final testing report for Milestone 4.
+
+### Roles
+
+| Role | Member |
+|---|---|
+| Product Owner | @PhanDangVu |
+| Scrum Master | @Dangtooo |
+
+The Scrum Master rotates from @taibaonguyen in Sprint 3.
+
+### Committed
+
+Scope: Verification of the isolated test environment, regression test coverage across all nine P0 user stories (US01-US09), interface regression checks, test evidence handovers, clean-clone setup verification, and compiling the Milestone 4 testing documentation.
+
+Total committed: 20 backlog items, 64 points.
+
+| Issue | Task | Story Points | Owner | Reviewer | Dependencies | Parent Story |
+|---|---|---:|---|---|---|---|
+| [#202](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/202) | Refine backlog for Sprint 4 | 2 | @PhanDangVu | @Dangtooo | None | #PO |
+| [#203](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/203) | Add authentication and authorization regression tests | 4 | @PhanDangVu | @taibaonguyen | #205 | #50 (US05) |
+| [#204](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/204) | Complete upload validation boundary tests | 4 | @PhanDangVu | @taibaonguyen | #205 | #51 (US06) |
+| [#205](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/205) | Verify the isolated pytest environment and baseline | 3 | @PhanDangVu | @Dangtooo | None | #50 (US05), #51 (US06) |
+| [#206](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/206) | Hand over authentication and upload test evidence | 3 | @PhanDangVu | @Dangtooo | #203, #204, #205 | #50 (US05), #51 (US06) |
+| [#207](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/207) | Document how to run the test suites | 3 | @Dangtooo | @PhanDangVu | #205, #210 | US01-US09 (#46-#54) |
+| [#208](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/208) | Extend processing lifecycle and timeout regression tests | 4 | @Dangtooo | @PhanDangVu | #205 | #52 (US07) |
+| [#209](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/209) | Compile the testing report and defect detection evidence | 3 | @Dangtooo | @PhanDangVu | #206, #216, #221, #210 | US01-US09 (#46-#54) |
+| [#210](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/210) | Verify clean-clone test instructions and existing CI | 4 | @Dangtooo | @PhanDangVu | #203, #204, #208, #212-#215, #217-#219 | US01-US09 (#46-#54) |
+| [#211](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/211) | Wrap up Sprint 4 and prepare the milestone submission | 2 | @Dangtooo | @PhanDangVu | #202, #209, #210 | #SM |
+| [#212](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/212) | Extend AI label and concept validation tests | 4 | @duongbui0811 | @PhanDangVu | #205 | #49 (US04) |
+| [#213](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/213) | Extend in-document search regression tests | 3 | @duongbui0811 | @PhanDangVu | #205 | #49 (US04) |
+| [#214](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/214) | Extend evidence and citation integrity tests | 4 | @duongbui0811 | @PhanDangVu | #205 | #53 (US08) |
+| [#215](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/215) | Extend citation-to-reader navigation tests | 3 | @duongbui0811 | @PhanDangVu | #205 | #54 (US09) |
+| [#216](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/216) | Hand over label, evidence and reader test evidence | 2 | @duongbui0811 | @Dangtooo | #212, #213, #214, #215 | #49 (US04), #53 (US08), #54 (US09) |
+| [#217](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/217) | Extend contract comparison table regression tests | 4 | @taibaonguyen | @PhanDangVu | #205 | #46 (US01) |
+| [#218](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/218) | Extend cross-document search regression tests | 4 | @taibaonguyen | @duongbui0811 | #205 | #47 (US02) |
+| [#219](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/219) | Extend bullet summary and action recommendation tests | 4 | @taibaonguyen | @PhanDangVu | #205 | #48 (US03) |
+| [#220](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/220) | Review existing P0 interface regression coverage | 2 | @taibaonguyen | @Dangtooo | #203, #204, #215, #217-#219 | US01-US09 (#46-#54) |
+| [#221](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/221) | Hand over table, search and summary test evidence | 2 | @taibaonguyen | @Dangtooo | #217, #218, #219, #220 | #46 (US01), #47 (US02), #48 (US03) |
+
+**Total committed: 64 points across 20 tasks.**
+
+### Story Coverage Matrix (US01-US09)
+
+| User Story | Title | Covered Backlog Tasks |
+|---|---|---|
+| US01 (#46) | Upload multiple contracts and view financial comparison table | #217, #221, #207, #209, #210, #220 |
+| US02 (#47) | Search across 20+ documents for relevant facts and figures | #218, #221, #207, #209, #210, #220 |
+| US03 (#48) | Mobile-friendly bullet summary with action recommendations | #219, #221, #207, #209, #210, #220 |
+| US04 (#49) | AI-suggested label with confidence and unverified warning | #212, #213, #216, #207, #209, #210, #220 |
+| US05 (#50) | Sign in and access own documents securely | #203, #205, #206, #207, #209, #210, #220 |
+| US06 (#51) | Validate upload format and size before processing | #204, #205, #206, #207, #209, #210, #220 |
+| US07 (#52) | Track processing progress with live updates | #208, #207, #209, #210, #220 |
+| US08 (#53) | Link each important summary point to exact document page | #214, #216, #207, #209, #210, #220 |
+| US09 (#54) | Open citation at exact page in document reader | #215, #216, #207, #209, #210, #220 |
+
+### Planning Board Capture
+
+Sprint 4 planning board immediately after Planning:
+- Board URL: [Sprint Board - Text Classification and Summarization Service](https://github.com/orgs/SE-FDA-NEU/projects/24/views/1)
+- Initial status: 20 issues refined, estimated, and assigned to Sprint 4.
+
+### Attendance
+
+| Member | Planning | Review | Retro |
+|---|---|---|---|
+| @PhanDangVu | ✓ | TBD | TBD |
+| @Dangtooo | ✓ | TBD | TBD |
+| @duongbui0811 | ✓ | TBD | TBD |
+| @taibaonguyen | ✓ | TBD | TBD |
+
+---
+
 ## Sprint 3 - October 2026
 
 ### Sprint goal
