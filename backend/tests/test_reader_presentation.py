@@ -13,6 +13,153 @@ from app.services.pdf_extraction import extract_pdf
 from app.services.pdf_highlights import highlighted_pdf
 from app.services.reader_extraction import extract_document_for_reader
 from test_pdf_extraction import make_pdf
+from test_reader_extraction import keyword_reader
+
+
+def highlight_rectangles(page):
+    """Read actual overlay rectangles from the returned PDF content stream."""
+    rectangles, pending = [], []
+    for operands, operator in page.get_contents().operations:
+        if operator == b're':
+            pending.append(tuple(float(value) for value in operands))
+        elif operator in (b'f', b'f*', b'B', b'B*', b'b', b'b*'):
+            rectangles.extend(pending)
+            pending = []
+        elif operator in (b'n', b'S', b's'):
+            # PDF merging adds a page-size clipping rectangle (re W n).
+            # It is not a painted search highlight.
+            pending = []
+    return rectangles
+
+
+@pytest.mark.parametrize('page_number,query,spans', [
+    pytest.param(2, 'KEYWORD', [(7, 14), (15, 22)], id='TC-US04-36-known-page-repeated-highlight'),
+    pytest.param(1, 'Alpha', [(0, 5)], id='TC-US04-37-first-page-highlight'),
+    pytest.param(3, 'Omega', [(10, 15)], id='TC-US04-38-last-page-highlight'),
+])
+def test_keyword_highlight_draws_only_at_known_match_positions(
+        client, keyword_reader, page_number, query, spans):
+    document_id, source, pages = keyword_reader
+    original = source.read_bytes()
+    version = pages[0]['reader']['sha256']
+    response = client.get(f'/documents/{document_id}/reader.pdf', params={
+        'version': version, 'highlight_page': page_number, 'q': query,
+    })
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/pdf'
+    assert response.headers['x-reader-version'] == version
+    rendered = PdfReader(BytesIO(response.content))
+    assert len(rendered.pages) == 3
+    page = pages[page_number - 1]
+    for start, end in spans:
+        assert page['text'][start:end].casefold() == query.casefold()
+    selected = [position for position in page['positions']
+                if any(position['start'] < end and position['end'] > start for start, end in spans)]
+    assert selected
+    rectangles = highlight_rectangles(rendered.pages[page_number - 1])
+    assert len(rectangles) == len(selected)
+    height = float(rendered.pages[page_number - 1].mediabox.height)
+    for rectangle, position in zip(rectangles, selected):
+        x0, top, x1, bottom = position['bbox']
+        assert rectangle == pytest.approx((x0, height - bottom, x1 - x0, bottom - top), abs=0.001)
+    for index, rendered_page in enumerate(rendered.pages):
+        assert rendered_page.extract_text().strip() == pages[index]['text']
+        if index != page_number - 1:
+            assert highlight_rectangles(rendered_page) == []
+    assert source.read_bytes() == original
+
+
+@pytest.mark.parametrize('query', [
+    pytest.param('absentword', id='TC-US04-39-highlight-no-match'),
+    pytest.param('', id='TC-US04-40-empty-highlight-query-clears-marks'),
+])
+def test_valid_query_without_highlights_returns_readable_pdf(client, keyword_reader, query):
+    document_id, source, pages = keyword_reader
+    original = source.read_bytes()
+    version = pages[0]['reader']['sha256']
+    response = client.get(f'/documents/{document_id}/reader.pdf', params={
+        'version': version, 'highlight_page': 2, 'q': query,
+    })
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/pdf'
+    assert response.headers['x-reader-version'] == version
+    pdf = PdfReader(BytesIO(response.content))
+    assert len(pdf.pages) == 3
+    assert [page.extract_text().strip() for page in pdf.pages] == [page['text'] for page in pages]
+    assert all(highlight_rectangles(page) == [] for page in pdf.pages)
+    assert source.read_bytes() == original
+
+
+@pytest.mark.parametrize('page_number,start,end,query', [
+    pytest.param(1, 0, 5, 'Alpha', id='TC-US04-55-valid-span-starts-at-zero'),
+    pytest.param(3, 10, 15, 'Omega', id='TC-US04-56-valid-span-ends-at-text-length'),
+])
+def test_exact_match_span_accepts_first_and_last_character_boundaries(
+        client, keyword_reader, page_number, start, end, query):
+    document_id, source, pages = keyword_reader
+    original = source.read_bytes()
+    assert pages[page_number - 1]['text'][start:end] == query
+    params = {'version': pages[0]['reader']['sha256'], 'highlight_page': page_number}
+    url = f'/documents/{document_id}/reader.pdf'
+    span_response = client.get(url, params={**params, 'start': start, 'end': end})
+    query_response = client.get(url, params={**params, 'q': query})
+    assert span_response.status_code == query_response.status_code == 200
+    span_pdf = PdfReader(BytesIO(span_response.content))
+    query_pdf = PdfReader(BytesIO(query_response.content))
+    assert len(span_pdf.pages) == len(query_pdf.pages) == 3
+    rectangles = highlight_rectangles(span_pdf.pages[page_number - 1])
+    assert len(rectangles) == end - start
+    assert rectangles == highlight_rectangles(query_pdf.pages[page_number - 1])
+    assert all(highlight_rectangles(page) == [] for index, page in enumerate(span_pdf.pages)
+               if index != page_number - 1)
+    assert source.read_bytes() == original
+
+
+@pytest.mark.parametrize('params,error_field,detail', [
+    pytest.param({'highlight_page': 2, 'q': 'x' * 501}, 'q', None,
+                 id='TC-US04-41-overlong-highlight-query'),
+    pytest.param({'highlight_page': 0, 'q': 'keyword'}, 'highlight_page', None,
+                 id='TC-US04-42-highlight-page-zero'),
+    pytest.param({'highlight_page': -1, 'q': 'keyword'}, 'highlight_page', None,
+                 id='TC-US04-43-highlight-negative-page'),
+    pytest.param({'highlight_page': 4, 'q': 'keyword'}, None, 'Highlight page is outside the document.',
+                 id='TC-US04-44-highlight-one-past-last-page'),
+    pytest.param({'highlight_page': 'invalid', 'q': 'keyword'}, 'highlight_page', None,
+                 id='TC-US04-45-highlight-nonnumeric-page'),
+    pytest.param({'highlight_page': '1.5', 'q': 'keyword'}, 'highlight_page', None,
+                 id='TC-US04-46-highlight-fractional-page'),
+    pytest.param({'q': 'keyword'}, None, 'A highlight page is required.',
+                 id='TC-US04-47-highlight-missing-page'),
+    pytest.param({'highlight_page': 1, 'start': -1, 'end': 5}, 'start', None,
+                 id='TC-US04-48-negative-match-start'),
+    pytest.param({'highlight_page': 3, 'start': 10, 'end': 16}, None,
+                 'Highlight span is outside the page text.', id='TC-US04-49-match-end-past-text'),
+    pytest.param({'highlight_page': 3, 'start': 15, 'end': 16}, None,
+                 'Highlight span is outside the page text.', id='TC-US04-50-match-start-at-text-end'),
+    pytest.param({'highlight_page': 2, 'start': 7, 'end': 7}, None,
+                 'Highlight span is outside the page text.', id='TC-US04-51-empty-match-span'),
+    pytest.param({'highlight_page': 2, 'start': 14, 'end': 7}, None,
+                 'Highlight span is outside the page text.', id='TC-US04-52-reversed-match-span'),
+    pytest.param({'highlight_page': 2, 'start': 7}, None,
+                 'Highlight span is outside the page text.', id='TC-US04-53-missing-match-end'),
+    pytest.param({'highlight_page': 2, 'end': 14}, None,
+                 'Highlight requires both start and end.', id='TC-US04-54-missing-match-start'),
+])
+def test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf(
+        client, keyword_reader, params, error_field, detail):
+    document_id, source, pages = keyword_reader
+    original = source.read_bytes()
+    response = client.get(f'/documents/{document_id}/reader.pdf', params={
+        'version': pages[0]['reader']['sha256'], **params,
+    })
+    assert response.status_code == 422
+    assert response.headers['content-type'] == 'application/json'
+    payload = response.json()
+    if error_field:
+        assert any(error['loc'] == ['query', error_field] for error in payload['detail'])
+    else:
+        assert payload['detail'] == detail
+    assert source.read_bytes() == original
 
 
 @pytest.mark.parametrize('rotation', [0, 90, 180, 270])

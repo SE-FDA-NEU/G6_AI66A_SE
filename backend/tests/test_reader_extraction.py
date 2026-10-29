@@ -47,6 +47,116 @@ def save_document(factory, source, fmt):
         return document.id
 
 
+@pytest.fixture
+def keyword_reader(session_factory, tmp_path):
+    """Fixed physical pages and offsets shared by extraction/presentation tests."""
+    texts = ['Alpha first page.', 'Middle keyword keyword.', 'Last page Omega']
+    source = make_pdf(tmp_path / 'keyword-reader.pdf', [
+        f'BT /F1 12 Tf 72 720 Td ({text}) Tj ET'.encode('ascii') for text in texts
+    ])
+    document_id = save_document(session_factory, source, FileFormat.PDF)
+    result = reader.extract_document_for_reader(document_id, session_factory)
+    return document_id, source, result['extracted_text']
+
+
+@pytest.mark.parametrize('query,page_number,spans', [
+    pytest.param('keyword', 2, [(7, 14), (15, 22)], id='TC-US04-19-known-page-keyword'),
+    pytest.param('Alpha', 1, [(0, 5)], id='TC-US04-20-first-page-first-character'),
+    pytest.param('Omega', 3, [(10, 15)], id='TC-US04-21-last-page-last-character'),
+])
+def test_reader_keyword_search_returns_known_page_and_source_positions(
+        client, keyword_reader, query, page_number, spans):
+    document_id, _, pages = keyword_reader
+    response = client.get('/search', params={'q': query})
+    assert response.status_code == 200
+    result = response.json()
+    assert result['query'] == query
+    assert result['total_hits'] == len(result['hits']) == 1
+    hit = result['hits'][0]
+    assert hit['document_id'] == document_id
+    assert hit['page'] == page_number
+    page_response = client.get(f'/documents/{document_id}/pages/{page_number}/text')
+    assert page_response.status_code == 200
+    page = page_response.json()
+    assert page['page'] == page_number
+    assert page['text'] == pages[page_number - 1]['text']
+    # Search hit offsets identify the source passage, not just the keyword.
+    assert (hit['start'], hit['end']) == (0, len(page['text']))
+    assert page['text'][hit['start']:hit['end']] == hit['snippet']
+    assert hit['reader_version'] == pages[page_number - 1]['reader']['sha256']
+    assert hit['highlight_url'] == (
+        f'/documents/{document_id}?page={page_number}&start=0&end={len(page["text"])}')
+    for start, end in spans:
+        assert page['text'][start:end] == query
+        positions = [position for position in page['positions']
+                     if position['start'] < end and position['end'] > start]
+        assert positions
+        assert positions[0]['start'] == start
+        assert positions[-1]['end'] == end
+        assert ''.join(position['text'] for position in positions) == query
+
+
+@pytest.mark.parametrize('query', [pytest.param('absentword', id='TC-US04-22-no-matches')])
+def test_reader_search_no_match_is_a_valid_empty_result(client, keyword_reader, query):
+    response = client.get('/search', params={'q': query})
+    assert response.status_code == 200
+    assert response.json() == {'query': query, 'total_hits': 0, 'hits': []}
+
+
+@pytest.mark.parametrize('params,error_location', [
+    pytest.param({}, ['query', 'q'], id='TC-US04-23-missing-query'),
+    pytest.param({'q': ''}, ['query', 'q'], id='TC-US04-24-empty-query'),
+    pytest.param({'q': 'x' * 501}, ['query', 'q'], id='TC-US04-25-overlong-query'),
+    pytest.param({'q': ' \t\n'}, None, id='TC-US04-26-whitespace-query'),
+    pytest.param({'q': '!!!'}, None, id='TC-US04-27-punctuation-query'),
+])
+def test_reader_search_invalid_query_is_not_a_no_match_result(client, keyword_reader, params, error_location):
+    response = client.get('/search', params=params)
+    assert response.status_code == 422
+    payload = response.json()
+    assert 'hits' not in payload and 'total_hits' not in payload
+    if error_location:
+        assert any(error['loc'] == error_location for error in payload['detail'])
+    else:
+        assert payload['detail'] == 'Search query must contain a word or number.'
+
+
+@pytest.mark.parametrize('page_number,expected_text', [
+    pytest.param(1, 'Alpha first page.', id='TC-US04-28-first-page-text'),
+    pytest.param(2, 'Middle keyword keyword.', id='TC-US04-29-middle-page-text'),
+    pytest.param(3, 'Last page Omega', id='TC-US04-30-last-page-text'),
+])
+def test_reader_page_text_preserves_physical_page_and_positions(client, keyword_reader, page_number, expected_text):
+    document_id, _, pages = keyword_reader
+    response = client.get(f'/documents/{document_id}/pages/{page_number}/text')
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload == {'document_id': document_id, 'page': page_number,
+                       'text': expected_text, 'positions': pages[page_number - 1]['positions']}
+    assert payload['positions']
+    assert all(expected_text[position['start']:position['end']] == position['text']
+               for position in payload['positions'])
+
+
+@pytest.mark.parametrize('page_input,status,detail', [
+    pytest.param('0', 404, 'Page not found', id='TC-US04-31-page-zero'),
+    pytest.param('-1', 404, 'Page not found', id='TC-US04-32-negative-page'),
+    pytest.param('4', 404, 'Page not found', id='TC-US04-33-one-past-last-page'),
+    pytest.param('invalid', 422, None, id='TC-US04-34-nonnumeric-page'),
+    pytest.param('1.5', 422, None, id='TC-US04-35-fractional-page'),
+])
+def test_reader_page_text_rejects_invalid_or_missing_pages(client, keyword_reader, page_input, status, detail):
+    document_id, _, _ = keyword_reader
+    response = client.get(f'/documents/{document_id}/pages/{page_input}/text')
+    assert response.status_code == status
+    payload = response.json()
+    assert 'text' not in payload and 'positions' not in payload
+    if detail:
+        assert payload['detail'] == detail
+    else:
+        assert any(error['loc'] == ['path', 'page'] for error in payload['detail'])
+
+
 def fake_converter(source, fmt, output_dir):
     # Test publication/rollback independently of the native Office renderer.
     texts = ['DOCX page one alpha DOCX page one beta', 'DOCX page two gamma DOCX page two delta'] if fmt == FileFormat.DOCX else ['PPTX slide 1', 'PPTX slide 2', '']
