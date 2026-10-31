@@ -1,6 +1,6 @@
 # Run DocuMind locally
 
-DocuMind uses Next.js on port **8000**, FastAPI on port **8001** and MySQL on port **3306**. Run commands from the repository root unless a step says otherwise. No test commands are required for this setup.
+DocuMind uses Next.js on port **8000**, FastAPI on port **8001** and MySQL on port **3306**. Run commands from the repository root unless a step says otherwise. Sections 1-6 cover the application; section 7 covers isolated tests.
 
 ## 1. Prerequisites
 
@@ -124,3 +124,39 @@ For macOS/Linux, replace `Copy-Item` with `cp`, use `python3` if needed, and run
 | Old `converter_unavailable` / LibreOffice error | Stop old server processes, install the current `backend/requirements.txt` in `backend/.venv`, restart from this checkout and submit again. Current Office reading uses Python libraries. |
 | Reader source is missing | Upload the original file again. Older metadata-only demo rows do not provide real source files. |
 | Dependencies need reinstalling | Run `& ./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt`, then run `npm.cmd ci` inside `frontend`. |
+
+## 7. Run isolated tests
+
+### Backend (pytest)
+
+These steps need Python 3.11+ only; skip the application configuration, database preparation and demo seed above. From the repository root, create a virtual environment if one does not exist:
+
+```powershell
+python -m venv backend/.venv
+cd backend
+& ./.venv/Scripts/python.exe -m pip install -r requirements-dev.txt
+& ./.venv/Scripts/python.exe -m pytest tests -v
+```
+
+`requirements-dev.txt` includes the runtime dependencies and test tools. The required pytest `tests/` directory is **`backend/tests/`**, run from **`backend/`**. `conftest.py` supplies in-memory SQLite, temporary upload storage, authenticated TestClient requests and a recording queue; processing tests use controlled processors/providers. No real credentials, MySQL, Gemini calls or separately running servers are required. Acceptance data lives in `backend/test/fixtures/acceptance/`; it is separate from the pytest suite.
+
+To run only the processing lifecycle checks, from `backend/`:
+
+```powershell
+& ./.venv/Scripts/python.exe -m pytest tests/test_job_lifecycle.py tests/test_processing_timeouts.py tests/test_upload_jobs.py -v
+```
+
+### Frontend (Playwright)
+
+Install the Python development dependencies above, then run these commands from the repository root:
+
+```powershell
+cd frontend
+npm.cmd ci
+npx.cmd playwright install chromium webkit
+npm.cmd test
+```
+
+Playwright starts its own isolated API fixture server on **18001** and Next.js on **18000**; keep these ports free. It uses temporary SQLite/storage and seeded test data rather than the application database. The launcher selects `backend/.venv` automatically; set `E2E_PYTHON` to an absolute Python executable path only when using another environment with the development dependencies installed. Do not start `run.py` for these tests.
+
+For the lifecycle UI checks only, run `npm.cmd test -- tests/job-lifecycle.spec.js --project=chromium` from `frontend/`. On Linux, install browser system dependencies with `npx playwright install --with-deps chromium webkit`. On macOS/Linux, use `.venv/bin/python` in `backend/` and `npm`/`npx` instead of the Windows commands above.

@@ -242,6 +242,47 @@ def test_worker_exception_is_recorded(client, session_factory):
         assert job.finished_at is not None
 
 
+def test_worker_crash_preserves_completed_results_and_fails_unfinished_files(client, session_factory):
+    """TC-US07-007: a queue crash retains partial results without false completion."""
+    def worker(job_id, factory):
+        with factory() as db:
+            job = db.get(Job, job_id)
+            first, second, _ = job.job_files
+            first.status = JobStatus.COMPLETED
+            first.attempt_count = 1
+            second.status = JobStatus.PROCESSING
+            second.attempt_count = 1
+            job.status = JobStatus.PROCESSING
+            job.completed_count = 1
+            job.result_data = {'documents': {str(first.document_id): {'summary': 'Saved result'}}}
+            db.commit()
+        raise RuntimeError('private worker crash')
+
+    queue = JobQueue(session_factory, processor=worker)
+    app.dependency_overrides[get_job_queue] = lambda: queue
+    try:
+        response = client.post('/upload', files=parts('done.pdf', 'running.pdf', 'pending.pdf'))
+        assert response.status_code == 202
+    finally:
+        client.portal.call(queue.close)
+
+    job_id = response.json()['jobId']
+    polled = client.get(f'/jobs/{job_id}')
+    assert polled.status_code == 200
+    saved = polled.json()
+    first, second, third = saved['job_files']
+    assert saved['status'] == 'failed' and saved['finished_at'] is not None
+    assert saved['file_count'] == 3 and saved['completed_count'] == 1
+    assert [file['status'] for file in saved['job_files']] == ['completed', 'failed', 'failed']
+    assert [file['attempt_count'] for file in saved['job_files']] == [1, 1, 0]
+    assert first['error_message'] is None
+    assert second['error_message'] == third['error_message'] == 'Background processing failed. Please retry.'
+    assert saved['result_data']['documents'] == {str(first['document_id']): {'summary': 'Saved result'}}
+    assert 'private worker crash' not in polled.text
+    assert not queue.tasks
+    assert client.get(f'/jobs/{job_id}').json() == saved
+
+
 def test_default_worker_reports_invalid_pdf_extraction(client, session_factory):
     queue = JobQueue(session_factory)
     app.dependency_overrides[get_job_queue] = lambda: queue
