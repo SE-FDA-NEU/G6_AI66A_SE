@@ -1,6 +1,6 @@
 # US04 / US08 / US09 pytest case matrix and execution evidence
 
-Evidence captured on 29 October 2026 (Asia/Bangkok), Windows, Python 3.12.6 and pytest 9.1.1. This handover is confined to `docs/testing.md`. Existing tests and application code are unchanged in the final diff. The earlier runtime capture is preserved below; it is not presented as a new run after this documentation-only consolidation.
+Evidence captured on 31 October 2026 (Asia/Bangkok), Windows, Python 3.12.6 and pytest 9.1.1, against main commit `b18793e679b9557927b6a248e6c3e2b67dddd7ca`. This is a fresh collection, deliberate mutation and restored-code run. The final diff changes only `docs/testing.md`; existing tests and application code remain unchanged.
 
 The acceptance criteria are in [requirements.md](requirements.md). Tests use isolated SQLite, generated PDFs and injected analyzers. The complete matrix maps **80 unique TC IDs to 102 parametrized pytest invocations**, with normal, rejection and applicable boundary coverage for every story.
 
@@ -185,14 +185,20 @@ Actual captured results:
 | Run | Result | Exit code |
 |---|---|---:|
 | Collection | 102/172 tests collected; 70 deselected | 0 |
-| Broken rule | 4 failed, 17 deselected, 27 warnings in 8.45s | 1 |
-| Correct code restored | 102 passed, 70 deselected, 714 warnings in 43.83s | 0 |
+| Broken rule | 4 failed, 17 deselected, 27 warnings in 8.76s | 1 |
+| First restored run, temp-file permission failure | 1 failed, 101 passed, 70 deselected, 714 warnings in 51.52s | 1 |
+| Correct code restored, full retry outside sandbox | 102 passed, 70 deselected, 714 warnings in 53.66s | 0 |
 
 The complete outputs follow. Line endings and trailing whitespace were normalized for Markdown; assertion text, results and exit codes are preserved. Absolute system-temp paths in the captured commands identify the original run and need not be reused.
+
+The collection command used a temporary pytest reporter outside the checkout to export `callspec.params` for comparison with the matrix. All 102 matrix rows matched the freshly collected function names and parameter values. The collection command in the Commands section reproduces the same test selection without that reporter.
+
+The first restored-code run returned 101 passes and one failure: reading a temporary `page_count.json` raised `PermissionError`, so TC-US04-08 reported the generic processing error rather than `invalid_result`. No application/test code was changed to handle this. The full selection was rerun outside the sandbox with a fresh system-temp directory. The passing capture below is that rerun; the intermediate failure is also preserved for transparency. A retry whose test output could not be saved because of cross-context temp permissions is not used as passing evidence.
 
 ### Actual collection output
 
 ```text
+$ D:\SE_AI66A\backend\.venv\Scripts\python.exe -m pytest backend/tests/test_document_metadata_api.py backend/tests/test_concept_processing.py backend/tests/test_reader_extraction.py backend/tests/test_reader_presentation.py backend/tests/test_evidence.py backend/tests/test_evidence_persistence.py backend/tests/test_document_file.py -k "TC-US04 or TC-US08 or TC-US09" --collect-only -q -p no:cacheprovider -p story_capture
 backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-01-below-80]
 backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-02-at-80]
 backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-03-above-80]
@@ -302,13 +308,15 @@ backend\.venv\Lib\site-packages\fastapi\testclient.py:1
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-102/172 tests collected (70 deselected) in 0.67s
+102/172 tests collected (70 deselected) in 0.88s
+
+Exit code: 0
 ```
 
 ### Actual failing output with the deliberate defect
 
 ```text
-$ D:\SE_AI66A\backend\.venv\Scripts\python.exe -m pytest backend/tests/test_document_metadata_api.py -k TC-US04-02 -vv --tb=short -p no:cacheprovider --basetemp C:\Users\AD\AppData\Local\Temp\documind-us04-mutation-eu1l8wp6\pytest
+$ D:\SE_AI66A\backend\.venv\Scripts\python.exe -m pytest backend/tests/test_document_metadata_api.py -k TC-US04-02 -vv --tb=short -p no:cacheprovider --basetemp C:\Users\AD\AppData\Local\Temp\documind-story-main-4a4jzyeu\mutation-work
 ============================= test session starts =============================
 platform win32 -- Python 3.12.6, pytest-9.1.1, pluggy-1.7.0 -- D:\SE_AI66A\backend\.venv\Scripts\python.exe
 rootdir: D:\SE_AI66A
@@ -519,15 +527,217 @@ FAILED backend/tests/test_document_metadata_api.py::test_confidence_threshold_va
   +     'confidence_level': 'low',
         'user_label': None,
     }
-================ 4 failed, 17 deselected, 27 warnings in 8.45s ================
+================ 4 failed, 17 deselected, 27 warnings in 8.76s ================
 
 Exit code: 1
 ```
 
-### Actual passing output after restoration
+### Actual first restored run: temporary-file permission failure
 
 ```text
-$ D:\SE_AI66A\backend\.venv\Scripts\python.exe -m pytest backend/tests/test_document_metadata_api.py backend/tests/test_concept_processing.py backend/tests/test_reader_extraction.py backend/tests/test_reader_presentation.py backend/tests/test_evidence.py backend/tests/test_evidence_persistence.py backend/tests/test_document_file.py -k "TC-US04 or TC-US08 or TC-US09" -vv --tb=short -p no:cacheprovider --basetemp C:\Users\AD\AppData\Local\Temp\documind-story-matrix-c6m4wu6w\pytest
+$ D:\SE_AI66A\backend\.venv\Scripts\python.exe -m pytest backend/tests/test_document_metadata_api.py backend/tests/test_concept_processing.py backend/tests/test_reader_extraction.py backend/tests/test_reader_presentation.py backend/tests/test_evidence.py backend/tests/test_evidence_persistence.py backend/tests/test_document_file.py -k "TC-US04 or TC-US08 or TC-US09" -vv --tb=short -p no:cacheprovider --basetemp C:\Users\AD\AppData\Local\Temp\documind-story-main-4a4jzyeu\passing-work
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-9.1.1, pluggy-1.7.0 -- D:\SE_AI66A\backend\.venv\Scripts\python.exe
+rootdir: D:\SE_AI66A
+plugins: anyio-4.15.1
+collecting ... collected 172 items / 70 deselected / 102 selected
+
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-01-below-80] PASSED [  0%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-02-at-80] PASSED [  1%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-03-above-80] PASSED [  2%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-01-below-80] PASSED [  3%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-02-at-80] PASSED [  4%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-03-above-80] PASSED [  5%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-01-below-80] PASSED [  6%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-02-at-80] PASSED [  7%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-03-above-80] PASSED [  8%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-01-below-80] PASSED [  9%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-02-at-80] PASSED [ 10%]
+backend/tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-03-above-80] PASSED [ 11%]
+backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-04-empty-label] PASSED [ 12%]
+backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-05-long-label] PASSED [ 13%]
+backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-06-missing-confidence] PASSED [ 14%]
+backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-07-missing-label] PASSED [ 15%]
+backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-08-negative-confidence] FAILED [ 16%]
+backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-09-confidence-over-100] PASSED [ 17%]
+backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-10-two-concepts-generated-limitation] PASSED [ 18%]
+backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-11-two-concepts-explicit-limitation] PASSED [ 19%]
+backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-12-three-concepts] PASSED [ 20%]
+backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-13-four-concepts] PASSED [ 21%]
+backend/tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-14-five-concepts] PASSED [ 22%]
+backend/tests/test_concept_processing.py::test_more_than_five_concepts_rejected_by_shared_contract[TC-US04-15-six-concepts] PASSED [ 23%]
+backend/tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-16-empty-concept-name] PASSED [ 24%]
+backend/tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-17-missing-description] PASSED [ 25%]
+backend/tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-18-empty-description] PASSED [ 26%]
+backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-19-known-page-keyword] PASSED [ 27%]
+backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-20-first-page-first-character] PASSED [ 28%]
+backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-21-last-page-last-character] PASSED [ 29%]
+backend/tests/test_reader_extraction.py::test_reader_search_no_match_is_a_valid_empty_result[TC-US04-22-no-matches] PASSED [ 30%]
+backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-23-missing-query] PASSED [ 31%]
+backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-24-empty-query] PASSED [ 32%]
+backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-25-overlong-query] PASSED [ 33%]
+backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-26-whitespace-query] PASSED [ 34%]
+backend/tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-27-punctuation-query] PASSED [ 35%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-28-first-page-text] PASSED [ 36%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-29-middle-page-text] PASSED [ 37%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-30-last-page-text] PASSED [ 38%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-31-page-zero] PASSED [ 39%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-32-negative-page] PASSED [ 40%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-33-one-past-last-page] PASSED [ 41%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-34-nonnumeric-page] PASSED [ 42%]
+backend/tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-35-fractional-page] PASSED [ 43%]
+backend/tests/test_reader_presentation.py::test_saved_citation_opens_matching_document_page_and_visible_highlight[TC-US09-01-citation-opens-exact-source] PASSED [ 44%]
+backend/tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-02-reject-invalid-citation-page] PASSED [ 45%]
+backend/tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-03-reject-invalid-citation-document] PASSED [ 46%]
+backend/tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-04-reject-stale-citation] PASSED [ 47%]
+backend/tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-36-known-page-repeated-highlight] PASSED [ 48%]
+backend/tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-37-first-page-highlight] PASSED [ 49%]
+backend/tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-38-last-page-highlight] PASSED [ 50%]
+backend/tests/test_reader_presentation.py::test_valid_query_without_highlights_returns_readable_pdf[TC-US04-39-highlight-no-match] PASSED [ 50%]
+backend/tests/test_reader_presentation.py::test_valid_query_without_highlights_returns_readable_pdf[TC-US04-40-empty-highlight-query-clears-marks] PASSED [ 51%]
+backend/tests/test_reader_presentation.py::test_exact_match_span_accepts_first_and_last_character_boundaries[TC-US04-55-valid-span-starts-at-zero] PASSED [ 52%]
+backend/tests/test_reader_presentation.py::test_exact_match_span_accepts_first_and_last_character_boundaries[TC-US04-56-valid-span-ends-at-text-length] PASSED [ 53%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-41-overlong-highlight-query] PASSED [ 54%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-42-highlight-page-zero] PASSED [ 55%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-43-highlight-negative-page] PASSED [ 56%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-44-highlight-one-past-last-page] PASSED [ 57%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-45-highlight-nonnumeric-page] PASSED [ 58%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-46-highlight-fractional-page] PASSED [ 59%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-47-highlight-missing-page] PASSED [ 60%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-48-negative-match-start] PASSED [ 61%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-49-match-end-past-text] PASSED [ 62%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-50-match-start-at-text-end] PASSED [ 63%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-51-empty-match-span] PASSED [ 64%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-52-reversed-match-span] PASSED [ 65%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-53-missing-match-end] PASSED [ 66%]
+backend/tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-54-missing-match-start] PASSED [ 67%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-bullet] PASSED [ 68%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-table] PASSED [ 69%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-concept] PASSED [ 70%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-bullet] PASSED [ 71%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-table] PASSED [ 72%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-concept] PASSED [ 73%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-bullet] PASSED [ 74%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-table] PASSED [ 75%]
+backend/tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-concept] PASSED [ 76%]
+backend/tests/test_evidence_persistence.py::test_two_documents_supporting_one_bullet_claim_persist_distinct_citations[TC-US08-04-same-claim-two-documents] PASSED [ 77%]
+backend/tests/test_evidence_persistence.py::test_two_documents_supporting_one_bullet_claim_persist_distinct_citations[TC-US08-05-same-claim-distinct-document-pages] PASSED [ 78%]
+backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-06-persist-missing-source-unverified] PASSED [ 79%]
+backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-07-reject-nonexistent-source-document] PASSED [ 80%]
+backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-08-reject-source-page-with-different-text] PASSED [ 81%]
+backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-09-reject-mismatched-source-quote] PASSED [ 82%]
+backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-10-reject-stale-reader-source] PASSED [ 83%]
+backend/tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-11-preserve-valid-source-reject-invalid-source] PASSED [ 84%]
+backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-05-first-citation-page-file] PASSED [ 85%]
+backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-05-first-citation-page-rendered-file] PASSED [ 86%]
+backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-06-last-citation-page-file] PASSED [ 87%]
+backend/tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-06-last-citation-page-rendered-file] PASSED [ 88%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-file] PASSED [ 89%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-rendered-file] PASSED [ 90%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-file] PASSED [ 91%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-rendered-file] PASSED [ 92%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-file] PASSED [ 93%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-rendered-file] PASSED [ 94%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-10-nonnumeric-page-file] PASSED [ 95%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-10-nonnumeric-page-rendered-file] PASSED [ 96%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-11-fractional-page-file] PASSED [ 97%]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-11-fractional-page-rendered-file] PASSED [ 98%]
+backend/tests/test_document_file.py::test_textless_page_remains_readable_but_cannot_accept_citation_span[TC-US09-12-image-only-page-readable] PASSED [ 99%]
+backend/tests/test_document_file.py::test_textless_page_remains_readable_but_cannot_accept_citation_span[TC-US09-13-blank-page-readable] PASSED [100%]
+
+================================== FAILURES ===================================
+_ test_invalid_mocked_label_is_not_published[TC-US04-08-negative-confidence] __
+backend\tests\test_document_metadata_api.py:220: in test_invalid_mocked_label_is_not_published
+    assert 'invalid_result' in saved['job_files'][0]['error_message']
+E   AssertionError: assert 'invalid_result' in 'Document processing failed. Please retry.'
+---------------------------- Captured stdout setup ----------------------------
+Starting server (Database-first approach)...
+------------------------------ Captured log call ------------------------------
+ERROR    app.services.processing:processing.py:197 job=1 document=1 attempt=1/3 failed
+Traceback (most recent call last):
+  File "D:\SE_AI66A\backend\app\services\processing.py", line 126, in _process_job
+    prepared = await asyncio.wait_for(prepare_document(source, on_page_count=on_page_count),
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\AD\AppData\Local\Programs\Python\Python312\Lib\asyncio\tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "D:\SE_AI66A\backend\app\services\job_extraction.py", line 78, in prepare_document
+    count = json.loads(progress.read_text(encoding='utf-8'))['page_count']
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\AD\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\AD\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 'C:\\Users\\AD\\AppData\\Local\\Temp\\documind-job-zhyl11b5\\page_count.json'
+-------------------------- Captured stdout teardown ---------------------------
+Shutting down server...
+============================== warnings summary ===============================
+backend\.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\SE_AI66A\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+backend/tests/test_document_metadata_api.py: 102 warnings
+backend/tests/test_concept_processing.py: 61 warnings
+backend/tests/test_reader_extraction.py: 68 warnings
+backend/tests/test_reader_presentation.py: 120 warnings
+backend/tests/test_evidence.py: 81 warnings
+backend/tests/test_evidence_persistence.py: 76 warnings
+backend/tests/test_document_file.py: 48 warnings
+  D:\SE_AI66A\backend\.venv\Lib\site-packages\sqlalchemy\sql\schema.py:3627: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+backend/tests/test_document_metadata_api.py: 18 warnings
+backend/tests/test_concept_processing.py: 9 warnings
+backend/tests/test_reader_extraction.py: 17 warnings
+backend/tests/test_reader_presentation.py: 25 warnings
+backend/tests/test_evidence.py: 9 warnings
+backend/tests/test_evidence_persistence.py: 8 warnings
+backend/tests/test_document_file.py: 16 warnings
+  D:\SE_AI66A\backend\app\core\security.py:22: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+backend/tests/test_document_metadata_api.py: 12 warnings
+backend/tests/test_reader_extraction.py: 6 warnings
+backend/tests/test_reader_presentation.py: 10 warnings
+backend/tests/test_evidence.py: 3 warnings
+backend/tests/test_evidence_persistence.py: 4 warnings
+backend/tests/test_document_file.py: 10 warnings
+  D:\SE_AI66A\backend\app\services\document_retention.py:13: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return datetime.utcnow()
+
+backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-19-known-page-keyword]
+backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-20-first-page-first-character]
+backend/tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-21-last-page-last-character]
+backend/tests/test_reader_extraction.py::test_reader_search_no_match_is_a_valid_empty_result[TC-US04-22-no-matches]
+  D:\SE_AI66A\backend\app\services\search_index.py:182: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = now or datetime.utcnow()
+
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-file]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-file]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-file]
+  D:\SE_AI66A\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    result = context.run(func, *args)
+
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-rendered-file]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-rendered-file]
+backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-rendered-file]
+  D:\SE_AI66A\backend\app\api\document.py:297: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    return get_document_file(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED backend/tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-08-negative-confidence] - AssertionError: assert 'invalid_result' in 'Document processing failed. Please retry.'
+========= 1 failed, 101 passed, 70 deselected, 714 warnings in 51.52s =========
+
+Exit code: 1
+```
+
+### Actual passing output after restoration and retry
+
+```text
+$ D:\SE_AI66A\backend\.venv\Scripts\python.exe -m pytest backend/tests/test_document_metadata_api.py backend/tests/test_concept_processing.py backend/tests/test_reader_extraction.py backend/tests/test_reader_presentation.py backend/tests/test_evidence.py backend/tests/test_evidence_persistence.py backend/tests/test_document_file.py -k "TC-US04 or TC-US08 or TC-US09" -vv --tb=short -p no:cacheprovider --basetemp C:\Users\AD\AppData\Local\Temp\documind-story-retry-pw2nms16\pytest-work
 ============================= test session starts =============================
 platform win32 -- Python 3.12.6, pytest-9.1.1, pluggy-1.7.0 -- D:\SE_AI66A\backend\.venv\Scripts\python.exe
 rootdir: D:\SE_AI66A
@@ -691,7 +901,7 @@ backend/tests/test_document_file.py::test_invalid_citation_page_is_rejected_with
     return get_document_file(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-============== 102 passed, 70 deselected, 714 warnings in 43.83s ==============
+============== 102 passed, 70 deselected, 714 warnings in 53.66s ==============
 
 Exit code: 0
 ```
@@ -707,16 +917,16 @@ The test implementation commit/PR mapping was verified against GitHub `refs/pull
 | US08 evidence integrity | [53e992a](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/53e992a1c2ff262a9476c5ead51c4c9599e4eff0) | [#226](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/226) |
 | US09 citation reader navigation | [d340083](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/d340083c99f22e045d18f64d9607bcd803bdd1f1) | [#227](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/227) |
 
-The documentation handover is [draft PR #234](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/234), on `chore/us04-us08-us09-test-handover`, stacked on `215_Extend_citation_to_reader_navigation_tests` (PR #231). The initial captured evidence was committed in [72f0257](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/72f0257); this revision consolidates the evidence into this file and removes the earlier out-of-scope hygiene changes from the final PR diff. The [handover commit list](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/234/commits) includes the consolidation commit. No PR has been merged as part of this handover.
+The earlier documentation handover was [b98f5a9](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/b98f5a9965da9bb6979ffc5ded3534a02351f9ee), merged through [PR #234](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/234). This fresh run tests [main at b18793e](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/b18793e679b9557927b6a248e6c3e2b67dddd7ca). Implementation PR-to-commit mappings above were verified again on 31 October using GitHub pull-request head refs.
 
-Verify the final scope and documentation commits locally:
+The new handover branch is `docs/us04-us08-us09-evidence-20261031`, based on `main`. Its final diff must list only this document:
 
 ```powershell
-git diff --name-status 215_Extend_citation_to_reader_navigation_tests...HEAD
-git log --oneline 215_Extend_citation_to_reader_navigation_tests..HEAD -- docs/testing.md
+git diff --name-status origin/main...HEAD
+git log --oneline origin/main..HEAD -- docs/testing.md
 ```
 
-The first command must list only `docs/testing.md`.
+The fresh evidence is committed in [c7ae67f](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/c7ae67f7ba4c6377a1a7611428ba209413dd68a2) and handed over in [draft PR #237](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/237). Its [commit list](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/237/commits) also records the final documentation link update. The PR changes only `docs/testing.md` and has not been merged as part of this task.
 
 ## Scope of the evidence
 
