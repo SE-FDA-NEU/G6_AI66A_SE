@@ -926,7 +926,7 @@ git diff --name-status origin/main...HEAD
 git log --oneline origin/main..HEAD -- docs/testing.md
 ```
 
-The fresh evidence commit and PR link are recorded in the handover entry below.
+The fresh evidence is committed in [c7ae67f](https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/c7ae67f7ba4c6377a1a7611428ba209413dd68a2) and handed over in [draft PR #237](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/237). Its [commit list](https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/237/commits) also records the final documentation link update. The PR changes only `docs/testing.md` and has not been merged as part of this task.
 
 ## Scope of the evidence
 
