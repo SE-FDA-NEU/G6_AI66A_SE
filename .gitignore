@@ -26,6 +26,7 @@ build/
 
 # Python
 __pycache__/
+.tmp-us04-tests/
 *.py[cod]
 *$py.class
 venv/
