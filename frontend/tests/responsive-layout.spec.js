@@ -206,6 +206,8 @@ test('seven-day expiry warnings and expired reader messages fit 375px', async ({
     last_accessed_at: '2026-03-01T00:00:00', expires_at: '2026-03-31T00:00:00',
   }] }));
   await page.goto('/workspace');
+  // Wait for the mobile layout before the helper checks the sidebar toggle once.
+  await expect(page.locator('[aria-controls="document-history-sidebar"]')).toBeVisible();
   await openWorkspaceControls(page);
   await expect(page.getByTestId('expiry-warning')).toBeVisible();
   await expect(page.getByTestId('document-expiry')).toContainText('31/03/2026');
