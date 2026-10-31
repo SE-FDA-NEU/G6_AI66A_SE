@@ -12,6 +12,7 @@ from app.models import FileFormat, Job, JobMode
 from app.services import gemini_analysis as gemini, processing
 from app.services.pdf_extraction import extract_pdf
 from test_pdf_extraction import make_pdf
+from test_acceptance_fixtures import controlled_output, manifest, upload
 
 
 @pytest.fixture
@@ -54,6 +55,94 @@ def response(mode='bullet', source=0):
         result.update(concepts=[{'n': 'Phạt chậm trả', **claim}])
     return {'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': json.dumps(result)}]}}],
             'usageMetadata': {'promptTokenCount': 200, 'candidatesTokenCount': 80, 'totalTokenCount': 280}}
+
+
+@pytest.fixture
+def contract_api_job(client, api):
+    """Committed PDF through the real HTTP decoder, grounding and DB pipeline."""
+    state, calls = api
+    spec = next(spec for spec in manifest()['documents'] if spec['key'] == 'contract-1')
+
+    async def handler(request):
+        body = json.loads(request.content)
+        excerpts = json.loads(body['contents'][0]['parts'][0]['text'])
+        raw = controlled_output(spec, excerpts, 'table')
+        raw.update(state.get('table_override', {}))
+        if 'source_case' in state:
+            valid_id = raw['penalty']['s'][0]
+            raw['penalty']['s'] = {
+                'unknown': [999], 'missing': None, 'empty': [],
+                'mixed': [valid_id, 999], 'wrong_field': raw['value']['s'],
+            }[state['source_case']]
+        text = state.get('raw_text', json.dumps(raw))
+        return httpx.Response(200, json={'candidates': [
+            {'finishReason': 'STOP', 'content': {'parts': [{'text': text}]}}]})
+
+    state['handler'] = handler
+    return upload(client, [spec], 'table'), state, calls
+
+
+@pytest.mark.parametrize('override', [
+    pytest.param({'raw_text': '{unfinished'}, id='TC-US01-02-malformed-json'),
+    pytest.param({'raw_text': '{}'}, id='missing-table-fields'),
+    pytest.param({'table_override': {'value': '1,200,000,000 VND'}}, id='unstructured-value'),
+    pytest.param({'table_override': {'penalty': {'t': 0.05, 's': [0]}}}, id='numeric-penalty'),
+    pytest.param({'table_override': {'penalty': {'t': '0.05% per day', 's': [-1]}}}, id='negative-source'),
+    pytest.param({'table_override': {'penalty': {'t': '0.05% per day', 's': ['2']}}}, id='string-source'),
+    pytest.param({'table_override': {'penalty': {'t': '0.05% per day', 's': [True]}}}, id='boolean-source'),
+    pytest.param({'table_override': {'penalty': {'t': '0.05% per day', 's': [2.0]}}}, id='float-source'),
+    pytest.param({'table_override': {'penalty': {'t': None, 's': [2]}}}, id='source-without-text'),
+    pytest.param({'table_override': {'penalty': {
+        't': '0.05% per day', 's': [2], 'unverified': False}}}, id='provider-forges-verification'),
+])
+def test_contract_malformed_ai_output_cannot_publish_rows_or_citations(
+        client, session_factory, contract_api_job, override):
+    """TC-US01-02: reject malformed table output after the bounded repair attempt."""
+    job_id, state, calls = contract_api_job
+    state.update(override)
+    processing.process_job(job_id, session_factory)
+    saved = client.get(f'/jobs/{job_id}').json()
+    assert saved['status'] == saved['job_files'][0]['status'] == 'failed'
+    assert saved['completed_count'] == 0 and saved['result_data']['documents'] == {}
+    assert saved['citations'] == [] and len(calls) == 2
+    assert 'gemini_invalid_response' in saved['job_files'][0]['error_message']
+    assert not list(settings.STORAGE_DIR.rglob('*.json'))
+    with session_factory() as db:
+        document = db.get(Job, job_id).job_files[0].document
+        assert document.ai_label is None and document.ai_confidence is None
+    processing.process_job(job_id, session_factory)
+    assert client.get(f'/jobs/{job_id}').json() == saved and len(calls) == 2
+
+
+@pytest.mark.parametrize('source_case, evidence_count', [
+    pytest.param('unknown', 0, id='TC-US01-03-unknown-source'),
+    pytest.param('missing', 0, id='missing-source'),
+    pytest.param('empty', 0, id='empty-source'),
+    pytest.param('mixed', 1, id='valid-and-unknown-source'),
+    pytest.param('wrong_field', 1, id='existing-source-with-unsupported-fact'),
+])
+def test_contract_invalid_sources_stay_unverified_after_persistence(
+        client, session_factory, contract_api_job, source_case, evidence_count):
+    """TC-US01-03: source presence alone cannot verify a financial claim."""
+    job_id, state, calls = contract_api_job
+    state['source_case'] = source_case
+    processing.process_job(job_id, session_factory)
+    saved = client.get(f'/jobs/{job_id}').json()
+    assert saved['status'] == 'completed' and saved['completed_count'] == 1
+    document_id = saved['job_files'][0]['document_id']
+    row = saved['result_data']['documents'][str(document_id)]
+    penalty = row['output']['penalty']
+    assert penalty['text'] == '0.05% per day' and penalty['unverified']
+    assert len(penalty['evidence']) == evidence_count
+    assert 'unverified_claims' in row['warnings']
+    for field in ('value', 'payment_term'):
+        assert not row['output'][field]['unverified']
+    citations = [citation for citation in saved['citations'] if citation['claim_text'] == '0.05% per day']
+    assert len(citations) == 1 and citations[0]['unverified']
+    with session_factory() as db:
+        assert db.get(Job, job_id).result_data == saved['result_data']
+    processing.process_job(job_id, session_factory)
+    assert client.get(f'/jobs/{job_id}').json() == saved and len(calls) == 1
 
 
 @pytest.mark.parametrize('mode', list(JobMode))
