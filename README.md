@@ -4,7 +4,7 @@ Công cụ tóm tắt và phân loại văn bản, hệ thống hoá các thư m
 
 **Group:** G6_AI66A
 **Product Owner:** @PhanDangVu
-**Scrum Master (Sprint 1):** @Dangtooo
+**Scrum Master (Sprint 4):** @Dangtooo
 **Board:** [Sprint Board - Text Classification and Summarization Service](https://github.com/orgs/SE-FDA-NEU/projects/24/views/1)
 
 ---
