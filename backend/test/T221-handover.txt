@@ -1,0 +1,569 @@
+#221: US01 / US02 / US03 test evidence for docs/testing.md
+Only this text handover and T221-case-matrix.csv are intended for commit. Existing Markdown, application and test source are unchanged.
+Recorded HEAD: f796452ef52d3b3a6680cff7a4f5b79a30372dd7 | branch: 221-hand-over
+Runtime: Python 3.13.0, pytest 9.1.1, Node v24.22.1, Playwright 1.64.1
+
+MATRIX: T221-case-matrix.csv contains exact runnable pytest nodes, JSON parameter values, expected behavior, actual outcome and source permalinks.
+US01: 7 IDs / 24 concrete parametrized nodes; normal, rejection and boundary coverage.
+US02: 10 IDs / 11 concrete parametrized nodes; normal, rejection and boundary coverage.
+US03: 11 IDs / 29 concrete parametrized nodes; normal, rejection and boundary coverage.
+28 IDs map to 64 passing nodes. The broader selected run includes the six story modules plus timeout/fixture regressions; full actual output is below.
+Empty pytest_parameters means inputs are exercised inside the function: see expected_and_loop_inputs and the source permalink. Docstring-only IDs are not selected by pytest -k. Quote the full pytest_node_id from the CSV.
+
+CASE OVERVIEW (CSV expands parameters):
+TC-US01-01 | normal | Five committed contracts produce five exact financial rows, currencies, 0.05% per day and physical evidence.
+TC-US01-02 | rejection | Ten malformed JSON/field/type/forged-verification variants cannot publish results after bounded repair.
+TC-US01-03 | rejection | unknown/missing/empty/mixed/wrong_field sources never verify the penalty.
+TC-US01-04 | boundary | 299.999 seconds completes five rows; retry=False/True.
+TC-US01-05 | boundary | 300 seconds rejects row five and preserves four rows; retry=False/True.
+TC-US01-06 | boundary | 300.001 seconds rejects row five and preserves four rows; retry=False/True.
+TC-US01-07 | boundary | Queue time 300/300.001 seconds fails before model calls.
+TC-US02-01 | normal/boundary | 27 PDFs: 25 owned, 21 relevant; limits 7/20/100; offsets 21/22/100. Exclude four unrelated and two peer documents; 20 is not a maximum.
+TC-US02-02 | normal/boundary | Folder and effective label before pagination: ten hits; page size 3; offsets 0/3/6/9; foreign/unknown folders and wildcard/SQL-like labels do not broaden results.
+TC-US02-03 | rejection/boundary | Content/semantic modes reject missing/blank/punctuation/emoji/501-character queries, folder 0/-1/noninteger, blank/101-character labels, limit 0/101/noninteger, offset -1/noninteger and invalid mode. Accept query lengths 1/500, label 100 and limits 1/100. No embedding calls for invalid inputs.
+TC-US02-04 | rejection | Forged owner_id and matching filenames/text cannot cross accounts; foreign source-page reads return 403.
+TC-US02-05 | normal | 21 hits round-trip to physical page 3, exact snippet offsets, reader version and equivalent Evidence.
+TC-US02-06 | boundary | Adding owned document 26 produces 22 relevant hits, including its physical page 4; old sources unchanged.
+TC-US02-07 | normal/boundary | Real HTTP adapter with deterministic vectors returns all 21 relevant sources across page 20; isolate provider inputs and caches by owner.
+TC-US02-08 | rejection | Folder/label/account filters exclude sources before semantic provider calls and cache writes.
+TC-US02-09 | rejection/boundary | Invalid vector index 0/49 in a 50-passage batch returns 503 without partial cache; keyword search remains usable.
+TC-US02-10 | boundary | Cached corpus grows to 26 owned documents / 22 relevant hits; embed only two new passages.
+TC-US03-01 | normal | 15-page summary and two grounded distinct actions persist with citations and no limitation.
+TC-US03-02 | normal/boundary | One supported action persists with explicit limitation.
+TC-US03-03 | rejection | Six malformed bullet/action/type/source/forged-verification variants cannot publish a summary.
+TC-US03-04 | boundary | 999 total words accepted for action_count=1/2; count bullets, actions and limitation.
+TC-US03-05 | boundary | 1000 total words accepted for action_count=1/2.
+TC-US03-06 | rejection/boundary | 1001 words rejected for action_count=1/2, without published result/citations.
+TC-US03-07 | rejection/boundary | Three source-supported AI actions violate two-action wire limit; repair then failure.
+TC-US03-08 | rejection/boundary | Source truly supports zero/one actions; remove invented numeric advice and persist limitation.
+TC-US03-09 | boundary | 179.999 seconds accepted; retry=False/True x stage=analysis/persistence.
+TC-US03-10 | boundary | 180 seconds rejected/rolled back; retry=False/True x stage=analysis/persistence.
+TC-US03-11 | boundary | 180.001 seconds rejected/rolled back; retry=False/True x stage=analysis/persistence.
+
+VERIFIED IMPLEMENTATION COMMITS AND PR LINKS:
+test: extend contract comparison regressions (#217): https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/b07cb6246ce205b89a15aa13b075a5784db55484 | https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/228 | MERGED | mergedAt=2026-10-31T13:52:24Z
+218 extend cross document: https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/d4d77f2e6f6ddaab9983c4fa9b2c6998e00327a2 | https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/229 | MERGED | mergedAt=2026-10-31T13:52:37Z
+219 extend bullet: https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/23a44c39ad3528ef5248c59a4dcf288aca49fc4a | https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/230 | MERGED | mergedAt=2026-10-31T13:52:51Z
+220 review existing: https://github.com/SE-FDA-NEU/G6_AI66A_SE/commit/edb9b65389338201fb64bb149503964ac0fbb0c0 | https://github.com/SE-FDA-NEU/G6_AI66A_SE/pull/236 | MERGED | mergedAt=2026-10-31T13:55:26Z
+PR metadata was read from GitHub in this evidence session. The #221 handover commit/PR has not been created; the owner can add that real link after committing/pushing this handover.
+
+DELIBERATE FAILURE -> RESTORE -> PASS:
+Changed backend/app/schemas/result.py from if words > 1000: to if words > 999:. Both runs use exactly the same 1000-word test. Original bytes were restored in finally, compared byte-for-byte, then the passing run was captured. The subsequent full selected run used restored code.
+{
+  "file": "backend/app/schemas/result.py",
+  "node": "backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words]",
+  "correct_sha256": "8b6c8fb2c01c73d08968c7a797361c65eb5cca6fba3981fe1e906cc8d7c35fa4",
+  "mutated_sha256": "9f1e05fa2685cdef48903008f98b07c341d0c20bee42f345fd0816f264f8d4bf",
+  "restored_sha256": "8b6c8fb2c01c73d08968c7a797361c65eb5cca6fba3981fe1e906cc8d7c35fa4",
+  "restored_byte_for_byte": true
+}
+
+UI RESULTS BY SPEC / PROJECT (fresh run, --retries=1):
+bullet-results.spec.js / chromium: 11 passed, 0 failed, 0 skipped
+financial-table.spec.js / chromium: 12 passed, 0 failed, 0 skipped
+workspace.spec.js / chromium: 5 passed, 0 failed, 0 skipped
+responsive-layout.spec.js / android-375: 4 passed, 1 failed, 0 skipped
+responsive-layout.spec.js / ios-375: 5 passed, 0 failed, 0 skipped
+Remaining failed scenarios: android-375: US05 login leads through workspace, upload retry and completed bullet results without overflow
+Failures/flaky results below must not be relabeled as a clean first-attempt pass. No UI/app/test code was changed by this handover task.
+
+SCOPE / RECIPIENT NOTES:
+SQLite, temporary synthetic files and controlled provider responses are used. Fake time verifies deadline behavior, not live-model speed. This scoped run does not assert that the entire repository suite or remote CI passed.
+workspace.spec.js covers metadata/history pagination and label search. Cross-document content/semantic relevance and owner isolation are backed by pytest; do not claim browser coverage of a removed/absent content-search control.
+Copy the overview or reference the CSV from docs/testing.md. Include actual commands, outputs and commit/PR links. Teammate review, CI and manual/live-provider acceptance are separate checks.
+
+REPRODUCTION:
+Repository-relative interpreter: backend\.venv\Scripts\python.exe. For any matrix case use it with -m pytest and the quoted full pytest_node_id. Executed argv, cwd, timestamps, environment overrides and exit code are included before each raw output below.
+For the red run, save the original source bytes and apply the one-line mutation above. Restore those bytes before the green run, using try/finally if scripted. No git reset/checkout is required.
+UI command in frontend/: set CI=1 then npm.cmd test -- financial-table.spec.js workspace.spec.js bullet-results.spec.js responsive-layout.spec.js --retries=1.
+Temporary JUnit/collector files are omitted from the minimal commit. JUnit output paths below refer to temporary capture locations; raw console output and all case outcomes are retained here and in the CSV.
+
+========================================================================
+ACTUAL RUN: mutation-red
+{
+  "argv": [
+    "C:\\Users\\ADMIN\\Desktop\\G6_AI66A_SE\\backend\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words]",
+    "-v",
+    "--tb=short",
+    "--disable-warnings"
+  ],
+  "cwd": "C:\\Users\\ADMIN\\Desktop\\G6_AI66A_SE",
+  "env": {
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "started_utc": "2026-10-31T16:40:31.923652+00:00",
+  "finished_utc": "2026-10-31T16:40:34.928499+00:00",
+  "exit_code": 1,
+  "head": "f796452ef52d3b3a6680cff7a4f5b79a30372dd7"
+}
+--- BEGIN UNEDITED OUTPUT ---
+============================= test session starts =============================
+platform win32 -- Python 3.13.0, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\ADMIN\Desktop\G6_AI66A_SE\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\ADMIN\Desktop\G6_AI66A_SE
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words] FAILED [100%]
+
+================================== FAILURES ===================================
+_ test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words] _
+backend\tests\test_bullet_processing.py:123: in test_inclusive_word_limit_is_enforced_before_persistence
+    assert (saved['status'] == 'completed') == completed
+E   AssertionError: assert ('failed' == 'completed'
+E     
+E     - completed
+E     + failed) == True
+---------------------------- Captured stdout setup ----------------------------
+Starting server (Database-first approach)...
+------------------------------ Captured log call ------------------------------
+ERROR    app.services.processing:processing.py:189 job=1 document=1 invalid_result error_type=InvalidAnalysisResult fields=['output.bullet (value_error)']
+-------------------------- Captured stdout teardown ---------------------------
+Shutting down server...
+=========================== short test summary info ===========================
+FAILED backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words]
+======================== 1 failed, 7 warnings in 1.26s ========================
+
+--- END UNEDITED OUTPUT ---
+
+========================================================================
+ACTUAL RUN: mutation-green
+{
+  "argv": [
+    "C:\\Users\\ADMIN\\Desktop\\G6_AI66A_SE\\backend\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words]",
+    "-v",
+    "--tb=short",
+    "--disable-warnings"
+  ],
+  "cwd": "C:\\Users\\ADMIN\\Desktop\\G6_AI66A_SE",
+  "env": {
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "started_utc": "2026-10-31T16:40:34.964218+00:00",
+  "finished_utc": "2026-10-31T16:40:37.298636+00:00",
+  "exit_code": 0,
+  "head": "f796452ef52d3b3a6680cff7a4f5b79a30372dd7"
+}
+--- BEGIN UNEDITED OUTPUT ---
+============================= test session starts =============================
+platform win32 -- Python 3.13.0, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\ADMIN\Desktop\G6_AI66A_SE\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\ADMIN\Desktop\G6_AI66A_SE
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words] PASSED [100%]
+
+======================= 1 passed, 10 warnings in 0.96s ========================
+
+--- END UNEDITED OUTPUT ---
+
+========================================================================
+ACTUAL RUN: backend
+{
+  "argv": [
+    "C:\\Users\\ADMIN\\Desktop\\G6_AI66A_SE\\backend\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "backend/tests/test_financial_table.py",
+    "backend/tests/test_gemini_analysis.py",
+    "backend/tests/test_cross_document_search.py",
+    "backend/tests/test_search_index.py",
+    "backend/tests/test_search_embeddings.py",
+    "backend/tests/test_bullet_processing.py",
+    "backend/tests/test_processing_timeouts.py",
+    "backend/tests/test_acceptance_fixtures.py",
+    "-v",
+    "--tb=short",
+    "--disable-warnings",
+    "--junitxml=C:\\Users\\ADMIN\\AppData\\Local\\Temp\\documind-t221-9e5w9vs8\\backend.xml"
+  ],
+  "cwd": "C:\\Users\\ADMIN\\Desktop\\G6_AI66A_SE",
+  "env": {
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "started_utc": "2026-10-31T16:41:00.197586+00:00",
+  "finished_utc": "2026-10-31T16:43:24.344990+00:00",
+  "exit_code": 0,
+  "head": "f796452ef52d3b3a6680cff7a4f5b79a30372dd7"
+}
+--- BEGIN UNEDITED OUTPUT ---
+============================= test session starts =============================
+platform win32 -- Python 3.13.0, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\ADMIN\Desktop\G6_AI66A_SE\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\ADMIN\Desktop\G6_AI66A_SE
+plugins: anyio-4.15.1
+collecting ... collected 190 items
+
+backend/tests/test_financial_table.py::test_committed_contracts_preserve_five_rows_and_physical_sources PASSED [  0%]
+backend/tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[no-retry-TC-US01-04-before-300s] PASSED [  1%]
+backend/tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[no-retry-TC-US01-05-at-300s] PASSED [  1%]
+backend/tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[no-retry-TC-US01-06-after-300s] PASSED [  2%]
+backend/tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[one-timeout-retry-TC-US01-04-before-300s] PASSED [  2%]
+backend/tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[one-timeout-retry-TC-US01-05-at-300s] PASSED [  3%]
+backend/tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[one-timeout-retry-TC-US01-06-after-300s] PASSED [  3%]
+backend/tests/test_financial_table.py::test_expired_contract_batch_never_calls_provider[300] PASSED [  4%]
+backend/tests/test_financial_table.py::test_expired_contract_batch_never_calls_provider[300.001] PASSED [  4%]
+backend/tests/test_financial_table.py::test_five_financial_rows_and_labels_persist_exact_numbers_units_and_field_evidence PASSED [  5%]
+backend/tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[value-1,200,000,001 VND] PASSED [  5%]
+backend/tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[value-1,200,000,000 USD] PASSED [  6%]
+backend/tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[value-1.2 billion VND] PASSED [  6%]
+backend/tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[penalty-0.5% per day] PASSED [  7%]
+backend/tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[penalty-0.05% per month] PASSED [  7%]
+backend/tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[payment_term-Within 60 days] PASSED [  8%]
+backend/tests/test_financial_table.py::test_financial_batch_preserves_finished_rows_when_one_contract_times_out_or_fails[error0-3] PASSED [  8%]
+backend/tests/test_financial_table.py::test_financial_batch_preserves_finished_rows_when_one_contract_times_out_or_fails[error1-1] PASSED [  9%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[TC-US01-02-malformed-json] PASSED [ 10%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[missing-table-fields] PASSED [ 10%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[unstructured-value] PASSED [ 11%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[numeric-penalty] PASSED [ 11%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[negative-source] PASSED [ 12%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[string-source] PASSED [ 12%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[boolean-source] PASSED [ 13%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[float-source] PASSED [ 13%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[source-without-text] PASSED [ 14%]
+backend/tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[provider-forges-verification] PASSED [ 14%]
+backend/tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[TC-US01-03-unknown-source] PASSED [ 15%]
+backend/tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[missing-source] PASSED [ 15%]
+backend/tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[empty-source] PASSED [ 16%]
+backend/tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[valid-and-unknown-source] PASSED [ 16%]
+backend/tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[existing-source-with-unsupported-fact] PASSED [ 17%]
+backend/tests/test_gemini_analysis.py::test_one_compact_request_maps_real_source_offsets_and_metadata[bullet] PASSED [ 17%]
+backend/tests/test_gemini_analysis.py::test_one_compact_request_maps_real_source_offsets_and_metadata[table] PASSED [ 18%]
+backend/tests/test_gemini_analysis.py::test_one_compact_request_maps_real_source_offsets_and_metadata[concept] PASSED [ 18%]
+backend/tests/test_gemini_analysis.py::test_cache_reuses_wire_response_after_reupload_but_remaps_citations PASSED [ 19%]
+backend/tests/test_gemini_analysis.py::test_cache_is_scoped_by_owner_mode_budget_and_model PASSED [ 20%]
+backend/tests/test_gemini_analysis.py::test_missing_key_and_textless_pages_make_no_network_calls PASSED [ 20%]
+backend/tests/test_gemini_analysis.py::test_unknown_source_id_never_gets_a_verified_citation PASSED [ 21%]
+backend/tests/test_gemini_analysis.py::test_gemini_preserves_multiple_excerpt_ids_and_same_text_on_different_pages PASSED [ 21%]
+backend/tests/test_gemini_analysis.py::test_unknown_gemini_source_does_not_discard_its_other_valid_sources PASSED [ 22%]
+backend/tests/test_gemini_analysis.py::test_source_budget_keeps_offsets_balances_late_pages_and_reports_truncation PASSED [ 22%]
+backend/tests/test_gemini_analysis.py::test_table_budget_prioritizes_financial_clause_over_unrelated_text PASSED [ 23%]
+backend/tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[400-gemini_configuration_error] PASSED [ 23%]
+backend/tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[401-gemini_configuration_error] PASSED [ 24%]
+backend/tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[403-gemini_configuration_error] PASSED [ 24%]
+backend/tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[429-gemini_quota_exceeded] PASSED [ 25%]
+backend/tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[503-gemini_unavailable] PASSED [ 25%]
+backend/tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload0-gemini_invalid_response] PASSED [ 26%]
+backend/tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload1-gemini_blocked] PASSED [ 26%]
+backend/tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload2-gemini_output_limit] PASSED [ 27%]
+backend/tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload3-gemini_blocked] PASSED [ 27%]
+backend/tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload4-gemini_invalid_response] PASSED [ 28%]
+backend/tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload5-gemini_invalid_response] PASSED [ 28%]
+backend/tests/test_gemini_analysis.py::test_http_timeout_remains_compatible_with_existing_retry_logic PASSED [ 29%]
+backend/tests/test_gemini_analysis.py::test_oversized_bullet_wire_is_rejected_before_it_can_be_cached PASSED [ 30%]
+backend/tests/test_gemini_analysis.py::test_invalid_first_draft_is_corrected_once_and_only_valid_results_are_cached[malformed_json] PASSED [ 30%]
+backend/tests/test_gemini_analysis.py::test_invalid_first_draft_is_corrected_once_and_only_valid_results_are_cached[too_many_concepts] PASSED [ 31%]
+backend/tests/test_gemini_analysis.py::test_invalid_first_draft_is_corrected_once_and_only_valid_results_are_cached[word_budget] PASSED [ 31%]
+backend/tests/test_gemini_analysis.py::test_groq_input_budget_is_independent_of_gemini_budget PASSED [ 32%]
+backend/tests/test_gemini_analysis.py::test_many_source_topics_do_not_force_more_than_five_concepts PASSED [ 32%]
+backend/tests/test_gemini_analysis.py::test_empty_optional_limitation_does_not_fail_an_otherwise_valid_analysis[] PASSED [ 33%]
+backend/tests/test_gemini_analysis.py::test_empty_optional_limitation_does_not_fail_an_otherwise_valid_analysis[   ] PASSED [ 33%]
+backend/tests/test_gemini_analysis.py::test_inflight_gemini_request_is_cancelled_before_retry PASSED [ 34%]
+backend/tests/test_gemini_analysis.py::test_real_upload_job_saves_gemini_result_and_citations_without_repeat_on_reload[en] PASSED [ 34%]
+backend/tests/test_gemini_analysis.py::test_real_upload_job_saves_gemini_result_and_citations_without_repeat_on_reload[vi] PASSED [ 35%]
+backend/tests/test_gemini_analysis.py::test_quota_failure_updates_correct_file_without_false_success PASSED [ 35%]
+backend/tests/test_gemini_analysis.py::test_selected_language_controls_prompt_fallback_and_cache[en] PASSED [ 36%]
+backend/tests/test_gemini_analysis.py::test_selected_language_controls_prompt_fallback_and_cache[vi] PASSED [ 36%]
+backend/tests/test_cross_document_search.py::test_search_pagination_returns_all_relevant_documents_beyond_twenty PASSED [ 37%]
+backend/tests/test_cross_document_search.py::test_large_corpus_filters_apply_before_search_pagination PASSED [ 37%]
+backend/tests/test_cross_document_search.py::test_large_corpus_invalid_queries_and_filters_never_invoke_embeddings PASSED [ 38%]
+backend/tests/test_cross_document_search.py::test_large_corpus_search_and_source_pages_are_isolated_between_accounts PASSED [ 38%]
+backend/tests/test_cross_document_search.py::test_ranked_search_scans_beyond_visible_document_page PASSED [ 39%]
+backend/tests/test_cross_document_search.py::test_compact_snippet_opens_the_exact_matching_source_span PASSED [ 40%]
+backend/tests/test_cross_document_search.py::test_folder_and_effective_label_filters_are_combined_before_pagination PASSED [ 40%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params0] PASSED [ 41%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params1] PASSED [ 41%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params2] PASSED [ 42%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params3] PASSED [ 42%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params4] PASSED [ 43%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params5] PASSED [ 43%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params6] PASSED [ 44%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params7] PASSED [ 44%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params8] PASSED [ 45%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params9] PASSED [ 45%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params10] PASSED [ 46%]
+backend/tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params11] PASSED [ 46%]
+backend/tests/test_cross_document_search.py::test_semantic_search_rejects_weak_neighbors_and_embeds_only_filtered_authorized_sources PASSED [ 47%]
+backend/tests/test_cross_document_search.py::test_cross_language_semantic_scores_below_old_cutoff_keep_only_the_closest_band PASSED [ 47%]
+backend/tests/test_search_index.py::test_large_corpus_hits_round_trip_to_exact_reader_pages_and_evidence PASSED [ 48%]
+backend/tests/test_search_index.py::test_new_document_is_searchable_beyond_the_initial_twenty_without_rebuilding_old_sources PASSED [ 48%]
+backend/tests/test_search_index.py::test_twenty_documents_have_page_metadata_exact_passages_and_equivalent_evidence PASSED [ 49%]
+backend/tests/test_search_index.py::test_search_owner_is_always_taken_from_authentication PASSED [ 50%]
+backend/tests/test_search_index.py::test_unicode_chunks_cover_original_text_and_normalization_never_changes_offsets PASSED [ 50%]
+backend/tests/test_search_index.py::test_index_schema_compiles_for_the_existing_mysql_stack PASSED [ 51%]
+backend/tests/test_search_index.py::test_invalid_page_metadata_cannot_publish_search_references[<lambda>0] PASSED [ 51%]
+backend/tests/test_search_index.py::test_invalid_page_metadata_cannot_publish_search_references[<lambda>1] PASSED [ 52%]
+backend/tests/test_search_index.py::test_invalid_page_metadata_cannot_publish_search_references[<lambda>2] PASSED [ 52%]
+backend/tests/test_search_index.py::test_source_byte_changes_remove_stale_index_then_reextraction_replaces_it PASSED [ 53%]
+backend/tests/test_search_index.py::test_rename_expiry_delete_and_missing_sources_remove_index_entries PASSED [ 53%]
+backend/tests/test_search_index.py::test_index_and_content_replacement_roll_back_together PASSED [ 54%]
+backend/tests/test_search_index.py::test_semantic_vectors_are_persisted_reused_and_never_embed_other_owners_content PASSED [ 54%]
+backend/tests/test_search_index.py::test_failed_embeddings_do_not_publish_partial_vectors_and_content_search_keeps_working PASSED [ 55%]
+backend/tests/test_search_index.py::test_upload_job_indexes_saved_pages_without_additional_model_calls PASSED [ 55%]
+backend/tests/test_search_index.py::test_invalid_query_embedding_does_not_save_partial_json_cache PASSED [ 56%]
+backend/tests/test_search_index.py::test_changed_source_replaces_saved_semantic_cache PASSED [ 56%]
+backend/tests/test_search_index.py::test_saved_pages_are_searchable_after_restart_with_only_design_tables PASSED [ 57%]
+backend/tests/test_search_index.py::test_quota_keeps_completed_batches_and_retry_only_embeds_remaining_sources PASSED [ 57%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[20-RETRIEVAL_DOCUMENT] PASSED [ 58%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[20-RETRIEVAL_QUERY] PASSED [ 58%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[21-RETRIEVAL_DOCUMENT] PASSED [ 59%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[21-RETRIEVAL_QUERY] PASSED [ 60%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[50-RETRIEVAL_DOCUMENT] PASSED [ 60%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[50-RETRIEVAL_QUERY] PASSED [ 61%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[51-RETRIEVAL_DOCUMENT] PASSED [ 61%]
+backend/tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[51-RETRIEVAL_QUERY] PASSED [ 62%]
+backend/tests/test_search_embeddings.py::test_semantic_http_search_paginates_more_than_twenty_and_isolates_owner_caches PASSED [ 62%]
+backend/tests/test_search_embeddings.py::test_semantic_http_filters_exclude_other_folders_labels_and_accounts_before_embedding PASSED [ 63%]
+backend/tests/test_search_embeddings.py::test_bad_embedding_in_large_corpus_cannot_publish_a_partial_batch[first-vector] PASSED [ 63%]
+backend/tests/test_search_embeddings.py::test_bad_embedding_in_large_corpus_cannot_publish_a_partial_batch[last-vector-in-50] PASSED [ 64%]
+backend/tests/test_search_embeddings.py::test_new_document_after_semantic_pagination_embeds_only_new_source_pages PASSED [ 64%]
+backend/tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response0] PASSED [ 65%]
+backend/tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response1] PASSED [ 65%]
+backend/tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response2] PASSED [ 66%]
+backend/tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response3] PASSED [ 66%]
+backend/tests/test_search_embeddings.py::test_quota_is_sanitized_and_preserves_retry_time[12.4s-13] PASSED [ 67%]
+backend/tests/test_search_embeddings.py::test_quota_is_sanitized_and_preserves_retry_time[NaNs-60] PASSED [ 67%]
+backend/tests/test_search_embeddings.py::test_quota_is_sanitized_and_preserves_retry_time[bad-60] PASSED [ 68%]
+backend/tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[TC-US03-01-two-supported-actions] PASSED [ 68%]
+backend/tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[TC-US03-02-one-supported-action] PASSED [ 69%]
+backend/tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[zero-0] PASSED [ 70%]
+backend/tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[duplicate-1] PASSED [ 70%]
+backend/tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[no-source-1] PASSED [ 71%]
+backend/tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[unknown-source-1] PASSED [ 71%]
+backend/tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[wrong-number-1] PASSED [ 72%]
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[1-TC-US03-04-999-words] PASSED [ 72%]
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[1-TC-US03-05-1000-words] PASSED [ 73%]
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[1-TC-US03-06-1001-words] PASSED [ 73%]
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-04-999-words] PASSED [ 74%]
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words] PASSED [ 74%]
+backend/tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-06-1001-words] PASSED [ 75%]
+backend/tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[TC-US03-03-unstructured-bullets] PASSED [ 75%]
+backend/tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[unstructured-actions] PASSED [ 76%]
+backend/tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[invalid-bullet-text] PASSED [ 76%]
+backend/tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[invalid-source-type] PASSED [ 77%]
+backend/tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[negative-source] PASSED [ 77%]
+backend/tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[forged-verification] PASSED [ 78%]
+backend/tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[TC-US03-07-three-actions-rejected] PASSED [ 78%]
+backend/tests/test_bullet_processing.py::test_source_with_fewer_than_two_actions_persists_an_explicit_limitation[0] PASSED [ 79%]
+backend/tests/test_bullet_processing.py::test_source_with_fewer_than_two_actions_persists_an_explicit_limitation[1] PASSED [ 80%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-no-retry-TC-US03-09-before-180s] PASSED [ 80%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-no-retry-TC-US03-10-at-180s] PASSED [ 81%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-no-retry-TC-US03-11-after-180s] PASSED [ 81%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-one-timeout-retry-TC-US03-09-before-180s] PASSED [ 82%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-one-timeout-retry-TC-US03-10-at-180s] PASSED [ 82%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-one-timeout-retry-TC-US03-11-after-180s] PASSED [ 83%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-no-retry-TC-US03-09-before-180s] PASSED [ 83%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-no-retry-TC-US03-10-at-180s] PASSED [ 84%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-no-retry-TC-US03-11-after-180s] PASSED [ 84%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-one-timeout-retry-TC-US03-09-before-180s] PASSED [ 85%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-one-timeout-retry-TC-US03-10-at-180s] PASSED [ 85%]
+backend/tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-one-timeout-retry-TC-US03-11-after-180s] PASSED [ 86%]
+backend/tests/test_bullet_processing.py::test_wire_requires_structured_bullets_actions_and_source_ids PASSED [ 86%]
+backend/tests/test_bullet_processing.py::test_textless_source_has_explicit_action_limitation_without_calling_model PASSED [ 87%]
+backend/tests/test_bullet_processing.py::test_180_second_target_is_shared_across_retries_and_cancels_inflight_work PASSED [ 87%]
+backend/tests/test_bullet_processing.py::test_expired_queue_target_does_not_start_a_model_call PASSED [ 88%]
+backend/tests/test_bullet_processing.py::test_late_result_is_not_committed_as_success PASSED [ 88%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[None-30] PASSED [ 89%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[0-30] PASSED [ 90%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[1-33] PASSED [ 90%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[15-75] PASSED [ 91%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[89-297] PASSED [ 91%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[90-300] PASSED [ 92%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[91-300] PASSED [ 92%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[1000-300] PASSED [ 93%]
+backend/tests/test_processing_timeouts.py::test_timeout_formula_and_cap[-1-30] PASSED [ 93%]
+backend/tests/test_processing_timeouts.py::test_always_timeout_retries_twice_and_persists_failure PASSED [ 94%]
+backend/tests/test_processing_timeouts.py::test_third_attempt_can_succeed_and_clears_timeout_error PASSED [ 94%]
+backend/tests/test_processing_timeouts.py::test_timeout_does_not_skip_other_documents PASSED [ 95%]
+backend/tests/test_processing_timeouts.py::test_actual_deadline_cancels_each_attempt_before_retry PASSED [ 95%]
+backend/tests/test_processing_timeouts.py::test_non_timeout_error_fails_once_without_leaking_details PASSED [ 96%]
+backend/tests/test_processing_timeouts.py::test_resuming_timed_out_file_does_not_reset_attempt_budget PASSED [ 96%]
+backend/tests/test_processing_timeouts.py::test_finished_files_are_skipped_on_resume PASSED [ 97%]
+backend/tests/test_processing_timeouts.py::test_queue_uses_timeout_worker_and_job_poll_exposes_attempts PASSED [ 97%]
+backend/tests/test_acceptance_fixtures.py::test_committed_sources_match_answers_and_rebuild_deterministically PASSED [ 98%]
+backend/tests/test_acceptance_fixtures.py::test_five_committed_contracts_persist_numbers_sources_and_confidence_boundary PASSED [ 98%]
+backend/tests/test_acceptance_fixtures.py::test_supported_insufficient_and_missing_evidence_use_saved_shared_contract PASSED [ 99%]
+backend/tests/test_acceptance_fixtures.py::test_seed_extends_ten_to_twenty_and_searches_beyond_list_page_with_owner_isolation PASSED [100%]
+
+- generated xml file: C:\Users\ADMIN\AppData\Local\Temp\documind-t221-9e5w9vs8\backend.xml -
+=============== 190 passed, 3626 warnings in 141.75s (0:02:21) ================
+
+--- END UNEDITED OUTPUT ---
+
+========================================================================
+ACTUAL RUN: ui
+{
+  "argv": [
+    "cmd.exe",
+    "/d",
+    "/c",
+    "npm.cmd",
+    "test",
+    "--",
+    "financial-table.spec.js",
+    "workspace.spec.js",
+    "bullet-results.spec.js",
+    "responsive-layout.spec.js",
+    "--retries=1"
+  ],
+  "cwd": "C:\\Users\\ADMIN\\Desktop\\G6_AI66A_SE\\frontend",
+  "env": {
+    "PYTHONIOENCODING": "utf-8",
+    "CI": "1"
+  },
+  "started_utc": "2026-10-31T17:17:54.818216+00:00",
+  "finished_utc": "2026-10-31T17:19:57.334009+00:00",
+  "exit_code": 1,
+  "head": "f796452ef52d3b3a6680cff7a4f5b79a30372dd7"
+}
+--- BEGIN UNEDITED OUTPUT ---
+npm notice run test
+npm notice run playwright test financial-table.spec.js workspace.spec.js bullet-results.spec.js responsive-layout.spec.js --retries=1
+[WebServer] C:\Users\ADMIN\Desktop\G6_AI66A_SE\backend\test\serve_auth_e2e.py:102: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+[WebServer]   expires_at=datetime.utcnow() + timedelta(days=30)))
+[WebServer] C:\Users\ADMIN\Desktop\G6_AI66A_SE\backend\test\serve_auth_e2e.py:112: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+[WebServer]   review_state=ReviewState.NEEDS_REVIEW, expires_at=datetime.utcnow() + timedelta(days=30))
+[WebServer] C:\Users\ADMIN\Desktop\G6_AI66A_SE\backend\test\serve_auth_e2e.py:123: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+[WebServer]   expires_at=datetime.utcnow() + timedelta(days=30))
+[WebServer] C:\Users\ADMIN\Desktop\G6_AI66A_SE\backend\test\serve_auth_e2e.py:146: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+[WebServer]   file_size_bytes=128, expires_at=datetime.utcnow() + timedelta(days=30))
+[WebServer] INFO:     Started server process [30700]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18001 (Press CTRL+C to quit)
+[WebServer] (node:32004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm notice run npx
+[WebServer] npm notice run next dev --hostname 127.0.0.1 --port 18000
+[WebServer] (node:6576) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:25188) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:19392) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 38 tests using 1 worker
+
+(node:464) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › tests\bullet-results.spec.js:28:1 › saved bullet summary and two recommendations retain their own citations on refresh and revisit without resubmission (2.0s)
+  ok  2 [chromium] › tests\bullet-results.spec.js:67:3 › 0 supported action displays the exact persisted source limitation in Hành động đề xuất after refresh (966ms)
+  ok  3 [chromium] › tests\bullet-results.spec.js:67:3 › 1 supported action displays the exact persisted source limitation in Hành động đề xuất after refresh (986ms)
+  ok  4 [chromium] › tests\bullet-results.spec.js:88:1 › legacy results without a limitation still explain missing recommendations (717ms)
+  ok  5 [chromium] › tests\bullet-results.spec.js:98:1 › shared Chưa xác thực states keep review evidence and never invent citation links for unsupported saved claims (768ms)
+  ok  6 [chromium] › tests\bullet-results.spec.js:115:3 › existing processing view transitions to completed without inventing bullet or action output (1.0s)
+  ok  7 [chromium] › tests\bullet-results.spec.js:115:3 › existing processing view transitions to failed without inventing bullet or action output (972ms)
+  ok  8 [chromium] › tests\bullet-results.spec.js:115:3 › existing processing view transitions to timed_out without inventing bullet or action output (1.0s)
+  ok  9 [chromium] › tests\bullet-results.spec.js:146:3 › saved summary, limitation and action text remain readable and safe at 375px (751ms)
+  ok 10 [chromium] › tests\bullet-results.spec.js:146:3 › saved summary, limitation and action text remain readable and safe at 390px (623ms)
+  ok 11 [chromium] › tests\bullet-results.spec.js:164:1 › an action citation opens its saved source page and returns to the completed summary (1.3s)
+  ok 12 [chromium] › tests\financial-table.spec.js:35:1 › five saved contracts render as five comparison rows with exact numbers, units and field evidence after reload (2.5s)
+  ok 13 [chromium] › tests\financial-table.spec.js:70:1 › missing and unsupported fields are explicit without replacing numeric text or borrowing another contract evidence (841ms)
+  ok 14 [chromium] › tests\financial-table.spec.js:100:3 › US07 polling retains all five contract rows and ends with completed inside the five-minute budget (753ms)
+  ok 15 [chromium] › tests\financial-table.spec.js:100:3 › US07 polling retains all five contract rows and ends with failed inside the five-minute budget (783ms)
+  ok 16 [chromium] › tests\financial-table.spec.js:100:3 › US07 polling retains all five contract rows and ends with timed_out inside the five-minute budget (723ms)
+  ok 17 [chromium] › tests\financial-table.spec.js:144:1 › table appears before results exist and keeps five pending rows (694ms)
+  ok 18 [chromium] › tests\financial-table.spec.js:158:1 › mobile comparison renders five cards without horizontal scrolling, keeps duplicate filenames distinct and displays AI text safely (774ms)
+  ok 19 [chromium] › tests\financial-table.spec.js:182:3 › mobile cards at 375px preserve numeric units, field sources and saved results across reload and resize (1.6s)
+  ok 20 [chromium] › tests\financial-table.spec.js:182:3 › mobile cards at 640px preserve numeric units, field sources and saved results across reload and resize (1.5s)
+  ok 21 [chromium] › tests\financial-table.spec.js:215:3 › field citation at 375px opens its exact source page and returns to the saved comparison (1.5s)
+  ok 22 [chromium] › tests\financial-table.spec.js:215:3 › field citation at 1100px opens its exact source page and returns to the saved comparison (1.6s)
+  ok 23 [chromium] › tests\financial-table.spec.js:247:1 › mobile cards retain pending and failed contracts beside US07 progress and failure details (785ms)
+  ok 24 [chromium] › tests\workspace.spec.js:11:1 › upload is the main view; history is in the sidebar with label titles and source links (839ms)
+  ok 25 [chromium] › tests\workspace.spec.js:27:1 › history reads all metadata pages and searches labels beyond the visible history page (793ms)
+  ok 26 [chromium] › tests\workspace.spec.js:45:1 › history errors offer retry without preventing upload (754ms)
+  ok 27 [chromium] › tests\workspace.spec.js:55:1 › home upload retains selection after failure and sends the existing upload payload (956ms)
+  ok 28 [chromium] › tests\workspace.spec.js:79:1 › mobile starts with upload and expands history without horizontal overflow (908ms)
+(node:31892) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  29 [android-375] › tests\responsive-layout.spec.js:44:1 › US05 login leads through workspace, upload retry and completed bullet results without overflow (30.3s)
+(node:33788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  30 [android-375] › tests\responsive-layout.spec.js:44:1 › US05 login leads through workspace, upload retry and completed bullet results without overflow (retry #1) (30.3s)
+(node:32172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 31 [android-375] › tests\responsive-layout.spec.js:127:1 › five comparison cards and source-reader controls fit 375px and menu expands only on small screens (2.1s)
+  ok 32 [android-375] › tests\responsive-layout.spec.js:167:1 › Xuất bảng pending, error and real PDF download work at 375px without overflow (966ms)
+  ok 33 [android-375] › tests\responsive-layout.spec.js:201:1 › seven-day expiry warnings and expired reader messages fit 375px (1.3s)
+  ok 34 [android-375] › tests\responsive-layout.spec.js:223:1 › progress, timeout errors, limitations and Chưa xác thực citations wrap at 375px (745ms)
+(node:31012) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 35 [ios-375] › tests\responsive-layout.spec.js:44:1 › US05 login leads through workspace, upload retry and completed bullet results without overflow (5.8s)
+  ok 36 [ios-375] › tests\responsive-layout.spec.js:127:1 › five comparison cards and source-reader controls fit 375px and menu expands only on small screens (2.8s)
+  ok 37 [ios-375] › tests\responsive-layout.spec.js:167:1 › Xuất bảng pending, error and real PDF download work at 375px without overflow (1.4s)
+  ok 38 [ios-375] › tests\responsive-layout.spec.js:201:1 › seven-day expiry warnings and expired reader messages fit 375px (2.0s)
+  ok 39 [ios-375] › tests\responsive-layout.spec.js:223:1 › progress, timeout errors, limitations and Chưa xác thực citations wrap at 375px (913ms)
+
+
+  1) [android-375] › tests\responsive-layout.spec.js:44:1 › US05 login leads through workspace, upload retry and completed bullet results without overflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[aria-controls="create-folder-panel"]')
+        - locator resolved to <button type="button" aria-expanded="false" aria-controls="create-folder-panel" class="btn primary w-full inline-flex min-h-11 items-center justify-center gap-2 border border-zinc-100 bg-white px-5 py-3 font-mono text-xs font-medium text-black transition-colors duration-150 motion-reduce:transition-none">…</button>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+          - waiting 100ms
+        55 × waiting for element to be visible, enabled and stable
+           - element is not visible
+         - retrying click action
+           - waiting 500ms
+        - waiting for element to be visible, enabled and stable
+
+
+       at helpers.js:8
+
+       6 |   await expect(page.locator('.workspace-documents')).toHaveAttribute('aria-busy', 'false');
+       7 |   const create = page.locator('[aria-controls="create-folder-panel"]');
+    >  8 |   if (await create.getAttribute('aria-expanded') === 'false') await create.click();
+         |                                                                            ^
+       9 |   for (const folder of await page.locator('[aria-controls^="history-folder-"]').all()) {
+      10 |     const count = await folder.locator('..').locator('button').first().locator('span').last().innerText();
+      11 |     if (Number(count) > 0 && await folder.getAttribute('aria-expanded') === 'false') await folder.click();
+        at openWorkspaceControls (C:\Users\ADMIN\Desktop\G6_AI66A_SE\frontend\tests\helpers.js:8:76)
+        at C:\Users\ADMIN\Desktop\G6_AI66A_SE\frontend\tests\responsive-layout.spec.js:58:3
+
+    Error Context: test-results\responsive-layout-US05-log-1d8ff-et-results-without-overflow-android-375\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\responsive-layout-US05-log-1d8ff-et-results-without-overflow-android-375\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\responsive-layout-US05-log-1d8ff-et-results-without-overflow-android-375\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error Context: test-results\responsive-layout-US05-log-1d8ff-et-results-without-overflow-android-375-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\responsive-layout-US05-log-1d8ff-et-results-without-overflow-android-375-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\responsive-layout-US05-log-1d8ff-et-results-without-overflow-android-375-retry1\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [android-375] › tests\responsive-layout.spec.js:44:1 › US05 login leads through workspace, upload retry and completed bullet results without overflow 
+  37 passed (2.0m)
+
+--- END UNEDITED OUTPUT ---
