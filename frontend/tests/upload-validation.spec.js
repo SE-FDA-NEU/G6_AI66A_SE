@@ -10,6 +10,8 @@ test('BR01 checks file size in bytes and permits case-insensitive allowed extens
   for (const name of ['report.PDF', 'report.docx', 'report.PpTx']) {
     expect(validateFile({ name, size: 5 * MB }, [])).toEqual([]);
   }
+  expect(validateFile({ name: 'report.pdf', size: 5 * MB - 1 }, [])).toEqual([]);
+  expect(validateFile({ name: 'empty.pdf', size: 0 }, [])).toContain('Tệp không được rỗng.');
   expect(validateFile({ name: 'report.pdf', size: 5 * MB + 1 }, [])).toContain('Tệp vượt quá 5 MB.');
   for (const name of ['report', 'report.pdf.exe', 'report.txt']) {
     expect(validateFile({ name, size: 10 }, [])).toContain('Chỉ chấp nhận PDF, DOCX hoặc PPTX.');
@@ -58,6 +60,7 @@ test.describe('upload page', () => {
     await expect(page.locator('.upload-files').getByRole('listitem')).toHaveCount(5);
   });
 
+  // TC-US06-10: invalid additions preserve accepted selections and never submit.
   test('shows per-file size and format errors, keeps valid selections and sends no upload', async ({ page }) => {
     const uploads = [];
     page.on('request', request => {
@@ -66,6 +69,7 @@ test.describe('upload page', () => {
     await page.getByLabel('Chọn tệp tài liệu').setInputFiles(file('keep.pdf'));
     await page.getByLabel('Chọn tệp tài liệu').setInputFiles([
       file('malware.exe', 32, 'application/pdf'),
+      file('empty.pdf', 0),
       file('oversize.pdf', Math.ceil(5.1 * MB), 'application/pdf'),
       file('valid.docx'),
     ]);
@@ -75,7 +79,9 @@ test.describe('upload page', () => {
       .toContainText('Tệp vượt quá 5 MB.');
     await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'keep.pdf' })).toContainText('Hợp lệ');
     await expect(page.getByRole('status')).toContainText('2/5 tệp hợp lệ');
-    await expect(page.getByRole('status')).toContainText('2 tệp cần kiểm tra');
+    await expect(page.locator('.upload-files').getByRole('listitem').filter({ hasText: 'empty.pdf' }))
+      .toContainText('Tệp không được rỗng.');
+    await expect(page.getByRole('status')).toContainText('3 tệp cần kiểm tra');
     expect(uploads).toEqual([]);
   });
 
