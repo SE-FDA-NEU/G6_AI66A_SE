@@ -6,6 +6,6 @@ export default class Document extends NextDocument {
     return { ...props, locale: readLocale(context.req?.headers.cookie) };
   }
   render() {
-    return <Html lang={this.props.locale}><Head /><body><Main /><NextScript /></body></Html>;
+    return <Html lang={this.props.locale} data-scroll-behavior="smooth"><Head /><body><Main /><NextScript /></body></Html>;
   }
 }
