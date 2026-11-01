@@ -2,7 +2,13 @@ import { expect } from '@playwright/test';
 export async function openWorkspaceControls(page) {
   if (new URL(page.url()).pathname !== '/workspace') return;
   const toggle = page.locator('[aria-controls="document-history-sidebar"]');
-  if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') === 'false') await toggle.click();
+  // CSS can arrive after navigation: a one-off visibility check can skip the
+  // mobile toggle and leave every sidebar control hidden for the whole test.
+  if (page.viewportSize().width < 768) {
+    await expect(toggle).toBeVisible();
+    if (await toggle.getAttribute('aria-expanded') === 'false') await toggle.click();
+  }
+  await expect(page.locator('#document-history-sidebar')).toBeVisible();
   await expect(page.locator('.workspace-documents')).toHaveAttribute('aria-busy', 'false');
   const create = page.locator('[aria-controls="create-folder-panel"]');
   if (await create.getAttribute('aria-expanded') === 'false') await create.click();
