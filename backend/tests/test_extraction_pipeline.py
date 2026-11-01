@@ -445,7 +445,9 @@ def test_reported_page_count_tightens_extraction_deadline_before_text_finishes(t
         work = Path(args[-1])
         paths.append(work)
         script = ('import pathlib,sys,time; '
-                  'pathlib.Path(sys.argv[1], "page_count.json").write_text(\'{"page_count": 5}\'); '
+                  'staged = pathlib.Path(sys.argv[1], "page_count.tmp"); '
+                  'staged.write_text(\'{"page_count": 5}\'); '
+                  'staged.replace(pathlib.Path(sys.argv[1], "page_count.json")); '
                   'time.sleep(60)')
         worker = await real_spawn(sys.executable, '-c', script, str(work), **kwargs)
         workers.append(worker)
