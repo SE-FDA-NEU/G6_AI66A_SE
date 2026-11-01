@@ -1,0 +1,7 @@
+▲ Next.js 16.4.3 (Turbopack)
+- Local:         http://127.0.0.1:18010
+- Network:       http://127.0.0.1:18010
+✓ Ready in 513ms
+✓ Running next.config.mjs took 19ms
+
+ GET / 200 in 125ms (next.js: 71ms, application-code: 54ms)
