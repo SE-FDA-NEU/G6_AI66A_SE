@@ -1,0 +1,9 @@
+INFO:     Started server process [30144]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18011 (Press CTRL+C to quit)
+Starting server (Database-first approach)...
+INFO:     127.0.0.1:59497 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59498 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59498 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59498 - "GET /documents?limit=100 HTTP/1.1" 200 OK

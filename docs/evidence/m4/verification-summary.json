@@ -1,0 +1,14 @@
+{
+  "base_commit": "34a86be60a2f5ebc289c72b1f84771592e51c2c6",
+  "case_ids": 70,
+  "mapped_pytest_nodes": 162,
+  "backend": {
+    "total": 690,
+    "passed": 686,
+    "skipped": 4
+  },
+  "playwright_passed": 213,
+  "frontend_build": "passed",
+  "application_startup": "passed",
+  "remote_ci_after_patch": "not run; no push requested"
+}

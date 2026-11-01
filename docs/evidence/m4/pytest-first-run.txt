@@ -1,0 +1,945 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\.venv\Scripts\python.exe
+rootdir: C:\Users\admin\Desktop\SE\tmp\m4-verify\backend
+plugins: anyio-4.15.1
+collecting ... collected 690 items
+
+tests/test_acceptance_fixtures.py::test_committed_sources_match_answers_and_rebuild_deterministically PASSED [  0%]
+tests/test_acceptance_fixtures.py::test_five_committed_contracts_persist_numbers_sources_and_confidence_boundary PASSED [  0%]
+tests/test_acceptance_fixtures.py::test_supported_insufficient_and_missing_evidence_use_saved_shared_contract PASSED [  0%]
+tests/test_acceptance_fixtures.py::test_seed_extends_ten_to_twenty_and_searches_beyond_list_page_with_owner_isolation PASSED [  0%]
+tests/test_ai_label_filter.py::test_eight_of_twenty_across_folders_and_clearing_restores_every_document PASSED [  0%]
+tests/test_ai_label_filter.py::test_user_label_edits_never_change_ai_label_filter_meaning PASSED [  0%]
+tests/test_ai_label_filter.py::test_combined_filters_use_and_and_clearing_only_label_keeps_folder PASSED [  1%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[Macro-0] PASSED [  1%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[Macroeconomics%-0] PASSED [  1%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[%-0] PASSED [  1%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[MACROECONOMICS-0] PASSED [  1%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[macroeconomics-1] PASSED [  1%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[V\u0129 m\xf4-1] PASSED [  1%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[Vi mo-0] PASSED [  2%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[Unknown-0] PASSED [  2%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[ Macroeconomics-0] PASSED [  2%]
+tests/test_ai_label_filter.py::test_exact_label_never_matches_substrings_wildcards_case_or_accent_variants[Macroeconomics -0] PASSED [  2%]
+tests/test_ai_label_filter.py::test_aliases_and_cross_account_isolation PASSED [  2%]
+tests/test_ai_label_filter.py::test_invalid_or_conflicting_labels_return_422[params0] PASSED [  2%]
+tests/test_ai_label_filter.py::test_invalid_or_conflicting_labels_return_422[params1] PASSED [  2%]
+tests/test_ai_label_filter.py::test_invalid_or_conflicting_labels_return_422[params2] PASSED [  3%]
+tests/test_ai_label_filter.py::test_invalid_or_conflicting_labels_return_422[params3] PASSED [  3%]
+tests/test_ai_label_filter.py::test_invalid_or_conflicting_labels_return_422[params4] PASSED [  3%]
+tests/test_ai_label_filter.py::test_invalid_or_conflicting_labels_return_422[params5] PASSED [  3%]
+tests/test_ai_label_filter.py::test_invalid_or_conflicting_labels_return_422[params6] PASSED [  3%]
+tests/test_auth_authorization.py::test_login_accepts_email_and_username[upload@example.com] PASSED [  3%]
+tests/test_auth_authorization.py::test_login_accepts_email_and_username[upload_user] PASSED [  3%]
+tests/test_auth_authorization.py::test_bad_credentials_return_same_error_without_session[upload@example.com-incorrect-password] PASSED [  4%]
+tests/test_auth_authorization.py::test_bad_credentials_return_same_error_without_session[unknown@example.com-US05-test-password] PASSED [  4%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[missing-/auth/me] PASSED [  4%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[missing-/documents] PASSED [  4%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[missing-/jobs] PASSED [  4%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[missing-/search?q=private] PASSED [  4%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[forged-/auth/me] PASSED [  4%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[forged-/documents] PASSED [  5%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[forged-/jobs] PASSED [  5%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[forged-/search?q=private] PASSED [  5%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[expired-/auth/me] PASSED [  5%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[expired-/documents] PASSED [  5%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[expired-/jobs] PASSED [  5%]
+tests/test_auth_authorization.py::test_protected_routes_reject_invalid_sessions[expired-/search?q=private] PASSED [  5%]
+tests/test_auth_authorization.py::test_owner_reads_resources_but_other_account_cannot PASSED [  6%]
+tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[TC-US03-01-two-supported-actions] PASSED [  6%]
+tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[TC-US03-02-one-supported-action] PASSED [  6%]
+tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[zero-0] PASSED [  6%]
+tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[duplicate-1] PASSED [  6%]
+tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[no-source-1] PASSED [  6%]
+tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[unknown-source-1] PASSED [  6%]
+tests/test_bullet_processing.py::test_structured_bullets_and_only_grounded_distinct_actions_persist[wrong-number-1] PASSED [  7%]
+tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[1-TC-US03-04-999-words] PASSED [  7%]
+tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[1-TC-US03-05-1000-words] PASSED [  7%]
+tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[1-TC-US03-06-1001-words] PASSED [  7%]
+tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-04-999-words] PASSED [  7%]
+tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-05-1000-words] PASSED [  7%]
+tests/test_bullet_processing.py::test_inclusive_word_limit_is_enforced_before_persistence[2-TC-US03-06-1001-words] PASSED [  7%]
+tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[TC-US03-03-unstructured-bullets] PASSED [  8%]
+tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[unstructured-actions] PASSED [  8%]
+tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[invalid-bullet-text] PASSED [  8%]
+tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[invalid-source-type] PASSED [  8%]
+tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[negative-source] PASSED [  8%]
+tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[forged-verification] PASSED [  8%]
+tests/test_bullet_processing.py::test_invalid_ai_output_never_publishes_a_summary_or_recommendations[TC-US03-07-three-actions-rejected] PASSED [  8%]
+tests/test_bullet_processing.py::test_source_with_fewer_than_two_actions_persists_an_explicit_limitation[0] PASSED [  9%]
+tests/test_bullet_processing.py::test_source_with_fewer_than_two_actions_persists_an_explicit_limitation[1] PASSED [  9%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-no-retry-TC-US03-09-before-180s] PASSED [  9%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-no-retry-TC-US03-10-at-180s] PASSED [  9%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-no-retry-TC-US03-11-after-180s] PASSED [  9%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-one-timeout-retry-TC-US03-09-before-180s] PASSED [  9%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-one-timeout-retry-TC-US03-10-at-180s] PASSED [ 10%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[analysis-one-timeout-retry-TC-US03-11-after-180s] PASSED [ 10%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-no-retry-TC-US03-09-before-180s] PASSED [ 10%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-no-retry-TC-US03-10-at-180s] PASSED [ 10%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-no-retry-TC-US03-11-after-180s] PASSED [ 10%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-one-timeout-retry-TC-US03-09-before-180s] PASSED [ 10%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-one-timeout-retry-TC-US03-10-at-180s] PASSED [ 10%]
+tests/test_bullet_processing.py::test_fifteen_page_pdf_deadline_uses_fake_time_and_rejects_late_publication[persistence-one-timeout-retry-TC-US03-11-after-180s] PASSED [ 11%]
+tests/test_bullet_processing.py::test_wire_requires_structured_bullets_actions_and_source_ids PASSED [ 11%]
+tests/test_bullet_processing.py::test_textless_source_has_explicit_action_limitation_without_calling_model PASSED [ 11%]
+tests/test_bullet_processing.py::test_180_second_target_is_shared_across_retries_and_cancels_inflight_work PASSED [ 11%]
+tests/test_bullet_processing.py::test_expired_queue_target_does_not_start_a_model_call PASSED [ 11%]
+tests/test_bullet_processing.py::test_late_result_is_not_committed_as_success PASSED [ 11%]
+tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-10-two-concepts-generated-limitation] PASSED [ 11%]
+tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-11-two-concepts-explicit-limitation] PASSED [ 12%]
+tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-12-three-concepts] PASSED [ 12%]
+tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-13-four-concepts] PASSED [ 12%]
+tests/test_concept_processing.py::test_three_to_five_concepts_persisted_with_grounded_evidence[TC-US04-14-five-concepts] PASSED [ 12%]
+tests/test_concept_processing.py::test_more_than_five_concepts_rejected_by_shared_contract[TC-US04-15-six-concepts] PASSED [ 12%]
+tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-16-empty-concept-name] PASSED [ 12%]
+tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-17-missing-description] PASSED [ 12%]
+tests/test_concept_processing.py::test_invalid_mocked_concepts_are_not_published[TC-US04-18-empty-description] PASSED [ 13%]
+tests/test_concept_processing.py::test_short_source_returns_clear_limitation_without_inventing_concepts PASSED [ 13%]
+tests/test_concept_processing.py::test_source_with_zero_concepts_returns_limitation_and_warning PASSED [ 13%]
+tests/test_concept_processing.py::test_concept_evidence_validity_and_unsupported_heading_facts PASSED [ 13%]
+tests/test_concept_processing.py::test_gemini_concept_analysis_short_text_and_no_text_layer PASSED [ 13%]
+tests/test_cross_document_search.py::test_search_pagination_returns_all_relevant_documents_beyond_twenty PASSED [ 13%]
+tests/test_cross_document_search.py::test_large_corpus_filters_apply_before_search_pagination PASSED [ 13%]
+tests/test_cross_document_search.py::test_large_corpus_invalid_queries_and_filters_never_invoke_embeddings PASSED [ 14%]
+tests/test_cross_document_search.py::test_large_corpus_search_and_source_pages_are_isolated_between_accounts PASSED [ 14%]
+tests/test_cross_document_search.py::test_ranked_search_scans_beyond_visible_document_page PASSED [ 14%]
+tests/test_cross_document_search.py::test_compact_snippet_opens_the_exact_matching_source_span PASSED [ 14%]
+tests/test_cross_document_search.py::test_folder_and_effective_label_filters_are_combined_before_pagination PASSED [ 14%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params0] PASSED [ 14%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params1] PASSED [ 14%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params2] PASSED [ 15%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params3] PASSED [ 15%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params4] PASSED [ 15%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params5] PASSED [ 15%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params6] PASSED [ 15%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params7] PASSED [ 15%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params8] PASSED [ 15%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params9] PASSED [ 16%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params10] PASSED [ 16%]
+tests/test_cross_document_search.py::test_invalid_queries_and_filters_return_validation_errors[params11] PASSED [ 16%]
+tests/test_cross_document_search.py::test_semantic_search_rejects_weak_neighbors_and_embeds_only_filtered_authorized_sources PASSED [ 16%]
+tests/test_cross_document_search.py::test_cross_language_semantic_scores_below_old_cutoff_keep_only_the_closest_band PASSED [ 16%]
+tests/test_database_bootstrap.py::test_new_database_creates_all_tables_and_next_start_preserves_data SKIPPED [ 16%]
+tests/test_database_bootstrap.py::test_missing_and_extra_tables_are_synced_after_restorable_backup SKIPPED [ 16%]
+tests/test_database_bootstrap.py::test_backup_failure_leaves_missing_and_extra_tables_untouched SKIPPED [ 17%]
+tests/test_database_bootstrap.py::test_retained_table_reference_blocks_dropping_extra_table SKIPPED [ 17%]
+tests/test_design_schema.py::test_models_match_table_and_column_definitions_in_design PASSED [ 17%]
+tests/test_design_schema.py::test_restore_backs_up_before_dropping_only_retired_tables_and_is_idempotent PASSED [ 17%]
+tests/test_design_schema.py::test_existing_backup_cannot_be_overwritten_or_tables_dropped PASSED [ 17%]
+tests/test_design_schema.py::test_unexpected_schema_is_not_modified PASSED [ 17%]
+tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-05-first-citation-page-file] PASSED [ 17%]
+tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-05-first-citation-page-rendered-file] PASSED [ 18%]
+tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-06-last-citation-page-file] PASSED [ 18%]
+tests/test_document_file.py::test_citation_page_selects_readable_original_without_changing_source[TC-US09-06-last-citation-page-rendered-file] PASSED [ 18%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-file] PASSED [ 18%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-rendered-file] PASSED [ 18%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-file] PASSED [ 18%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-rendered-file] PASSED [ 18%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-file] PASSED [ 19%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-rendered-file] PASSED [ 19%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-10-nonnumeric-page-file] PASSED [ 19%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-10-nonnumeric-page-rendered-file] PASSED [ 19%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-11-fractional-page-file] PASSED [ 19%]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-11-fractional-page-rendered-file] PASSED [ 19%]
+tests/test_document_file.py::test_textless_page_remains_readable_but_cannot_accept_citation_span[TC-US09-12-image-only-page-readable] PASSED [ 20%]
+tests/test_document_file.py::test_textless_page_remains_readable_but_cannot_accept_citation_span[TC-US09-13-blank-page-readable] PASSED [ 20%]
+tests/test_document_file.py::test_unauthenticated_request_returns_401 PASSED [ 20%]
+tests/test_document_file.py::test_valid_pdf_returns_file_and_metadata_headers PASSED [ 20%]
+tests/test_document_file.py::test_page_selection_and_validation PASSED   [ 20%]
+tests/test_document_file.py::test_valid_docx_and_pptx_files PASSED       [ 20%]
+tests/test_document_file.py::test_rendered_file_response PASSED          [ 20%]
+tests/test_document_file.py::test_missing_document_returns_404 PASSED    [ 21%]
+tests/test_document_file.py::test_missing_physical_file_returns_404_without_path_leak PASSED [ 21%]
+tests/test_document_file.py::test_cross_account_request_denied_with_403 PASSED [ 21%]
+tests/test_document_metadata_api.py::test_reader_pages_exposes_metadata_and_preserves_folder_id PASSED [ 21%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-01-below-80] PASSED [ 21%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-02-at-80] PASSED [ 21%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-confirmed-TC-US04-03-above-80] PASSED [ 21%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-01-below-80] PASSED [ 22%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-02-at-80] PASSED [ 22%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[unassigned-needs_review-TC-US04-03-above-80] PASSED [ 22%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-01-below-80] PASSED [ 22%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-02-at-80] PASSED [ 22%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-confirmed-TC-US04-03-above-80] PASSED [ 22%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-01-below-80] PASSED [ 22%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-02-at-80] PASSED [ 23%]
+tests/test_document_metadata_api.py::test_confidence_threshold_values_persisted[assigned-needs_review-TC-US04-03-above-80] PASSED [ 23%]
+tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-04-empty-label] PASSED [ 23%]
+tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-05-long-label] PASSED [ 23%]
+tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-06-missing-confidence] PASSED [ 23%]
+tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-07-missing-label] PASSED [ 23%]
+tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-08-negative-confidence] PASSED [ 23%]
+tests/test_document_metadata_api.py::test_invalid_mocked_label_is_not_published[TC-US04-09-confidence-over-100] PASSED [ 24%]
+tests/test_document_metadata_api.py::test_reader_pages_cross_account_protection PASSED [ 24%]
+tests/test_document_metadata_api.py::test_get_page_text_endpoint_authorized_access PASSED [ 24%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[metadata] PASSED [ 24%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[pages] PASSED [ 24%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[page_text] PASSED [ 24%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[prepare] PASSED [ 24%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[original] PASSED [ 25%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[rendered] PASSED [ 25%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[rendered_alias] PASSED [ 25%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[reader_pdf] PASSED [ 25%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[range] PASSED [ 25%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[label] PASSED [ 25%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[confirm] PASSED [ 25%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[move] PASSED [ 26%]
+tests/test_document_retention.py::test_successful_open_download_or_update_renews_exactly_30_days[unfile] PASSED [ 26%]
+tests/test_document_retention.py::test_each_explicit_access_renews_from_the_new_access_not_the_old_expiry PASSED [ 26%]
+tests/test_document_retention.py::test_reader_returns_renewed_utc_metadata_for_march_1_access PASSED [ 26%]
+tests/test_document_retention.py::test_workspace_search_and_job_polling_never_renew_documents PASSED [ 26%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[ownership_open] PASSED [ 26%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[ownership_download] PASSED [ 26%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[ownership_label] PASSED [ 27%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[ownership_folder] PASSED [ 27%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[invalid_label] PASSED [ 27%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[missing_folder] PASSED [ 27%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[foreign_folder] PASSED [ 27%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[invalid_page] PASSED [ 27%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[missing_page] PASSED [ 27%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[wrong_version] PASSED [ 28%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[missing_file] PASSED [ 28%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[bad_range] PASSED [ 28%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[outside_range] PASSED [ 28%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[conversion] PASSED [ 28%]
+tests/test_document_retention.py::test_failed_requests_do_not_renew[unauthenticated] PASSED [ 28%]
+tests/test_document_retention.py::test_stream_failure_after_headers_does_not_renew PASSED [ 28%]
+tests/test_document_retention.py::test_comparison_pdf_download_renews_only_its_source_documents_after_success[success] PASSED [ 29%]
+tests/test_document_retention.py::test_comparison_pdf_download_renews_only_its_source_documents_after_success[not_completed] PASSED [ 29%]
+tests/test_document_retention.py::test_comparison_pdf_download_renews_only_its_source_documents_after_success[foreign] PASSED [ 29%]
+tests/test_document_retention.py::test_comparison_pdf_download_renews_only_its_source_documents_after_success[render_failure] PASSED [ 29%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-bullet] PASSED [ 29%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-table] PASSED [ 29%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-01-correct-document-page-concept] PASSED [ 30%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-bullet] PASSED [ 30%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-table] PASSED [ 30%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-02-missing-evidence-unverified-concept] PASSED [ 30%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-bullet] PASSED [ 30%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-table] PASSED [ 30%]
+tests/test_evidence.py::test_shared_contract_marks_missing_invalid_sources_unverified_in_every_mode[TC-US08-03-invalid-page-rejected-concept] PASSED [ 30%]
+tests/test_evidence.py::test_amount_date_percentage_and_contract_clause_contract[amount-1000 USD-1] PASSED [ 31%]
+tests/test_evidence.py::test_amount_date_percentage_and_contract_clause_contract[date-01/03/2026-1] PASSED [ 31%]
+tests/test_evidence.py::test_amount_date_percentage_and_contract_clause_contract[percentage-0.05% per day-2] PASSED [ 31%]
+tests/test_evidence.py::test_amount_date_percentage_and_contract_clause_contract[clause-The tenant may terminate with notice.-4] PASSED [ 31%]
+tests/test_evidence.py::test_valid_passage_does_not_verify_changed_factual_values[5% per day-2] PASSED [ 31%]
+tests/test_evidence.py::test_valid_passage_does_not_verify_changed_factual_values[0.05% per month-2] PASSED [ 31%]
+tests/test_evidence.py::test_valid_passage_does_not_verify_changed_factual_values[Payment within 30 months-2] PASSED [ 31%]
+tests/test_evidence.py::test_valid_passage_does_not_verify_changed_factual_values[1000 VND-1] PASSED [ 32%]
+tests/test_evidence.py::test_valid_passage_does_not_verify_changed_factual_values[10000 USD-1] PASSED [ 32%]
+tests/test_evidence.py::test_valid_passage_does_not_verify_changed_factual_values[Signed 01/04/2026-1] PASSED [ 32%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[negative_span] PASSED [ 32%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[beyond_page] PASSED [ 32%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[empty_quote] PASSED [ 32%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[wrong_quote] PASSED [ 32%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[missing_span] PASSED [ 33%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[missing_page] PASSED [ 33%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[missing_document] PASSED [ 33%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[bool_page] PASSED [ 33%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[numeric_string] PASSED [ 33%]
+tests/test_evidence.py::test_invalid_reference_fields_are_discarded_without_echoing_fake_citations[wrong_version] PASSED [ 33%]
+tests/test_evidence.py::test_same_claim_keeps_separate_documents_pages_and_repeated_source_text PASSED [ 33%]
+tests/test_evidence.py::test_valid_and_invalid_sources_preserve_only_real_passages_for_review PASSED [ 34%]
+tests/test_evidence.py::test_another_users_document_is_not_a_valid_source_even_with_matching_text PASSED [ 34%]
+tests/test_evidence.py::test_model_uncertainty_is_never_promoted_to_verified PASSED [ 34%]
+tests/test_evidence.py::test_concept_heading_cannot_hide_an_unsupported_percentage PASSED [ 34%]
+tests/test_evidence.py::test_numeric_comparisons_are_conservative_about_decimal_and_date_reformats PASSED [ 34%]
+tests/test_evidence_persistence.py::test_two_documents_supporting_one_bullet_claim_persist_distinct_citations[TC-US08-04-same-claim-two-documents] PASSED [ 34%]
+tests/test_evidence_persistence.py::test_two_documents_supporting_one_bullet_claim_persist_distinct_citations[TC-US08-05-same-claim-distinct-document-pages] PASSED [ 34%]
+tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-06-persist-missing-source-unverified] PASSED [ 35%]
+tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-07-reject-nonexistent-source-document] PASSED [ 35%]
+tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-08-reject-source-page-with-different-text] PASSED [ 35%]
+tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-09-reject-mismatched-source-quote] PASSED [ 35%]
+tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-10-reject-stale-reader-source] PASSED [ 35%]
+tests/test_evidence_persistence.py::test_unverified_claim_persists_without_invalid_source_links[TC-US08-11-preserve-valid-source-reject-invalid-source] PASSED [ 35%]
+tests/test_evidence_persistence.py::test_two_documents_supporting_table_cell_persist_distinct_citations PASSED [ 35%]
+tests/test_evidence_persistence.py::test_two_documents_supporting_concept_persist_distinct_citations PASSED [ 36%]
+tests/test_evidence_persistence.py::test_retrievable_evidence_in_job_response_enables_reader_navigation PASSED [ 36%]
+tests/test_evidence_persistence.py::test_search_hit_source_reference_equivalence PASSED [ 36%]
+tests/test_extraction_pipeline.py::test_real_queue_extracts_five_documents_and_revisit_keeps_results[bullet] PASSED [ 36%]
+tests/test_extraction_pipeline.py::test_real_queue_extracts_five_documents_and_revisit_keeps_results[table] PASSED [ 36%]
+tests/test_extraction_pipeline.py::test_real_queue_extracts_five_documents_and_revisit_keeps_results[concept] PASSED [ 36%]
+tests/test_extraction_pipeline.py::test_analyzer_payload_evidence_and_label_metadata_persist[0.72-bullet] PASSED [ 36%]
+tests/test_extraction_pipeline.py::test_analyzer_payload_evidence_and_label_metadata_persist[0.72-table] PASSED [ 37%]
+tests/test_extraction_pipeline.py::test_analyzer_payload_evidence_and_label_metadata_persist[0.72-concept] PASSED [ 37%]
+tests/test_extraction_pipeline.py::test_analyzer_payload_evidence_and_label_metadata_persist[0.87-bullet] PASSED [ 37%]
+tests/test_extraction_pipeline.py::test_analyzer_payload_evidence_and_label_metadata_persist[0.87-table] PASSED [ 37%]
+tests/test_extraction_pipeline.py::test_analyzer_payload_evidence_and_label_metadata_persist[0.87-concept] PASSED [ 37%]
+tests/test_extraction_pipeline.py::test_label_prediction_confidence_boundary_and_no_folder_auto_assignment[0.87-high-needs_review] PASSED [ 37%]
+tests/test_extraction_pipeline.py::test_label_prediction_confidence_boundary_and_no_folder_auto_assignment[0.8-high-needs_review] PASSED [ 37%]
+tests/test_extraction_pipeline.py::test_label_prediction_confidence_boundary_and_no_folder_auto_assignment[0.79-low-needs_review] PASSED [ 38%]
+tests/test_extraction_pipeline.py::test_label_prediction_confidence_boundary_and_no_folder_auto_assignment[0.72-low-needs_review] PASSED [ 38%]
+tests/test_extraction_pipeline.py::test_ai_suggestion_keeps_human_label_review_and_folder[0.87] PASSED [ 38%]
+tests/test_extraction_pipeline.py::test_ai_suggestion_keeps_human_label_review_and_folder[0.72] PASSED [ 38%]
+tests/test_extraction_pipeline.py::test_invalid_evidence_is_unverified_without_losing_extracted_result[document_id] PASSED [ 38%]
+tests/test_extraction_pipeline.py::test_invalid_evidence_is_unverified_without_losing_extracted_result[page] PASSED [ 38%]
+tests/test_extraction_pipeline.py::test_invalid_evidence_is_unverified_without_losing_extracted_result[quote] PASSED [ 38%]
+tests/test_extraction_pipeline.py::test_invalid_evidence_is_unverified_without_losing_extracted_result[reader_version] PASSED [ 39%]
+tests/test_extraction_pipeline.py::test_invalid_evidence_is_unverified_without_losing_extracted_result[start] PASSED [ 39%]
+tests/test_extraction_pipeline.py::test_broken_pdf_fails_only_its_file_and_good_file_still_completes PASSED [ 39%]
+tests/test_extraction_pipeline.py::test_extraction_timeouts_reuse_three_attempt_budget_and_do_not_stop_batch PASSED [ 39%]
+tests/test_extraction_pipeline.py::test_analyzer_timeout_retries_after_real_extraction_then_saves_once PASSED [ 39%]
+tests/test_extraction_pipeline.py::test_failed_result_commit_rolls_back_metadata_artifact_and_continues PASSED [ 39%]
+tests/test_extraction_pipeline.py::test_textless_pdf_is_extracted_without_fabricated_content PASSED [ 40%]
+tests/test_extraction_pipeline.py::test_office_upload_pipeline_uses_actual_rendered_reader_pages[DOCX] PASSED [ 40%]
+tests/test_extraction_pipeline.py::test_office_upload_pipeline_uses_actual_rendered_reader_pages[PPTX] PASSED [ 40%]
+tests/test_extraction_pipeline.py::test_native_office_pipeline_needs_no_external_program PASSED [ 40%]
+tests/test_extraction_pipeline.py::test_results_and_reader_survive_database_engine_restart PASSED [ 40%]
+tests/test_extraction_pipeline.py::test_cancelling_extraction_kills_worker_before_removing_work_directory PASSED [ 40%]
+tests/test_extraction_pipeline.py::test_reported_page_count_tightens_extraction_deadline_before_text_finishes FAILED [ 40%]
+tests/test_financial_table.py::test_committed_contracts_preserve_five_rows_and_physical_sources PASSED [ 41%]
+tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[no-retry-TC-US01-04-before-300s] PASSED [ 41%]
+tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[no-retry-TC-US01-05-at-300s] PASSED [ 41%]
+tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[no-retry-TC-US01-06-after-300s] PASSED [ 41%]
+tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[one-timeout-retry-TC-US01-04-before-300s] PASSED [ 41%]
+tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[one-timeout-retry-TC-US01-05-at-300s] PASSED [ 41%]
+tests/test_financial_table.py::test_contract_batch_deadline_rejects_late_fifth_row[one-timeout-retry-TC-US01-06-after-300s] PASSED [ 41%]
+tests/test_financial_table.py::test_expired_contract_batch_never_calls_provider[300] PASSED [ 42%]
+tests/test_financial_table.py::test_expired_contract_batch_never_calls_provider[300.001] PASSED [ 42%]
+tests/test_financial_table.py::test_five_financial_rows_and_labels_persist_exact_numbers_units_and_field_evidence PASSED [ 42%]
+tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[value-1,200,000,001 VND] PASSED [ 42%]
+tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[value-1,200,000,000 USD] PASSED [ 42%]
+tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[value-1.2 billion VND] PASSED [ 42%]
+tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[penalty-0.5% per day] PASSED [ 42%]
+tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[penalty-0.05% per month] PASSED [ 43%]
+tests/test_financial_table.py::test_changed_numbers_currency_or_period_are_saved_as_unverified[payment_term-Within 60 days] PASSED [ 43%]
+tests/test_financial_table.py::test_financial_batch_preserves_finished_rows_when_one_contract_times_out_or_fails[error0-3] PASSED [ 43%]
+tests/test_financial_table.py::test_financial_batch_preserves_finished_rows_when_one_contract_times_out_or_fails[error1-1] PASSED [ 43%]
+tests/test_folders.py::test_create_and_list_folders_are_persisted_owner_scoped_and_paginated PASSED [ 43%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload0] PASSED [ 43%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload1] PASSED [ 43%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload2] PASSED [ 44%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload3] PASSED [ 44%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload4] PASSED [ 44%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload5] PASSED [ 44%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload6] PASSED [ 44%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload7] PASSED [ 44%]
+tests/test_folders.py::test_invalid_folder_creation_cannot_create_or_spoof_owner[payload8] PASSED [ 44%]
+tests/test_folders.py::test_folder_name_accepts_storage_boundary PASSED  [ 45%]
+tests/test_folders.py::test_invalid_folder_list_pagination[params0] PASSED [ 45%]
+tests/test_folders.py::test_invalid_folder_list_pagination[params1] PASSED [ 45%]
+tests/test_folders.py::test_invalid_folder_list_pagination[params2] PASSED [ 45%]
+tests/test_folders.py::test_invalid_folder_list_pagination[params3] PASSED [ 45%]
+tests/test_folders.py::test_move_and_unfile_change_only_membership_and_existing_search_filters_see_the_move PASSED [ 45%]
+tests/test_folders.py::test_rejected_moves_leave_both_accounts_unchanged[own-private-403] PASSED [ 45%]
+tests/test_folders.py::test_rejected_moves_leave_both_accounts_unchanged[peer-first-403] PASSED [ 46%]
+tests/test_folders.py::test_rejected_moves_leave_both_accounts_unchanged[peer-private-403] PASSED [ 46%]
+tests/test_folders.py::test_rejected_moves_leave_both_accounts_unchanged[peer-None-403] PASSED [ 46%]
+tests/test_folders.py::test_rejected_moves_leave_both_accounts_unchanged[missing-first-404] PASSED [ 46%]
+tests/test_folders.py::test_rejected_moves_leave_both_accounts_unchanged[own-missing-404] PASSED [ 46%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload0] PASSED [ 46%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload1] PASSED [ 46%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload2] PASSED [ 47%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload3] PASSED [ 47%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload4] PASSED [ 47%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload5] PASSED [ 47%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload6] PASSED [ 47%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload7] PASSED [ 47%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload8] PASSED [ 47%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload9] PASSED [ 48%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload10] PASSED [ 48%]
+tests/test_folders.py::test_invalid_moves_cannot_clear_membership_or_edit_metadata[payload11] PASSED [ 48%]
+tests/test_folders.py::test_folder_and_move_endpoints_require_authentication PASSED [ 48%]
+tests/test_folders.py::test_filename_search_is_literal_owner_scoped_and_combines_with_folder_filters PASSED [ 48%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[TC-US01-02-malformed-json] PASSED [ 48%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[missing-table-fields] PASSED [ 48%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[unstructured-value] PASSED [ 49%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[numeric-penalty] PASSED [ 49%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[negative-source] PASSED [ 49%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[string-source] PASSED [ 49%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[boolean-source] PASSED [ 49%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[float-source] PASSED [ 49%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[source-without-text] PASSED [ 50%]
+tests/test_gemini_analysis.py::test_contract_malformed_ai_output_cannot_publish_rows_or_citations[provider-forges-verification] PASSED [ 50%]
+tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[TC-US01-03-unknown-source] PASSED [ 50%]
+tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[missing-source] PASSED [ 50%]
+tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[empty-source] PASSED [ 50%]
+tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[valid-and-unknown-source] PASSED [ 50%]
+tests/test_gemini_analysis.py::test_contract_invalid_sources_stay_unverified_after_persistence[existing-source-with-unsupported-fact] PASSED [ 50%]
+tests/test_gemini_analysis.py::test_one_compact_request_maps_real_source_offsets_and_metadata[bullet] PASSED [ 51%]
+tests/test_gemini_analysis.py::test_one_compact_request_maps_real_source_offsets_and_metadata[table] PASSED [ 51%]
+tests/test_gemini_analysis.py::test_one_compact_request_maps_real_source_offsets_and_metadata[concept] PASSED [ 51%]
+tests/test_gemini_analysis.py::test_cache_reuses_wire_response_after_reupload_but_remaps_citations PASSED [ 51%]
+tests/test_gemini_analysis.py::test_cache_is_scoped_by_owner_mode_budget_and_model PASSED [ 51%]
+tests/test_gemini_analysis.py::test_missing_key_and_textless_pages_make_no_network_calls PASSED [ 51%]
+tests/test_gemini_analysis.py::test_unknown_source_id_never_gets_a_verified_citation PASSED [ 51%]
+tests/test_gemini_analysis.py::test_gemini_preserves_multiple_excerpt_ids_and_same_text_on_different_pages PASSED [ 52%]
+tests/test_gemini_analysis.py::test_unknown_gemini_source_does_not_discard_its_other_valid_sources PASSED [ 52%]
+tests/test_gemini_analysis.py::test_source_budget_keeps_offsets_balances_late_pages_and_reports_truncation PASSED [ 52%]
+tests/test_gemini_analysis.py::test_table_budget_prioritizes_financial_clause_over_unrelated_text PASSED [ 52%]
+tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[400-gemini_configuration_error] PASSED [ 52%]
+tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[401-gemini_configuration_error] PASSED [ 52%]
+tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[403-gemini_configuration_error] PASSED [ 52%]
+tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[429-gemini_quota_exceeded] PASSED [ 53%]
+tests/test_gemini_analysis.py::test_api_errors_are_sanitized_and_do_not_retry_or_cache[503-gemini_unavailable] PASSED [ 53%]
+tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload0-gemini_invalid_response] PASSED [ 53%]
+tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload1-gemini_blocked] PASSED [ 53%]
+tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload2-gemini_output_limit] PASSED [ 53%]
+tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload3-gemini_blocked] PASSED [ 53%]
+tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload4-gemini_invalid_response] PASSED [ 53%]
+tests/test_gemini_analysis.py::test_blocked_truncated_or_invalid_output_is_never_a_success[payload5-gemini_invalid_response] PASSED [ 54%]
+tests/test_gemini_analysis.py::test_http_timeout_remains_compatible_with_existing_retry_logic PASSED [ 54%]
+tests/test_gemini_analysis.py::test_oversized_bullet_wire_is_rejected_before_it_can_be_cached PASSED [ 54%]
+tests/test_gemini_analysis.py::test_invalid_first_draft_is_corrected_once_and_only_valid_results_are_cached[malformed_json] PASSED [ 54%]
+tests/test_gemini_analysis.py::test_invalid_first_draft_is_corrected_once_and_only_valid_results_are_cached[too_many_concepts] PASSED [ 54%]
+tests/test_gemini_analysis.py::test_invalid_first_draft_is_corrected_once_and_only_valid_results_are_cached[word_budget] PASSED [ 54%]
+tests/test_gemini_analysis.py::test_groq_input_budget_is_independent_of_gemini_budget PASSED [ 54%]
+tests/test_gemini_analysis.py::test_many_source_topics_do_not_force_more_than_five_concepts PASSED [ 55%]
+tests/test_gemini_analysis.py::test_empty_optional_limitation_does_not_fail_an_otherwise_valid_analysis[] PASSED [ 55%]
+tests/test_gemini_analysis.py::test_empty_optional_limitation_does_not_fail_an_otherwise_valid_analysis[   ] PASSED [ 55%]
+tests/test_gemini_analysis.py::test_inflight_gemini_request_is_cancelled_before_retry PASSED [ 55%]
+tests/test_gemini_analysis.py::test_real_upload_job_saves_gemini_result_and_citations_without_repeat_on_reload[en] PASSED [ 55%]
+tests/test_gemini_analysis.py::test_real_upload_job_saves_gemini_result_and_citations_without_repeat_on_reload[vi] PASSED [ 55%]
+tests/test_gemini_analysis.py::test_quota_failure_updates_correct_file_without_false_success PASSED [ 55%]
+tests/test_gemini_analysis.py::test_selected_language_controls_prompt_fallback_and_cache[en] PASSED [ 56%]
+tests/test_gemini_analysis.py::test_selected_language_controls_prompt_fallback_and_cache[vi] PASSED [ 56%]
+tests/test_groq_analysis.py::test_transient_network_error_recovers_with_same_payload[ConnectError] PASSED [ 56%]
+tests/test_groq_analysis.py::test_transient_network_error_recovers_with_same_payload[ReadError] PASSED [ 56%]
+tests/test_groq_analysis.py::test_transient_network_error_recovers_with_same_payload[RemoteProtocolError] PASSED [ 56%]
+tests/test_groq_analysis.py::test_exhausted_connection_logs_diagnostic_codes_without_keys_or_passages PASSED [ 56%]
+tests/test_groq_analysis.py::test_configuration_and_quota_failures_are_not_retried[400-groq_configuration_error] PASSED [ 56%]
+tests/test_groq_analysis.py::test_configuration_and_quota_failures_are_not_retried[401-groq_configuration_error] PASSED [ 57%]
+tests/test_groq_analysis.py::test_configuration_and_quota_failures_are_not_retried[403-groq_configuration_error] PASSED [ 57%]
+tests/test_groq_analysis.py::test_configuration_and_quota_failures_are_not_retried[422-groq_configuration_error] PASSED [ 57%]
+tests/test_groq_analysis.py::test_configuration_and_quota_failures_are_not_retried[429-groq_quota_exceeded] PASSED [ 57%]
+tests/test_groq_analysis.py::test_request_timeout_remains_a_timeout_for_the_existing_job_retry PASSED [ 57%]
+tests/test_groq_analysis.py::test_retries_share_one_overall_deadline PASSED [ 57%]
+tests/test_groq_analysis.py::test_job_cancellation_does_not_trigger_another_request PASSED [ 57%]
+tests/test_groq_analysis.py::test_exhausted_network_failure_does_not_publish_a_successful_job PASSED [ 58%]
+tests/test_groq_analysis.py::test_recovered_groq_response_still_maps_to_real_document_evidence PASSED [ 58%]
+tests/test_groq_analysis.py::test_temporary_http_error_respects_retry_after_then_recovers[429] PASSED [ 58%]
+tests/test_groq_analysis.py::test_temporary_http_error_respects_retry_after_then_recovers[502] PASSED [ 58%]
+tests/test_groq_analysis.py::test_temporary_http_error_respects_retry_after_then_recovers[503] PASSED [ 58%]
+tests/test_groq_analysis.py::test_long_daily_or_invalid_rate_limit_is_not_spammed_or_reported_as_timeout[headers0] PASSED [ 58%]
+tests/test_groq_analysis.py::test_long_daily_or_invalid_rate_limit_is_not_spammed_or_reported_as_timeout[headers1] PASSED [ 58%]
+tests/test_groq_analysis.py::test_long_daily_or_invalid_rate_limit_is_not_spammed_or_reported_as_timeout[headers2] PASSED [ 59%]
+tests/test_groq_analysis.py::test_server_failures_have_bounded_retries_without_false_results PASSED [ 59%]
+tests/test_groq_analysis.py::test_parallel_documents_share_one_groq_request_slot PASSED [ 59%]
+tests/test_groq_analysis.py::test_real_upload_pipeline_saves_groq_results_and_evidence_on_reload PASSED [ 59%]
+tests/test_job_lifecycle.py::test_submit_five_files_all_complete_and_results_persist_on_revisit PASSED [ 59%]
+tests/test_job_lifecycle.py::test_mock_timeout_is_observable_before_retry_and_never_counts_as_success PASSED [ 59%]
+tests/test_job_lifecycle.py::test_partial_progress_is_visible_before_all_files_finish PASSED [ 60%]
+tests/test_local_launcher.py::test_setup_only_prepares_database_and_dev_dependencies_without_starting_servers PASSED [ 60%]
+tests/test_local_launcher.py::test_database_failure_stops_startup PASSED [ 60%]
+tests/test_local_launcher.py::test_busy_port_prevents_any_environment_or_database_changes PASSED [ 60%]
+tests/test_pdf_extraction.py::test_preserves_physical_pages_including_image_only_and_blank PASSED [ 60%]
+tests/test_pdf_extraction.py::test_offsets_and_boxes_are_stable_and_match_stored_text PASSED [ 60%]
+tests/test_pdf_extraction.py::test_rotated_page_geometry_and_number_are_preserved PASSED [ 60%]
+tests/test_pdf_extraction.py::test_accented_text_and_crop_geometry_are_not_normalized PASSED [ 61%]
+tests/test_pdf_extraction.py::test_multicodepoint_glyphs_map_once_without_removing_distinct_repeated_glyphs PASSED [ 61%]
+tests/test_pdf_extraction.py::test_persists_existing_structure_and_page_count PASSED [ 61%]
+tests/test_pdf_extraction.py::test_uploaded_document_metadata_exposes_persisted_page_count PASSED [ 61%]
+tests/test_pdf_extraction.py::test_invalid_pdf_leaves_previous_extraction_unchanged PASSED [ 61%]
+tests/test_pdf_extraction.py::test_commit_failure_keeps_metadata_atomic PASSED [ 61%]
+tests/test_pdf_extraction.py::test_missing_or_non_pdf_document_is_rejected PASSED [ 61%]
+tests/test_pdf_extraction.py::test_later_page_failure_does_not_persist_partial_text PASSED [ 62%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[None-30] PASSED [ 62%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[0-30] PASSED [ 62%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[1-33] PASSED [ 62%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[15-75] PASSED [ 62%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[89-297] PASSED [ 62%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[90-300] PASSED [ 62%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[91-300] PASSED [ 63%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[1000-300] PASSED [ 63%]
+tests/test_processing_timeouts.py::test_timeout_formula_and_cap[-1-30] PASSED [ 63%]
+tests/test_processing_timeouts.py::test_always_timeout_retries_twice_and_persists_failure PASSED [ 63%]
+tests/test_processing_timeouts.py::test_job_deadline_includes_queue_time_and_retries[TC-US07-004-before-job-deadline-bullet-180-1] PASSED [ 63%]
+tests/test_processing_timeouts.py::test_job_deadline_includes_queue_time_and_retries[TC-US07-004-before-job-deadline-table-300-5] PASSED [ 63%]
+tests/test_processing_timeouts.py::test_job_deadline_includes_queue_time_and_retries[TC-US07-005-at-job-deadline-bullet-180-1] PASSED [ 63%]
+tests/test_processing_timeouts.py::test_job_deadline_includes_queue_time_and_retries[TC-US07-005-at-job-deadline-table-300-5] PASSED [ 64%]
+tests/test_processing_timeouts.py::test_job_deadline_includes_queue_time_and_retries[TC-US07-006-after-job-deadline-bullet-180-1] PASSED [ 64%]
+tests/test_processing_timeouts.py::test_job_deadline_includes_queue_time_and_retries[TC-US07-006-after-job-deadline-table-300-5] PASSED [ 64%]
+tests/test_processing_timeouts.py::test_third_attempt_can_succeed_and_clears_timeout_error PASSED [ 64%]
+tests/test_processing_timeouts.py::test_timeout_does_not_skip_other_documents PASSED [ 64%]
+tests/test_processing_timeouts.py::test_actual_deadline_cancels_each_attempt_before_retry PASSED [ 64%]
+tests/test_processing_timeouts.py::test_non_timeout_error_fails_once_without_leaking_details PASSED [ 64%]
+tests/test_processing_timeouts.py::test_resuming_timed_out_file_does_not_reset_attempt_budget PASSED [ 65%]
+tests/test_processing_timeouts.py::test_finished_files_are_skipped_on_resume PASSED [ 65%]
+tests/test_processing_timeouts.py::test_queue_uses_timeout_worker_and_job_poll_exposes_attempts PASSED [ 65%]
+tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-19-known-page-keyword] PASSED [ 65%]
+tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-20-first-page-first-character] PASSED [ 65%]
+tests/test_reader_extraction.py::test_reader_keyword_search_returns_known_page_and_source_positions[TC-US04-21-last-page-last-character] PASSED [ 65%]
+tests/test_reader_extraction.py::test_reader_search_no_match_is_a_valid_empty_result[TC-US04-22-no-matches] PASSED [ 65%]
+tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-23-missing-query] PASSED [ 66%]
+tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-24-empty-query] PASSED [ 66%]
+tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-25-overlong-query] PASSED [ 66%]
+tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-26-whitespace-query] PASSED [ 66%]
+tests/test_reader_extraction.py::test_reader_search_invalid_query_is_not_a_no_match_result[TC-US04-27-punctuation-query] PASSED [ 66%]
+tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-28-first-page-text] PASSED [ 66%]
+tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-29-middle-page-text] PASSED [ 66%]
+tests/test_reader_extraction.py::test_reader_page_text_preserves_physical_page_and_positions[TC-US04-30-last-page-text] PASSED [ 67%]
+tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-31-page-zero] PASSED [ 67%]
+tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-32-negative-page] PASSED [ 67%]
+tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-33-one-past-last-page] PASSED [ 67%]
+tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-34-nonnumeric-page] PASSED [ 67%]
+tests/test_reader_extraction.py::test_reader_page_text_rejects_invalid_or_missing_pages[TC-US04-35-fractional-page] PASSED [ 67%]
+tests/test_reader_extraction.py::test_persisted_pages_are_extracted_from_the_exact_reader_file[DOCX] PASSED [ 67%]
+tests/test_reader_extraction.py::test_persisted_pages_are_extracted_from_the_exact_reader_file[PPTX] PASSED [ 68%]
+tests/test_reader_extraction.py::test_conversion_failure_does_not_overwrite_an_existing_reader PASSED [ 68%]
+tests/test_reader_extraction.py::test_pptx_page_count_mismatch_is_explicit_and_saves_no_metadata PASSED [ 68%]
+tests/test_reader_extraction.py::test_invalid_converted_pdf_and_commit_failure_clean_new_artifacts PASSED [ 68%]
+tests/test_reader_extraction.py::test_reader_authorization_precedes_file_access[pages] PASSED [ 68%]
+tests/test_reader_extraction.py::test_reader_authorization_precedes_file_access[reader.pdf?version=0000000000000000000000000000000000000000000000000000000000000000] PASSED [ 68%]
+tests/test_reader_extraction.py::test_prepare_endpoint_needs_no_external_program PASSED [ 68%]
+tests/test_reader_extraction.py::test_tampered_reader_pdf_is_not_served PASSED [ 69%]
+tests/test_reader_extraction.py::test_corrupt_office_is_an_explicit_failure PASSED [ 69%]
+tests/test_reader_extraction.py::test_native_office_pages_match_displayed_reader[DOCX] PASSED [ 69%]
+tests/test_reader_extraction.py::test_native_office_pages_match_displayed_reader[PPTX] PASSED [ 69%]
+tests/test_reader_extraction.py::test_native_docx_preserves_vietnamese_tables_and_xml_characters PASSED [ 69%]
+tests/test_reader_extraction.py::test_native_docx_flows_long_content_without_dropping_paragraphs PASSED [ 69%]
+tests/test_reader_extraction.py::test_native_pptx_preserves_grouped_text_and_dense_slide_on_one_page PASSED [ 70%]
+tests/test_reader_presentation.py::test_saved_citation_opens_matching_document_page_and_visible_highlight[TC-US09-01-citation-opens-exact-source] PASSED [ 70%]
+tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-02-reject-invalid-citation-page] PASSED [ 70%]
+tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-03-reject-invalid-citation-document] PASSED [ 70%]
+tests/test_reader_presentation.py::test_invalid_citation_is_removed_from_saved_reader_summary[TC-US09-04-reject-stale-citation] PASSED [ 70%]
+tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-36-known-page-repeated-highlight] PASSED [ 70%]
+tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-37-first-page-highlight] PASSED [ 70%]
+tests/test_reader_presentation.py::test_keyword_highlight_draws_only_at_known_match_positions[TC-US04-38-last-page-highlight] PASSED [ 71%]
+tests/test_reader_presentation.py::test_valid_query_without_highlights_returns_readable_pdf[TC-US04-39-highlight-no-match] PASSED [ 71%]
+tests/test_reader_presentation.py::test_valid_query_without_highlights_returns_readable_pdf[TC-US04-40-empty-highlight-query-clears-marks] PASSED [ 71%]
+tests/test_reader_presentation.py::test_exact_match_span_accepts_first_and_last_character_boundaries[TC-US04-55-valid-span-starts-at-zero] PASSED [ 71%]
+tests/test_reader_presentation.py::test_exact_match_span_accepts_first_and_last_character_boundaries[TC-US04-56-valid-span-ends-at-text-length] PASSED [ 71%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-41-overlong-highlight-query] PASSED [ 71%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-42-highlight-page-zero] PASSED [ 71%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-43-highlight-negative-page] PASSED [ 72%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-44-highlight-one-past-last-page] PASSED [ 72%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-45-highlight-nonnumeric-page] PASSED [ 72%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-46-highlight-fractional-page] PASSED [ 72%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-47-highlight-missing-page] PASSED [ 72%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-48-negative-match-start] PASSED [ 72%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-49-match-end-past-text] PASSED [ 72%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-50-match-start-at-text-end] PASSED [ 73%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-51-empty-match-span] PASSED [ 73%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-52-reversed-match-span] PASSED [ 73%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-53-missing-match-end] PASSED [ 73%]
+tests/test_reader_presentation.py::test_invalid_highlight_input_returns_validation_error_instead_of_no_match_pdf[TC-US04-54-missing-match-start] PASSED [ 73%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[None-0] PASSED [ 73%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[None-90] PASSED [ 73%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[None-180] PASSED [ 74%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[None-270] PASSED [ 74%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[cropbox1-0] PASSED [ 74%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[cropbox1-90] PASSED [ 74%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[cropbox1-180] PASSED [ 74%]
+tests/test_reader_presentation.py::test_pdf_highlight_overlays_the_stored_glyph_coordinates[cropbox1-270] PASSED [ 74%]
+tests/test_reader_presentation.py::test_summary_returns_only_saved_document_result_and_enforces_ownership PASSED [ 74%]
+tests/test_reader_presentation.py::test_highlight_endpoint_preserves_snapshot_and_validates_requests PASSED [ 75%]
+tests/test_retention_cleanup.py::test_cleanup_removes_original_all_rendered_versions_search_caches_citations_and_saved_results PASSED [ 75%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[-get-None] PASSED [ 75%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/pages-get-None] PASSED [ 75%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/pages/1/text-get-None] PASSED [ 75%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/file-get-None] PASSED [ 75%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/file?rendered=true-get-None] PASSED [ 75%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/rendered-file-get-None] PASSED [ 76%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/reader.pdf?version=old-get-None] PASSED [ 76%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/reader-post-None] PASSED [ 76%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/label-patch-body8] PASSED [ 76%]
+tests/test_retention_cleanup.py::test_old_document_urls_return_expired_without_content_or_resurrection[/folder-patch-body9] PASSED [ 76%]
+tests/test_retention_cleanup.py::test_renewal_between_candidate_selection_and_lock_preserves_files_and_results PASSED [ 76%]
+tests/test_retention_cleanup.py::test_failed_file_deletion_is_private_retryable_and_does_not_starve_other_candidates PASSED [ 76%]
+tests/test_retention_cleanup.py::test_cleanup_never_unlinks_outside_storage PASSED [ 77%]
+tests/test_retention_cleanup.py::test_optional_shared_model_cache_is_purged_only_for_the_expired_owner PASSED [ 77%]
+tests/test_retention_cleanup.py::test_zero_byte_document_is_not_itself_an_expiry_marker PASSED [ 77%]
+tests/test_retention_cleanup.py::test_app_lifespan_starts_and_stops_the_enabled_scheduler PASSED [ 77%]
+tests/test_retention_cleanup.py::test_cleanup_rejects_linked_rendered_files PASSED [ 77%]
+tests/test_retention_cleanup.py::test_scheduler_retries_after_failure_and_stops_gracefully PASSED [ 77%]
+tests/test_retention_cleanup.py::test_analysis_finishing_after_cleanup_cannot_restore_pages_files_or_results PASSED [ 77%]
+tests/test_retention_cleanup.py::test_active_document_analysis_cannot_reintroduce_a_claim_from_an_expired_cross_document_source PASSED [ 78%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[20-RETRIEVAL_DOCUMENT] PASSED [ 78%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[20-RETRIEVAL_QUERY] PASSED [ 78%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[21-RETRIEVAL_DOCUMENT] PASSED [ 78%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[21-RETRIEVAL_QUERY] PASSED [ 78%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[50-RETRIEVAL_DOCUMENT] PASSED [ 78%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[50-RETRIEVAL_QUERY] PASSED [ 78%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[51-RETRIEVAL_DOCUMENT] PASSED [ 79%]
+tests/test_search_embeddings.py::test_embedding_rest_contract_batches_validates_and_hides_key[51-RETRIEVAL_QUERY] PASSED [ 79%]
+tests/test_search_embeddings.py::test_semantic_http_search_paginates_more_than_twenty_and_isolates_owner_caches PASSED [ 79%]
+tests/test_search_embeddings.py::test_semantic_http_filters_exclude_other_folders_labels_and_accounts_before_embedding PASSED [ 79%]
+tests/test_search_embeddings.py::test_bad_embedding_in_large_corpus_cannot_publish_a_partial_batch[first-vector] PASSED [ 79%]
+tests/test_search_embeddings.py::test_bad_embedding_in_large_corpus_cannot_publish_a_partial_batch[last-vector-in-50] PASSED [ 79%]
+tests/test_search_embeddings.py::test_new_document_after_semantic_pagination_embeds_only_new_source_pages PASSED [ 80%]
+tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response0] PASSED [ 80%]
+tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response1] PASSED [ 80%]
+tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response2] PASSED [ 80%]
+tests/test_search_embeddings.py::test_provider_errors_and_bad_vectors_are_sanitized[response3] PASSED [ 80%]
+tests/test_search_embeddings.py::test_quota_is_sanitized_and_preserves_retry_time[12.4s-13] PASSED [ 80%]
+tests/test_search_embeddings.py::test_quota_is_sanitized_and_preserves_retry_time[NaNs-60] PASSED [ 80%]
+tests/test_search_embeddings.py::test_quota_is_sanitized_and_preserves_retry_time[bad-60] PASSED [ 81%]
+tests/test_search_index.py::test_large_corpus_hits_round_trip_to_exact_reader_pages_and_evidence PASSED [ 81%]
+tests/test_search_index.py::test_new_document_is_searchable_beyond_the_initial_twenty_without_rebuilding_old_sources PASSED [ 81%]
+tests/test_search_index.py::test_twenty_documents_have_page_metadata_exact_passages_and_equivalent_evidence PASSED [ 81%]
+tests/test_search_index.py::test_search_owner_is_always_taken_from_authentication PASSED [ 81%]
+tests/test_search_index.py::test_unicode_chunks_cover_original_text_and_normalization_never_changes_offsets PASSED [ 81%]
+tests/test_search_index.py::test_index_schema_compiles_for_the_existing_mysql_stack PASSED [ 81%]
+tests/test_search_index.py::test_invalid_page_metadata_cannot_publish_search_references[<lambda>0] PASSED [ 82%]
+tests/test_search_index.py::test_invalid_page_metadata_cannot_publish_search_references[<lambda>1] PASSED [ 82%]
+tests/test_search_index.py::test_invalid_page_metadata_cannot_publish_search_references[<lambda>2] PASSED [ 82%]
+tests/test_search_index.py::test_source_byte_changes_remove_stale_index_then_reextraction_replaces_it PASSED [ 82%]
+tests/test_search_index.py::test_rename_expiry_delete_and_missing_sources_remove_index_entries PASSED [ 82%]
+tests/test_search_index.py::test_index_and_content_replacement_roll_back_together PASSED [ 82%]
+tests/test_search_index.py::test_semantic_vectors_are_persisted_reused_and_never_embed_other_owners_content PASSED [ 82%]
+tests/test_search_index.py::test_failed_embeddings_do_not_publish_partial_vectors_and_content_search_keeps_working PASSED [ 83%]
+tests/test_search_index.py::test_upload_job_indexes_saved_pages_without_additional_model_calls PASSED [ 83%]
+tests/test_search_index.py::test_invalid_query_embedding_does_not_save_partial_json_cache PASSED [ 83%]
+tests/test_search_index.py::test_changed_source_replaces_saved_semantic_cache PASSED [ 83%]
+tests/test_search_index.py::test_saved_pages_are_searchable_after_restart_with_only_design_tables PASSED [ 83%]
+tests/test_search_index.py::test_quota_keeps_completed_batches_and_retry_only_embeds_remaining_sources PASSED [ 83%]
+tests/test_t38_benchmark.py::test_harness_measures_extraction_generation_and_persistence_in_isolation PASSED [ 83%]
+tests/test_t38_benchmark.py::test_missing_real_key_is_explicitly_blocked_not_reported_as_a_success PASSED [ 84%]
+tests/test_t38_benchmark.py::test_wrong_page_count_does_not_spend_model_quota PASSED [ 84%]
+tests/test_table_pdf.py::test_five_saved_rows_units_vietnamese_missing_fields_and_repeat_download PASSED [ 84%]
+tests/test_table_pdf.py::test_incomplete_job_cannot_export[pending] PASSED [ 84%]
+tests/test_table_pdf.py::test_incomplete_job_cannot_export[processing] PASSED [ 84%]
+tests/test_table_pdf.py::test_incomplete_job_cannot_export[failed] PASSED [ 84%]
+tests/test_table_pdf.py::test_incomplete_job_cannot_export[timed_out] PASSED [ 84%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[wrong_mode] PASSED [ 85%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[partial_count] PASSED [ 85%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[partial_file] PASSED [ 85%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[missing_file] PASSED [ 85%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[missing_result] PASSED [ 85%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[missing_row] PASSED [ 85%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[extra_row] PASSED [ 85%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[missing_field] PASSED [ 86%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[wrong_row_id] PASSED [ 86%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[wrong_output] PASSED [ 86%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[not_analyzed] PASSED [ 86%]
+tests/test_table_pdf.py::test_completed_status_alone_does_not_make_a_complete_table[foreign_document] PASSED [ 86%]
+tests/test_table_pdf.py::test_other_account_missing_job_and_unauthenticated_requests PASSED [ 86%]
+tests/test_table_pdf.py::test_unverified_cells_and_only_real_authorized_page_references[unsupported] PASSED [ 86%]
+tests/test_table_pdf.py::test_unverified_cells_and_only_real_authorized_page_references[missing] PASSED [ 87%]
+tests/test_table_pdf.py::test_unverified_cells_and_only_real_authorized_page_references[issues] PASSED [ 87%]
+tests/test_table_pdf.py::test_unverified_cells_and_only_real_authorized_page_references[foreign_source] PASSED [ 87%]
+tests/test_table_pdf.py::test_unverified_cells_and_only_real_authorized_page_references[wrong_version] PASSED [ 87%]
+tests/test_table_pdf.py::test_unverified_cells_and_only_real_authorized_page_references[bad_page] PASSED [ 87%]
+tests/test_table_pdf.py::test_long_clauses_wrap_split_rows_repeat_headers_and_render_without_clipping PASSED [ 87%]
+tests/test_table_pdf.py::test_export_does_not_translate_saved_cells_and_uses_job_language PASSED [ 87%]
+tests/test_upload_jobs.py::test_upload_destination_is_committed_before_enqueue_and_survives_processing PASSED [ 88%]
+tests/test_upload_jobs.py::test_upload_without_destination_stays_outside_existing_folders PASSED [ 88%]
+tests/test_upload_jobs.py::test_invalid_destination_writes_no_files_or_jobs[missing-404] PASSED [ 88%]
+tests/test_upload_jobs.py::test_invalid_destination_writes_no_files_or_jobs[foreign-403] PASSED [ 88%]
+tests/test_upload_jobs.py::test_malformed_upload_destination_is_rejected[0] PASSED [ 88%]
+tests/test_upload_jobs.py::test_malformed_upload_destination_is_rejected[-1] PASSED [ 88%]
+tests/test_upload_jobs.py::test_malformed_upload_destination_is_rejected[invalid] PASSED [ 88%]
+tests/test_upload_jobs.py::test_malformed_upload_destination_is_rejected[1.5] PASSED [ 89%]
+tests/test_upload_jobs.py::test_saved_batch_has_pending_job_documents_and_links[bullet] PASSED [ 89%]
+tests/test_upload_jobs.py::test_saved_batch_has_pending_job_documents_and_links[table] PASSED [ 89%]
+tests/test_upload_jobs.py::test_saved_batch_has_pending_job_documents_and_links[concept] PASSED [ 89%]
+tests/test_upload_jobs.py::test_duplicate_and_path_like_names_never_control_storage_paths PASSED [ 89%]
+tests/test_upload_jobs.py::test_invalid_mode_has_no_side_effects[BULLET] PASSED [ 89%]
+tests/test_upload_jobs.py::test_invalid_mode_has_no_side_effects[unsupported] PASSED [ 90%]
+tests/test_upload_jobs.py::test_invalid_batch_has_no_side_effects PASSED [ 90%]
+tests/test_upload_jobs.py::test_deleted_account_cannot_create_job PASSED [ 90%]
+tests/test_upload_jobs.py::test_partial_storage_failure_rolls_back_only_new_batch PASSED [ 90%]
+tests/test_upload_jobs.py::test_database_failure_removes_saved_files PASSED [ 90%]
+tests/test_upload_jobs.py::test_existing_batch_directory_is_never_deleted PASSED [ 90%]
+tests/test_upload_jobs.py::test_queue_failure_is_recorded_instead_of_leaving_pending_job PASSED [ 90%]
+tests/test_upload_jobs.py::test_response_returns_while_real_background_worker_is_blocked PASSED [ 91%]
+tests/test_upload_jobs.py::test_worker_exception_is_recorded PASSED      [ 91%]
+tests/test_upload_jobs.py::test_worker_crash_preserves_completed_results_and_fails_unfinished_files PASSED [ 91%]
+tests/test_upload_jobs.py::test_default_worker_reports_invalid_pdf_extraction PASSED [ 91%]
+tests/test_upload_jobs.py::test_closed_queue_rejects_new_work PASSED     [ 91%]
+tests/test_upload_jobs.py::test_upload_language_is_saved_before_enqueue_and_passed_to_worker[en] PASSED [ 91%]
+tests/test_upload_jobs.py::test_upload_language_is_saved_before_enqueue_and_passed_to_worker[vi] PASSED [ 91%]
+tests/test_upload_jobs.py::test_invalid_summary_language_does_not_create_upload PASSED [ 92%]
+tests/test_upload_validation.py::test_valid_extensions_with_generic_mime[report.PDF] PASSED [ 92%]
+tests/test_upload_validation.py::test_valid_extensions_with_generic_mime[notes.docx] PASSED [ 92%]
+tests/test_upload_validation.py::test_valid_extensions_with_generic_mime[slides.PpTx] PASSED [ 92%]
+tests/test_upload_validation.py::test_five_files_at_exact_size_boundary PASSED [ 92%]
+tests/test_upload_validation.py::test_disallowed_extensions_even_when_mime_claims_pdf[malware.exe] PASSED [ 92%]
+tests/test_upload_validation.py::test_disallowed_extensions_even_when_mime_claims_pdf[report.pdf.exe] PASSED [ 92%]
+tests/test_upload_validation.py::test_disallowed_extensions_even_when_mime_claims_pdf[README] PASSED [ 93%]
+tests/test_upload_validation.py::test_disallowed_extensions_even_when_mime_claims_pdf[notes.txt] PASSED [ 93%]
+tests/test_upload_validation.py::test_one_byte_above_file_limit PASSED   [ 93%]
+tests/test_upload_validation.py::test_sixth_file_has_its_own_error PASSED [ 93%]
+tests/test_upload_validation.py::test_combined_size_boundary_is_checked_independently[52428800-False] PASSED [ 93%]
+tests/test_upload_validation.py::test_combined_size_boundary_is_checked_independently[52428801-True] PASSED [ 93%]
+tests/test_upload_validation.py::test_reports_all_failures_and_identifies_duplicate_filenames_by_index PASSED [ 93%]
+tests/test_upload_validation.py::test_single_file_can_report_multiple_reasons PASSED [ 94%]
+tests/test_upload_validation.py::test_missing_files_has_structured_error PASSED [ 94%]
+tests/test_upload_validation.py::test_swagger_files_schema_is_binary_array PASSED [ 94%]
+tests/test_upload_validation.py::test_unauthenticated_upload_rejected[None] PASSED [ 94%]
+tests/test_upload_validation.py::test_unauthenticated_upload_rejected[Bearer forged-token] PASSED [ 94%]
+tests/test_upload_validation.py::test_cookie_session_is_supported PASSED [ 94%]
+tests/test_upload_validation.py::test_reads_actual_bytes_and_rewinds_even_after_rejection[16] PASSED [ 94%]
+tests/test_upload_validation.py::test_reads_actual_bytes_and_rewinds_even_after_rejection[5242881] PASSED [ 95%]
+tests/test_upload_validation.py::test_valid_file_count_boundaries[4] PASSED [ 95%]
+tests/test_upload_validation.py::test_valid_file_count_boundaries[5] PASSED [ 95%]
+tests/test_upload_validation.py::test_inclusive_file_size_boundary[5242879] PASSED [ 95%]
+tests/test_upload_validation.py::test_inclusive_file_size_boundary[5242880] PASSED [ 95%]
+tests/test_upload_validation.py::test_empty_file_rejects_entire_mixed_batch PASSED [ 95%]
+tests/test_user_labels.py::test_prediction_never_confirms_itself_and_confirm_only_snapshots_ai_label[0.79] PASSED [ 95%]
+tests/test_user_labels.py::test_prediction_never_confirms_itself_and_confirm_only_snapshots_ai_label[0.8] PASSED [ 96%]
+tests/test_user_labels.py::test_prediction_never_confirms_itself_and_confirm_only_snapshots_ai_label[0.99] PASSED [ 96%]
+tests/test_user_labels.py::test_prediction_never_confirms_itself_and_confirm_only_snapshots_ai_label[None] PASSED [ 96%]
+tests/test_user_labels.py::test_manual_edit_and_partial_review_changes_persist_on_all_document_reads PASSED [ 96%]
+tests/test_user_labels.py::test_clearing_human_decision_restores_needs_review_without_changing_ai_or_folder[payload0] PASSED [ 96%]
+tests/test_user_labels.py::test_clearing_human_decision_restores_needs_review_without_changing_ai_or_folder[payload1] PASSED [ 96%]
+tests/test_user_labels.py::test_no_ai_suggestion_requires_an_explicit_human_label_before_confirmation PASSED [ 96%]
+tests/test_user_labels.py::test_label_accepts_the_storage_length_boundary PASSED [ 97%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload0] PASSED [ 97%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload1] PASSED [ 97%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload2] PASSED [ 97%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload3] PASSED [ 97%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload4] PASSED [ 97%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload5] PASSED [ 97%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload6] PASSED [ 98%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload7] PASSED [ 98%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload8] PASSED [ 98%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload9] PASSED [ 98%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload10] PASSED [ 98%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload11] PASSED [ 98%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload12] PASSED [ 98%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload13] PASSED [ 99%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload14] PASSED [ 99%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload15] PASSED [ 99%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload16] PASSED [ 99%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload17] PASSED [ 99%]
+tests/test_user_labels.py::test_invalid_edits_leave_the_entire_document_unchanged[payload18] PASSED [ 99%]
+tests/test_user_labels.py::test_other_owner_and_missing_document_both_return_404_without_mutation PASSED [100%]
+
+================================== FAILURES ===================================
+_ test_reported_page_count_tightens_extraction_deadline_before_text_finishes __
+
+tmp_path = WindowsPath('C:/Users/admin/Desktop/SE/tmp/m4-pytest-full/test_reported_page_count_tight0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002411A08FAA0>
+
+    def test_reported_page_count_tightens_extraction_deadline_before_text_finishes(tmp_path, monkeypatch):
+        source = make_pdf(tmp_path / 'slow-text.pdf', [b''])
+        document = processing.DocumentInput(1, str(source), None, FileFormat.PDF)
+        real_spawn = asyncio.create_subprocess_exec
+        workers, paths, reported = [], [], []
+        async def spawn(*args, **kwargs):
+            if args[0] == 'taskkill':
+                return await real_spawn(*args, **kwargs)
+            work = Path(args[-1])
+            paths.append(work)
+            script = ('import pathlib,sys,time; '
+                      'pathlib.Path(sys.argv[1], "page_count.json").write_text(\'{"page_count": 5}\'); '
+                      'time.sleep(60)')
+            worker = await real_spawn(sys.executable, '-c', script, str(work), **kwargs)
+            workers.append(worker)
+            return worker
+        def on_pages(count):
+            reported.append(count)
+            return .1  # short real deadline instead of waiting 45 seconds in this test
+        monkeypatch.setattr(job_extraction.asyncio, 'create_subprocess_exec', spawn)
+        async def extract():
+            with pytest.raises(TimeoutError):
+                await job_extraction.prepare_document(document, on_page_count=on_pages)
+>       asyncio.run(extract())
+
+tests\test_extraction_pipeline.py:460: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+C:\Users\admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\asyncio\base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests\test_extraction_pipeline.py:459: in extract
+    await job_extraction.prepare_document(document, on_page_count=on_pages)
+app\services\job_extraction.py:78: in prepare_document
+    count = json.loads(progress.read_text(encoding='utf-8'))['page_count']
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\decoder.py:338: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <json.decoder.JSONDecoder object at 0x0000024109BB3BC0>, s = '', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+C:\Users\admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\json\decoder.py:356: JSONDecodeError
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_acceptance_fixtures.py: 101 warnings
+tests/test_ai_label_filter.py: 392 warnings
+tests/test_auth_authorization.py: 37 warnings
+tests/test_bullet_processing.py: 229 warnings
+tests/test_concept_processing.py: 80 warnings
+tests/test_cross_document_search.py: 202 warnings
+tests/test_design_schema.py: 6 warnings
+tests/test_document_file.py: 72 warnings
+tests/test_document_metadata_api.py: 113 warnings
+tests/test_document_retention.py: 580 warnings
+tests/test_evidence.py: 309 warnings
+tests/test_evidence_persistence.py: 109 warnings
+tests/test_extraction_pipeline.py: 201 warnings
+tests/test_financial_table.py: 854 warnings
+tests/test_folders.py: 202 warnings
+tests/test_gemini_analysis.py: 107 warnings
+tests/test_groq_analysis.py: 11 warnings
+tests/test_job_lifecycle.py: 31 warnings
+tests/test_pdf_extraction.py: 25 warnings
+tests/test_processing_timeouts.py: 98 warnings
+tests/test_reader_extraction.py: 112 warnings
+tests/test_reader_presentation.py: 132 warnings
+tests/test_retention_cleanup.py: 192 warnings
+tests/test_search_embeddings.py: 161 warnings
+tests/test_search_index.py: 689 warnings
+tests/test_t38_benchmark.py: 8 warnings
+tests/test_table_pdf.py: 1482 warnings
+tests/test_upload_jobs.py: 127 warnings
+tests/test_upload_validation.py: 97 warnings
+tests/test_user_labels.py: 116 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\.venv\Lib\site-packages\sqlalchemy\sql\schema.py:3627: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+tests/test_acceptance_fixtures.py: 4 warnings
+tests/test_ai_label_filter.py: 22 warnings
+tests/test_auth_authorization.py: 20 warnings
+tests/test_bullet_processing.py: 38 warnings
+tests/test_concept_processing.py: 12 warnings
+tests/test_cross_document_search.py: 23 warnings
+tests/test_document_file.py: 25 warnings
+tests/test_document_metadata_api.py: 23 warnings
+tests/test_document_retention.py: 37 warnings
+tests/test_evidence.py: 35 warnings
+tests/test_evidence_persistence.py: 11 warnings
+tests/test_extraction_pipeline.py: 29 warnings
+tests/test_financial_table.py: 18 warnings
+tests/test_folders.py: 40 warnings
+tests/test_gemini_analysis.py: 18 warnings
+tests/test_groq_analysis.py: 2 warnings
+tests/test_job_lifecycle.py: 3 warnings
+tests/test_pdf_extraction.py: 1 warning
+tests/test_processing_timeouts.py: 14 warnings
+tests/test_reader_extraction.py: 28 warnings
+tests/test_reader_presentation.py: 29 warnings
+tests/test_retention_cleanup.py: 29 warnings
+tests/test_search_embeddings.py: 6 warnings
+tests/test_search_index.py: 14 warnings
+tests/test_table_pdf.py: 27 warnings
+tests/test_upload_jobs.py: 32 warnings
+tests/test_upload_validation.py: 24 warnings
+tests/test_user_labels.py: 30 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\app\core\security.py:22: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+tests/test_acceptance_fixtures.py: 20 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\test\acceptance_fixtures.py:181: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_acceptance_fixtures.py: 4 warnings
+tests/test_cross_document_search.py: 46 warnings
+tests/test_document_retention.py: 2 warnings
+tests/test_folders.py: 12 warnings
+tests/test_reader_extraction.py: 4 warnings
+tests/test_retention_cleanup.py: 1 warning
+tests/test_search_embeddings.py: 16 warnings
+tests/test_search_index.py: 27 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\app\services\search_index.py:182: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = now or datetime.utcnow()
+
+tests/test_acceptance_fixtures.py: 2 warnings
+tests/test_auth_authorization.py: 1 warning
+tests/test_cross_document_search.py: 1 warning
+tests/test_document_file.py: 16 warnings
+tests/test_document_metadata_api.py: 15 warnings
+tests/test_evidence.py: 3 warnings
+tests/test_evidence_persistence.py: 8 warnings
+tests/test_extraction_pipeline.py: 46 warnings
+tests/test_folders.py: 5 warnings
+tests/test_gemini_analysis.py: 2 warnings
+tests/test_pdf_extraction.py: 1 warning
+tests/test_reader_extraction.py: 25 warnings
+tests/test_reader_presentation.py: 12 warnings
+tests/test_retention_cleanup.py: 2 warnings
+tests/test_search_index.py: 22 warnings
+tests/test_table_pdf.py: 10 warnings
+tests/test_user_labels.py: 20 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\app\services\document_retention.py:13: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return datetime.utcnow()
+
+tests/test_ai_label_filter.py: 280 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_ai_label_filter.py:25: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=30))
+
+tests/test_ai_label_filter.py: 14 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_ai_label_filter.py:29: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=30)))
+
+tests/test_auth_authorization.py: 12 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_auth_authorization.py:66: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expired = jwt.encode({'sub': '123', 'exp': datetime.utcnow() - timedelta(minutes=1)},
+
+tests/test_auth_authorization.py::test_owner_reads_resources_but_other_account_cannot
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_auth_authorization.py:84: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=30))
+
+tests/test_cross_document_search.py: 146 warnings
+tests/test_search_embeddings.py: 136 warnings
+tests/test_search_index.py: 55 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_cross_document_search.py:27: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow() - timedelta(days=1, seconds=100 - number),
+
+tests/test_cross_document_search.py: 146 warnings
+tests/test_search_embeddings.py: 136 warnings
+tests/test_search_index.py: 55 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_cross_document_search.py:28: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=30))
+
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-file]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-file]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-file]
+tests/test_document_file.py::test_page_selection_and_validation
+tests/test_document_retention.py::test_failed_requests_do_not_renew[invalid_page]
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    result = context.run(func, *args)
+
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-07-page-zero-rendered-file]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-08-negative-page-rendered-file]
+tests/test_document_file.py::test_invalid_citation_page_is_rejected_without_serving_file[TC-US09-09-page-past-last-rendered-file]
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\app\api\document.py:297: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    return get_document_file(
+
+tests/test_folders.py: 21 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_folders.py:30: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    last_accessed_at=datetime(2026, 1, 1), expires_at=datetime.utcnow() + timedelta(days=30))
+
+tests/test_folders.py: 21 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_folders.py:34: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    review_state=ReviewState.NEEDS_REVIEW, expires_at=datetime.utcnow() + timedelta(days=30))
+
+tests/test_retention_cleanup.py: 19 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_retention_cleanup.py:45: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    doc.expires_at = NOW - timedelta(seconds=1) if index == 0 else max(NOW, datetime.utcnow()) + timedelta(days=30)
+
+tests/test_search_index.py: 294 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_search_index.py:93: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    file_size_bytes=source.stat().st_size, expires_at=datetime.utcnow() + timedelta(days=30))
+
+tests/test_search_index.py::test_rename_expiry_delete_and_missing_sources_remove_index_entries
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_search_index.py:190: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    db.get(Document, corpus[1]).expires_at = datetime.utcnow() - timedelta(seconds=1)
+
+tests/test_user_labels.py: 29 warnings
+  C:\Users\admin\Desktop\SE\tmp\m4-verify\backend\tests\test_user_labels.py:31: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    last_accessed_at=datetime(2026, 1, 1), expires_at=datetime.utcnow() + timedelta(days=30))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: C:\Users\admin\Desktop\SE\docs\evidence\m4\backend-junit.xml -
+=========================== short test summary info ===========================
+FAILED tests/test_extraction_pipeline.py::test_reported_page_count_tightens_extraction_deadline_before_text_finishes
+===== 1 failed, 685 passed, 4 skipped, 9167 warnings in 546.75s (0:09:06) =====

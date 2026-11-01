@@ -1,0 +1,12 @@
+{
+  "database": "disposable local schema",
+  "live_model_calls": false,
+  "checks": [
+    "fresh schema preparation and 20-document acceptance seed",
+    "Next.js landing page returns 200",
+    "real MySQL sign-in and session",
+    "20 seeded documents through Next.js API proxy"
+  ],
+  "status": "passed",
+  "scratch_schema_removed": true
+}
