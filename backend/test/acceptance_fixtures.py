@@ -153,6 +153,19 @@ def controlled_output(spec, excerpts, mode):
     return result
 
 
+def ensure_fixtures_built(fixture_dir=FIXTURES):
+    fixture_dir = Path(fixture_dir)
+    expected_path = fixture_dir / 'expected.json'
+    if not expected_path.is_file():
+        return build(fixture_dir)
+    answers = json.loads(expected_path.read_text(encoding='utf-8'))
+    for spec in answers.get('documents', []):
+        pdf_path = fixture_dir / spec['filename']
+        if not pdf_path.is_file() or hashlib.sha256(pdf_path.read_bytes()).hexdigest() != spec['sha256']:
+            return build(fixture_dir)
+    return answers
+
+
 def seed_account(session_factory, storage, owner_id, fixture_dir=FIXTURES, count=20):
     """Extend a fixture account from 10 to 20 without overwriting edits/renewals.
 
@@ -160,11 +173,13 @@ def seed_account(session_factory, storage, owner_id, fixture_dir=FIXTURES, count
     Caller supplies a test/demo owner; this function does not create credentials.
     """
     from app.models import Document, Folder, FileFormat, ReviewState
+    from app.services.document_retention import is_expired_source
     from app.services.reader_extraction import extract_document_for_reader
     if type(count) is not int or not 1 <= count <= 20:
         raise ValueError('Acceptance document count must be between 1 and 20.')
-    answers = json.loads((Path(fixture_dir) / 'expected.json').read_text(encoding='utf-8'))
+    answers = ensure_fixtures_built(fixture_dir)
     document_ids = []
+    now = datetime.utcnow()
     with session_factory() as db:
         folders = {folder.name: folder for folder in db.query(Folder).filter_by(owner_id=owner_id)}
         for name in ('Economics 101', 'Research'):
@@ -174,11 +189,10 @@ def seed_account(session_factory, storage, owner_id, fixture_dir=FIXTURES, count
         db.flush()
         for spec in answers['documents'][:count]:
             document = db.query(Document).filter_by(owner_id=owner_id, original_filename=spec['filename']).first()
+            path = Path(storage).resolve() / str(owner_id) / spec['filename']
             if document is None:
-                path = Path(storage).resolve() / str(owner_id) / spec['filename']
                 path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(Path(fixture_dir) / spec['filename'], path)
-                now = datetime.utcnow()
                 document = Document(owner_id=owner_id, original_filename=spec['filename'], storage_path=str(path),
                     file_format=FileFormat.PDF, file_size_bytes=path.stat().st_size,
                     folder_id=folders[spec['folder']].id if spec['folder'] else None,
@@ -187,6 +201,16 @@ def seed_account(session_factory, storage, owner_id, fixture_dir=FIXTURES, count
                     last_accessed_at=now, expires_at=now + timedelta(days=30))
                 db.add(document)
                 db.flush()
+            elif not is_expired_source(document):
+                # Restore missing disk file if needed and keep retention healthy without touching user edits.
+                target_path = Path(document.storage_path)
+                if not target_path.is_file():
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(Path(fixture_dir) / spec['filename'], path)
+                    document.storage_path = str(path)
+                if document.expires_at < now + timedelta(days=14):
+                    document.last_accessed_at = now
+                    document.expires_at = now + timedelta(days=30)
             document_ids.append(document.id)
         db.commit()
     for document_id in document_ids:
@@ -194,21 +218,456 @@ def seed_account(session_factory, storage, owner_id, fixture_dir=FIXTURES, count
     return document_ids
 
 
-def seed_local():
+DEMO_ACCOUNTS = (
+    {
+        'key': 'primary',
+        'username': 'acceptance145',
+        'email': 'acceptance145@example.invalid',
+        'password_env': 'DOCUMIND_DEMO_PASSWORD_A',
+        'default_password': 'Acceptance145!Local',
+    },
+    {
+        'key': 'peer',
+        'username': 'peer145',
+        'email': 'peer145@example.invalid',
+        'password_env': 'DOCUMIND_DEMO_PASSWORD_B',
+        'default_password': 'Peer145!Local',
+    },
+)
+
+
+def write_docx_sample(path: Path, title: str, paragraphs: list[str], table_rows: list[tuple[str, str]]) -> Path:
+    from docx import Document as WordDocument
+    doc = WordDocument()
+    doc.add_paragraph(title)
+    for idx, paragraph in enumerate(paragraphs):
+        if idx == 1:
+            doc.add_page_break()
+        doc.add_paragraph(paragraph)
+    if table_rows:
+        table = doc.add_table(rows=len(table_rows), cols=2)
+        for row_idx, (left, right) in enumerate(table_rows):
+            table.cell(row_idx, 0).text = left
+            table.cell(row_idx, 1).text = right
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(path)
+    return path
+
+
+def write_pptx_sample(path: Path, slides_text: list[str]) -> Path:
+    from pptx import Presentation
+    from pptx.util import Inches
+    deck = Presentation()
+    for index, text in enumerate(slides_text):
+        slide = deck.slides.add_slide(deck.slide_layouts[6])
+        if text:
+            slide.shapes.add_textbox(Inches(1), Inches(1), Inches(8), Inches(2)).text = text
+        if index == 1:
+            slide._element.set('show', '0')
+        slide.notes_slide.notes_text_frame.text = 'Synthetic speaker note excluded from reader pages.'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    deck.save(path)
+    return path
+
+
+def seed_office_samples(session_factory, storage, owner_id, *, prefix='sample'):
+    """Seed non-sensitive DOCX and PPTX files and prepare their .reader PDFs."""
+    from app.models import Document, FileFormat, Folder, ReviewState
+    from app.services.document_retention import is_expired_source
+    from app.services.reader_extraction import extract_document_for_reader
+
+    now = datetime.utcnow()
+    owner_dir = Path(storage).resolve() / str(owner_id)
+    owner_dir.mkdir(parents=True, exist_ok=True)
+
+    specs = [
+        {
+            'filename': f'{prefix}-policy-handbook.docx',
+            'format': FileFormat.DOCX,
+            'ai_label': 'Policy',
+            'confidence': 0.91,
+            'user_label': 'Operations policy',
+            'folder': 'Research',
+            'writer': lambda target: write_docx_sample(
+                target,
+                'Synthetic Procurement and Retention Policy Handbook',
+                [
+                    'Section 1. Supplier quotations must be compared before contract renewal. Payment term is Within 30 days.',
+                    'Section 2. Document retention renews for 30 days on authorized access. Late payment penalty is 0.05% per day.',
+                ],
+                [('Policy clause', 'Requirement'), ('Retention window', '30 days after access')],
+            ),
+        },
+        {
+            'filename': f'{prefix}-architecture-deck.pptx',
+            'format': FileFormat.PPTX,
+            'ai_label': 'Architecture',
+            'confidence': 0.87,
+            'user_label': None,
+            'folder': 'Economics 101',
+            'writer': lambda target: write_pptx_sample(
+                target,
+                [
+                    'Slide 1: DocuMind Native Reader Architecture Overview and Evidence Verification.',
+                    'Slide 2: Multi-Document Comparison Table and Citation Highlighting Pipeline.',
+                    'Slide 3: Cross-Document Keyword and Semantic Retrieval Summary.',
+                ],
+            ),
+        },
+    ]
+
+    doc_ids = []
+    with session_factory() as db:
+        folders = {folder.name: folder for folder in db.query(Folder).filter_by(owner_id=owner_id)}
+        for name in ('Economics 101', 'Research'):
+            if name not in folders:
+                folders[name] = Folder(owner_id=owner_id, name=name)
+                db.add(folders[name])
+        db.flush()
+
+        for spec in specs:
+            doc = db.query(Document).filter_by(owner_id=owner_id, original_filename=spec['filename']).first()
+            file_path = owner_dir / spec['filename']
+            if doc is None:
+                spec['writer'](file_path)
+                doc = Document(
+                    owner_id=owner_id,
+                    original_filename=spec['filename'],
+                    storage_path=str(file_path),
+                    file_format=spec['format'],
+                    file_size_bytes=file_path.stat().st_size,
+                    folder_id=folders[spec['folder']].id if spec['folder'] else None,
+                    ai_label=spec['ai_label'],
+                    ai_confidence=spec['confidence'],
+                    user_label=spec['user_label'],
+                    review_state=ReviewState.NEEDS_REVIEW,
+                    last_accessed_at=now,
+                    expires_at=now + timedelta(days=30),
+                )
+                db.add(doc)
+                db.flush()
+            elif not is_expired_source(doc):
+                target_path = Path(doc.storage_path)
+                if not target_path.is_file():
+                    spec['writer'](file_path)
+                    doc.storage_path = str(file_path)
+                if doc.expires_at < now + timedelta(days=14):
+                    doc.last_accessed_at = now
+                    doc.expires_at = now + timedelta(days=30)
+            doc_ids.append(doc.id)
+        db.commit()
+
+    for doc_id in doc_ids:
+        extract_document_for_reader(doc_id, session_factory)
+    return doc_ids
+
+
+def _build_validated_demo_analyzer(answers_by_filename):
+    from app.schemas.result import (
+        AnalysisMetadata,
+        AnalysisResult,
+        BulletOutput,
+        Claim,
+        Concept,
+        ConceptOutput,
+        Evidence,
+        LabelSuggestion,
+        TableOutput,
+    )
+
+    def make_claim(document, page_number, quote, text=None, kind='general'):
+        page_entry = document.extracted_text[page_number - 1]
+        page_text = page_entry['text']
+        start = page_text.index(quote)
+        end = start + len(quote)
+        return Claim(
+            text=text if text is not None else quote,
+            kind=kind,
+            unverified=False,
+            evidence=[
+                Evidence(
+                    document_id=document.id,
+                    page=page_number,
+                    start=start,
+                    end=end,
+                    quote=quote,
+                    reader_version=page_entry['reader']['sha256'],
+                )
+            ],
+        )
+
+    async def analyzer(document, mode):
+        with_meta = AnalysisMetadata(
+            provider='gemini',
+            model='gemini-3.5-flash',
+            prompt_version='seed-p0-v1',
+            cache_hit=True,
+            input_truncated=False,
+            input_tokens=0,
+            output_tokens=0,
+            total_tokens=0,
+        )
+        page1 = document.extracted_text[0]['text']
+        first_line = next((line.strip() for line in page1.splitlines() if line.strip()), page1.strip())
+        spec = None
+        for filename, candidate in answers_by_filename.items():
+            if filename.startswith('contract-') and filename[:-4].replace('-', ' ').lower() in page1.lower():
+                spec = candidate
+                break
+        if mode.value == 'table':
+            if spec and 'fields' in spec:
+                val = spec['fields']['value']
+                term = spec['fields']['payment_term']
+                pen = spec['fields']['penalty']
+                output = TableOutput(
+                    value=make_claim(document, 1, val, val, 'amount'),
+                    payment_term=make_claim(document, 2, term, term, 'clause') if term else Claim(text=None, unverified=True),
+                    penalty=make_claim(document, 3, pen, pen, 'clause'),
+                )
+                label = LabelSuggestion(ai_label='Contract', ai_confidence=spec.get('confidence', 90) / 100)
+                return AnalysisResult(output=output, label=label, analysis_metadata=with_meta)
+            output = TableOutput(
+                value=make_claim(document, 1, first_line, first_line, 'amount'),
+                payment_term=Claim(text=None, unverified=True),
+                penalty=Claim(text=None, unverified=True),
+            )
+            return AnalysisResult(output=output, label=LabelSuggestion(ai_label='Contract', ai_confidence=0.9), analysis_metadata=with_meta)
+
+        if mode.value == 'bullet':
+            bullets = [make_claim(document, 1, first_line)]
+            actions = []
+            if len(document.extracted_text) >= 3:
+                p2_line = document.extracted_text[1]['text'].strip()
+                p3_line = document.extracted_text[2]['text'].strip()
+                if p2_line:
+                    actions.append(make_claim(document, 2, p2_line))
+                if p3_line:
+                    actions.append(make_claim(document, 3, p3_line))
+            limitation = None if len(actions) >= 2 else 'The source provides fewer than two explicit action items.'
+            return AnalysisResult(
+                output=BulletOutput(bullets=bullets, actions=actions, limitation=limitation),
+                label=LabelSuggestion(ai_label='Report', ai_confidence=0.9),
+                analysis_metadata=with_meta,
+            )
+
+        concepts = []
+        for idx, page in enumerate(document.extracted_text[:3], start=1):
+            line = next((ln.strip() for ln in page['text'].splitlines() if ln.strip()), '')
+            if line:
+                concepts.append(Concept(name=f'Core Concept {idx}', description=make_claim(document, idx, line)))
+        limitation = None if len(concepts) >= 3 else 'The source supports fewer than three core concepts.'
+        return AnalysisResult(
+            output=ConceptOutput(concepts=concepts, limitation=limitation),
+            label=LabelSuggestion(ai_label='Concept Study', ai_confidence=0.88),
+            analysis_metadata=with_meta,
+        )
+
+    return analyzer
+
+
+def seed_p0_jobs(session_factory, owner_id, fixture_dir=FIXTURES, *, use_live_ai=False):
+    """Ensure completed Table, Bullet and Concept jobs with verified citations exist for owner_id."""
+    from app.core.config import settings
+    from app.models import Document, Job, JobFile, JobMode, JobStatus
+    from app.services import processing
+
+    answers = ensure_fixtures_built(fixture_dir)
+    answers_by_filename = {doc['filename']: doc for doc in answers['documents']}
+    analyzer = None
+    if not (use_live_ai and settings.GEMINI_API_KEY.get_secret_value().strip()):
+        analyzer = _build_validated_demo_analyzer(answers_by_filename)
+
+    with session_factory() as db:
+        docs_by_name = {
+            doc.original_filename: doc
+            for doc in db.query(Document).filter_by(owner_id=owner_id).all()
+        }
+        existing_modes = {
+            job.mode
+            for job in db.query(Job).filter_by(owner_id=owner_id, status=JobStatus.COMPLETED).all()
+            if job.result_data and job.result_data.get('documents')
+        }
+
+        plans = []
+        contract_docs = [docs_by_name[f'contract-{i}.pdf'] for i in range(1, 6) if f'contract-{i}.pdf' in docs_by_name]
+        if len(contract_docs) == 5 and JobMode.TABLE not in existing_modes:
+            plans.append((JobMode.TABLE, contract_docs))
+
+        if 'report-15-pages.pdf' in docs_by_name and JobMode.BULLET not in existing_modes:
+            plans.append((JobMode.BULLET, [docs_by_name['report-15-pages.pdf']]))
+
+        concept_targets = [
+            docs_by_name[name]
+            for name in ('sample-architecture-deck.pptx', 'sample-policy-handbook.docx', 'course-note-01.pdf')
+            if name in docs_by_name
+        ]
+        if concept_targets and JobMode.CONCEPT not in existing_modes:
+            plans.append((JobMode.CONCEPT, [concept_targets[0]]))
+
+        created_job_ids = []
+        for mode, target_docs in plans:
+            job = Job(
+                owner_id=owner_id,
+                mode=mode,
+                status=JobStatus.PENDING,
+                file_count=len(target_docs),
+                completed_count=0,
+                result_data={'schema_version': 1, 'language': 'vi', 'documents': {}},
+            )
+            db.add(job)
+            db.flush()
+            for doc in target_docs:
+                db.add(JobFile(job_id=job.id, document_id=doc.id, status=JobStatus.PENDING))
+            db.commit()
+            created_job_ids.append(job.id)
+
+    for job_id in created_job_ids:
+        processing.process_job(job_id, session_factory, analyzer=analyzer)
+
+    with session_factory() as db:
+        return [
+            job.id
+            for job in db.query(Job).filter_by(owner_id=owner_id, status=JobStatus.COMPLETED).order_by(Job.id).all()
+        ]
+
+
+def seed_peer_account(session_factory, storage, owner_id, fixture_dir=FIXTURES):
+    """Seed isolated documents and a completed Table job for the secondary account (US05 ownership)."""
+    from app.models import Document, FileFormat, Folder, Job, JobFile, JobMode, JobStatus, ReviewState
+    from app.services import processing
+    from app.services.document_retention import is_expired_source
+    from app.services.reader_extraction import extract_document_for_reader
+
+    answers = ensure_fixtures_built(fixture_dir)
+    answers_by_filename = {doc['filename']: doc for doc in answers['documents']}
+    now = datetime.utcnow()
+    owner_dir = Path(storage).resolve() / str(owner_id)
+    owner_dir.mkdir(parents=True, exist_ok=True)
+
+    doc_ids = []
+    with session_factory() as db:
+        folder = db.query(Folder).filter_by(owner_id=owner_id, name='Peer Contracts').first()
+        if folder is None:
+            folder = Folder(owner_id=owner_id, name='Peer Contracts')
+            db.add(folder)
+            db.flush()
+
+        pdf_doc = db.query(Document).filter_by(owner_id=owner_id, original_filename='contract-1.pdf').first()
+        pdf_path = owner_dir / 'contract-1.pdf'
+        if pdf_doc is None:
+            shutil.copyfile(Path(fixture_dir) / 'contract-1.pdf', pdf_path)
+            pdf_doc = Document(
+                owner_id=owner_id,
+                original_filename='contract-1.pdf',
+                storage_path=str(pdf_path),
+                file_format=FileFormat.PDF,
+                file_size_bytes=pdf_path.stat().st_size,
+                folder_id=folder.id,
+                ai_label='Contract',
+                ai_confidence=0.90,
+                user_label='Peer B Contract',
+                review_state=ReviewState.CONFIRMED,
+                last_accessed_at=now,
+                expires_at=now + timedelta(days=30),
+            )
+            db.add(pdf_doc)
+            db.flush()
+        elif not is_expired_source(pdf_doc):
+            if not Path(pdf_doc.storage_path).is_file():
+                shutil.copyfile(Path(fixture_dir) / 'contract-1.pdf', pdf_path)
+                pdf_doc.storage_path = str(pdf_path)
+            if pdf_doc.expires_at < now + timedelta(days=14):
+                pdf_doc.last_accessed_at = now
+                pdf_doc.expires_at = now + timedelta(days=30)
+        doc_ids.append(pdf_doc.id)
+        db.commit()
+
+    extract_document_for_reader(doc_ids[0], session_factory)
+    office_ids = seed_office_samples(session_factory, storage, owner_id, prefix='peer')
+    doc_ids.extend(office_ids)
+
+    with session_factory() as db:
+        has_job = db.query(Job).filter_by(owner_id=owner_id, status=JobStatus.COMPLETED).first()
+        job_id = None
+        if has_job is None:
+            job = Job(
+                owner_id=owner_id,
+                mode=JobMode.TABLE,
+                status=JobStatus.PENDING,
+                file_count=1,
+                completed_count=0,
+                result_data={'schema_version': 1, 'language': 'vi', 'documents': {}},
+            )
+            db.add(job)
+            db.flush()
+            db.add(JobFile(job_id=job.id, document_id=doc_ids[0], status=JobStatus.PENDING))
+            db.commit()
+            job_id = job.id
+
+    if job_id is not None:
+        processing.process_job(
+            job_id,
+            session_factory,
+            analyzer=_build_validated_demo_analyzer(answers_by_filename),
+        )
+    return doc_ids
+
+
+def seed_production_demo(session_factory=None, storage=None, fixture_dir=FIXTURES, *, use_live_ai=False):
+    """Idempotently prepare Account A + Account B, 20 PDFs + DOCX/PPTX, and Table/Bullet/Concept jobs."""
+    import os
     from app.core.config import settings
     from app.core.security import get_password_hash
     from app.db.database import SessionLocal
     from app.models import User
-    with SessionLocal() as db:
-        user = db.query(User).filter_by(username='acceptance145').first()
-        if user is None:
-            user = User(username='acceptance145', email='acceptance145@example.invalid',
-                        password_hash=get_password_hash('Acceptance145!Local'))
-            db.add(user)
-            db.commit()
-        owner_id = user.id
-    seed_account(SessionLocal, settings.STORAGE_DIR, owner_id)
-    print('Seeded acceptance145: 20 fixture documents (existing user edits preserved).')
+
+    factory = session_factory or SessionLocal
+    storage_root = Path(storage if storage is not None else settings.STORAGE_DIR).resolve()
+    account_ids = {}
+
+    with factory() as db:
+        for spec in DEMO_ACCOUNTS:
+            user = db.query(User).filter(
+                (User.username == spec['username']) | (User.email == spec['email'])
+            ).first()
+            if user is None:
+                password = os.environ.get(spec['password_env']) or spec['default_password']
+                user = User(
+                    username=spec['username'],
+                    email=spec['email'],
+                    password_hash=get_password_hash(password),
+                )
+                db.add(user)
+                db.flush()
+            account_ids[spec['key']] = user.id
+        db.commit()
+
+    primary_id = account_ids['primary']
+    peer_id = account_ids['peer']
+
+    pdf_ids = seed_account(factory, storage_root, primary_id, fixture_dir=fixture_dir, count=20)
+    office_ids = seed_office_samples(factory, storage_root, primary_id, prefix='sample')
+    job_ids = seed_p0_jobs(factory, primary_id, fixture_dir=fixture_dir, use_live_ai=use_live_ai)
+    peer_doc_ids = seed_peer_account(factory, storage_root, peer_id, fixture_dir=fixture_dir)
+
+    return {
+        'primary_owner_id': primary_id,
+        'peer_owner_id': peer_id,
+        'primary_pdf_ids': pdf_ids,
+        'primary_office_ids': office_ids,
+        'primary_job_ids': job_ids,
+        'peer_document_ids': peer_doc_ids,
+    }
+
+
+def seed_local(use_live_ai=False):
+    summary = seed_production_demo(use_live_ai=use_live_ai)
+    print(
+        f"Seeded production demo accounts: acceptance145 ({len(summary['primary_pdf_ids'])} PDFs + "
+        f"{len(summary['primary_office_ids'])} Office files, {len(summary['primary_job_ids'])} completed jobs) "
+        f"and peer145 ({len(summary['peer_document_ids'])} isolated documents)."
+    )
+    return summary
 
 
 if __name__ == '__main__':
