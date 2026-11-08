@@ -4,7 +4,7 @@ Công cụ tóm tắt và phân loại văn bản, hệ thống hoá các thư m
 
 **Group:** G6_AI66A
 **Product Owner:** @PhanDangVu
-**Scrum Master (Sprint 4):** @Dangtooo
+**Scrum Master (Sprint 5):** @taibaonguyen
 **Board:** [Sprint Board - Text Classification and Summarization Service](https://github.com/orgs/SE-FDA-NEU/projects/24/views/1)
 
 ---
@@ -16,14 +16,14 @@ Công cụ tóm tắt và phân loại văn bản, hệ thống hoá các thư m
 | Phan Dang Vu | @PhanDangVu | Product Owner |
 | To Hien Hai Dang | @Dangtooo | Scrum Master (Sprint 1) |
 | Bui Dang Duong | @duongbui0811 | Member |
-| Nguyen Bao Tai | @taibaonguyen | Member |
+| Nguyen Bao Tai | @taibaonguyen | Scrum Master (Sprint 5) |
 ---
 
 ## Scrum Master rotation
 
 | Sprint | 1 | 2 | 3 | 4 | 5 |
 | :--- | :--- | :--- | :--- | :--- | --- |
-| Scrum Master | @Dangtooo | @duongbui0811 | @taibaonguyen | @Dangtooo | @duongbui0811 |
+| Scrum Master | @Dangtooo | @duongbui0811 | @taibaonguyen | @Dangtooo | @taibaonguyen |
 ---
 
 ## Definition of Done
