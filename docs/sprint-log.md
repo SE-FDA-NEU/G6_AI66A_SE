@@ -6,7 +6,7 @@ evidence that the process was real.
 
 ---
 
-## Sprint 4 - October 2026
+## Sprint 4 - October-November 2026
 
 ### Sprint goal
 
@@ -34,7 +34,7 @@ Total committed: 20 backlog items, 64 points.
 | [#204](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/204) | Complete upload validation boundary tests | 4 | @PhanDangVu | @taibaonguyen | #205 | #51 (US06) |
 | [#205](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/205) | Verify the isolated pytest environment and baseline | 3 | @PhanDangVu | @Dangtooo | None | #50 (US05), #51 (US06) |
 | [#206](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/206) | Hand over authentication and upload test evidence | 3 | @PhanDangVu | @Dangtooo | #203, #204, #205 | #50 (US05), #51 (US06) |
-| [#207](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/207) | Document how to run the test suites | 3 | @Dangtooo | @PhanDangVu | #205, #210 | US01-US09 (#46-#54) |
+| [#207](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/207) | Document how to run the test suites | 3 | @Dangtooo | @PhanDangVu | #205 | US01-US09 (#46-#54) |
 | [#208](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/208) | Extend processing lifecycle and timeout regression tests | 4 | @Dangtooo | @PhanDangVu | #205 | #52 (US07) |
 | [#209](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/209) | Compile the testing report and defect detection evidence | 3 | @Dangtooo | @PhanDangVu | #206, #216, #221, #210 | US01-US09 (#46-#54) |
 | [#210](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/210) | Verify clean-clone test instructions and existing CI | 4 | @Dangtooo | @PhanDangVu | #203, #204, #208, #212-#215, #217-#219 | US01-US09 (#46-#54) |
@@ -72,6 +72,8 @@ Sprint 4 planning board immediately after Planning:
 - Board URL: [Sprint Board - Text Classification and Summarization Service](https://github.com/orgs/SE-FDA-NEU/projects/24/views/1)
 - Initial status: 20 issues refined, estimated, and assigned to Sprint 4.
 
+![After Sprint 4 Planning](evidence/m4/planning.png)
+
 ### Attendance
 
 | Member | Planning | Review | Retro |
@@ -80,6 +82,39 @@ Sprint 4 planning board immediately after Planning:
 | @Dangtooo | ✓ | TBD | TBD |
 | @duongbui0811 | ✓ | TBD | TBD |
 | @taibaonguyen | ✓ | TBD | TBD |
+
+
+### Result snapshot - 1 November 2026
+
+| Measure | Recorded value |
+|---|---|
+| Committed | 64 points, as recorded in the Planning table above |
+| Completed / closed-item accounting snapshot | 46 points across 14 closed issues |
+| Velocity / provisional snapshot | 46 points in the same recorded unit |
+| Remaining | 18 points across six open issues (#207-#211 and #216) |
+
+These are issue-state accounting figures, not a declaration that all Definition of Done checks have passed. The snapshot predates final approval/merge of the setup/test PRs #238/#239. Both board screenshots have since been supplied and are linked here; report approval, final CI and LMS submission remain separate checks. Recompute completed points and velocity after the final accepted scope is known. The original local plan proposed 44 SP, whereas this committed Planning record uses 64; confirm the team's adopted unit and do not automatically convert estimated hours into story points.
+
+### Contributions and evidence
+
+| Member | Work and traceability | Remaining publication state |
+|---|---|---|
+| @PhanDangVu | Auth/upload tests and isolated baseline; PRs #222/#223/#233/#235; closed #202-#206 | Handover in docs/testing-auth-upload.md |
+| @duongbui0811 | Label/concept/search/evidence/reader tests; PRs #224-#227/#234/#237; closed #212-#215 | #216 handover is merged but issue still open in inspected snapshot |
+| @taibaonguyen | Table/search/bullet regressions and UI review; PRs #228-#230/#236/#240; closed #217-#221 | CSV and raw handover in backend/test/T221-* |
+| @Dangtooo | Setup and lifecycle tests (#238/#239); final integration, report, evidence and PDF export candidate | Local candidate only; no push, merge or LMS submission claimed |
+
+Fresh-clone verification: 686 pytest passed, four explicit opt-in local-MySQL tests skipped; all 213 Playwright tests passed and the production build passed. A separate manual app check used a new disposable local MySQL schema, seeded 20 documents, verified landing/sign-in/list requests and removed that schema. Full evidence is linked from docs/testing.md.
+
+The last inspected remote CI run, 41256271292, failed on a hidden mobile sidebar control. The local helper fix passed all browser projects. The first clean-clone run exposed a non-atomic progress write in the fake extraction subprocess; it now follows the production atomic-write protocol, and the complete rerun passed. A new remote CI result requires pushing the candidate.
+
+### Final Review / Retrospective and submission
+
+Submission-day board:
+
+![Submission-day board](<evidence/m4/submission day.png>)
+
+Team reviewers confirm final contribution/point accounting, approvals and the PDF before submission. Export/submission steps are in [M4-submission.md](M4-submission.md). The wrap-up chore stays open until successful LMS submission evidence exists.
 
 ---
 
