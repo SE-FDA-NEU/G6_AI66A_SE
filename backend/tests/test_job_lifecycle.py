@@ -16,6 +16,7 @@ def use_worker(session_factory, monkeypatch, processor):
 
 
 def test_submit_five_files_all_complete_and_results_persist_on_revisit(client, session_factory, monkeypatch):
+    """TC-US07-002: completed results survive new requests without reprocessing."""
     async def analyze(document, mode):
         assert Path(document.storage_path).read_bytes() == b'%PDF-1.4 mock input'
         return {'summary': f'Mock analysis for document {document.id}', 'mode': mode.value}
@@ -63,6 +64,7 @@ def test_submit_five_files_all_complete_and_results_persist_on_revisit(client, s
 
 
 def test_mock_timeout_is_observable_before_retry_and_never_counts_as_success(client, session_factory, monkeypatch):
+    """TC-US07-003: timeout and exhausted retries never count as success."""
     timed_out, release_retry = threading.Event(), threading.Event()
     processor = AsyncMock(side_effect=TimeoutError)
     queue = use_worker(session_factory, monkeypatch, processor)
@@ -103,3 +105,48 @@ def test_mock_timeout_is_observable_before_retry_and_never_counts_as_success(cli
     assert failed['job_files'][0]['attempt_count'] == 3
     assert failed['completed_count'] == 0 and failed['result_data']['documents'] == {}
     assert failed['finished_at'] is not None
+
+
+def test_partial_progress_is_visible_before_all_files_finish(client, session_factory, monkeypatch):
+    """TC-US07-001: polling exposes 3/5 successes while the fourth file runs."""
+    fourth_started, release = threading.Event(), threading.Event()
+    calls = []
+
+    async def analyze(document, mode):
+        calls.append(document.id)
+        if len(calls) == 4:
+            fourth_started.set()
+            assert release.wait(5), 'Test did not release the fourth file'
+        return {'summary': f'Result for {document.id}'}
+
+    queue = use_worker(session_factory, monkeypatch, analyze)
+    try:
+        response = client.post('/upload', data={'mode': 'concept'}, files=[
+            ('files', (f'progress-{i}.pdf', b'%PDF-1.4 mock input', 'application/pdf'))
+            for i in range(5)
+        ])
+        assert response.status_code == 202
+        job_id = response.json()['jobId']
+        assert fourth_started.wait(2), 'Worker did not reach the fourth file'
+        polled = client.get(f'/jobs/{job_id}')
+        assert polled.status_code == 200
+        progress = polled.json()
+        assert progress['status'] == 'processing'
+        assert progress['completed_count'] == 3 and progress['file_count'] == 5
+        assert progress['finished_at'] is None
+        assert [file['status'] for file in progress['job_files']] == [
+            'completed', 'completed', 'completed', 'processing', 'pending',
+        ]
+        assert [file['attempt_count'] for file in progress['job_files']] == [1, 1, 1, 1, 0]
+        assert set(progress['result_data']['documents']) == {str(id) for id in calls[:3]}
+        assert client.get(f'/jobs/{job_id}').json() == progress
+    finally:
+        release.set()
+        client.portal.call(queue.close)
+
+    completed = client.get(f'/jobs/{job_id}').json()
+    assert completed['status'] == 'completed'
+    assert completed['completed_count'] == len(calls) == 5
+    assert completed['finished_at'] is not None
+    assert len(completed['result_data']['documents']) == 5
+    assert client.get(f'/jobs/{job_id}').json() == completed

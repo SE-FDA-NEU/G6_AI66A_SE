@@ -124,7 +124,6 @@ For macOS/Linux, replace `Copy-Item` with `cp`, use `python3` if needed, and run
 | Old `converter_unavailable` / LibreOffice error | Stop old server processes, install the current `backend/requirements.txt` in `backend/.venv`, restart from this checkout and submit again. Current Office reading uses Python libraries. |
 | Reader source is missing | Upload the original file again. Older metadata-only demo rows do not provide real source files. |
 | Dependencies need reinstalling | Run `& ./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt`, then run `npm.cmd ci` inside `frontend`. |
-| Venv reports `No Python at ...` | The Python used to create it was moved or removed. Recreate `backend/.venv` using an installed Python 3.11+ and reinstall `requirements-dev.txt` before running tests. |
 
 ## 7. Run isolated tests
 

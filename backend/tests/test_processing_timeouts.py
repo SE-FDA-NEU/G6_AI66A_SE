@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from datetime import datetime, timedelta
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -11,8 +13,8 @@ from app.services.job_queue import JobQueue, get_job_queue
 from app.main import app
 
 
-def create_job(client, session_factory, page_counts):
-    response = client.post('/upload', files=[
+def create_job(client, session_factory, page_counts, mode='bullet'):
+    response = client.post('/upload', data={'mode': mode}, files=[
         ('files', (f'document-{i}.pdf', b'sample', 'application/pdf'))
         for i in range(len(page_counts))
     ])
@@ -63,6 +65,66 @@ def test_always_timeout_retries_twice_and_persists_failure(client, session_facto
     for i in (1, 2, 3):
         assert f'job={job_id} document={ids[0]} attempt={i}/3 timeout=75s started' in caplog.text
         assert f'attempt={i}/3 timed_out' in caplog.text
+
+
+@pytest.mark.parametrize('mode, target, file_count', [
+    ('bullet', 180, 1), ('table', 300, 5),
+])
+@pytest.mark.parametrize('elapsed, completed', [
+    pytest.param(39.999, True, id='TC-US07-004-before-job-deadline'),
+    pytest.param(40, False, id='TC-US07-005-at-job-deadline'),
+    pytest.param(40.001, False, id='TC-US07-006-after-job-deadline'),
+])
+def test_job_deadline_includes_queue_time_and_retries(
+        client, session_factory, monkeypatch, mode, target, file_count, elapsed, completed):
+    """A 33-second file timeout retries only within the remaining workflow budget."""
+    job_id, ids = create_job(client, session_factory, [1] * file_count, mode=mode)
+    now = datetime(2026, 1, 1)
+    with session_factory() as db:
+        db.get(Job, job_id).created_at = now - timedelta(seconds=target - 40)
+        db.commit()
+    monkeypatch.setattr(processing, 'utcnow', lambda: now)
+    clock, budgets, calls = [0.0], [], []
+
+    async def processor(document, mode):
+        calls.append(document.id)
+        if len(calls) == 1:
+            clock[0] = 33
+            raise TimeoutError
+        clock[0] = elapsed
+        return {'summary': f'Result for {document.id}'}
+
+    async def wait_for(coroutine, timeout):
+        budgets.append(timeout)
+        return await asyncio.wait_for(coroutine, timeout=timeout)
+
+    # Replace only the worker's clock; asyncio itself keeps its real event loop.
+    monkeypatch.setattr(processing, 'asyncio', SimpleNamespace(
+        get_running_loop=lambda: SimpleNamespace(time=lambda: clock[0]),
+        wait_for=wait_for, run=asyncio.run,
+    ))
+    processing.process_job(job_id, session_factory, processor)
+    saved = client.get(f'/jobs/{job_id}').json()
+    assert budgets[:2] == [33, 7]
+    assert saved['job_files'][0]['attempt_count'] == 2
+    assert all(file['timeout_seconds'] == 33 for file in saved['job_files'])
+    assert saved['status'] == ('completed' if completed else 'failed')
+    assert saved['finished_at'] is not None
+    if completed:
+        assert calls == [ids[0], *ids]
+        assert saved['completed_count'] == file_count
+        assert len(saved['result_data']['documents']) == file_count
+        assert budgets[2:] == pytest.approx([40 - elapsed] * (file_count - 1))
+        assert all(file['status'] == 'completed' for file in saved['job_files'])
+    else:
+        assert calls == [ids[0], ids[0]]
+        assert len(budgets) == 2
+        assert saved['completed_count'] == 0
+        assert saved['result_data']['documents'] == {}
+        assert all(file['status'] == 'failed' for file in saved['job_files'])
+        assert all(f'{target}-second target' in file['error_message'] for file in saved['job_files'])
+    processing.process_job(job_id, session_factory, processor)
+    assert client.get(f'/jobs/{job_id}').json() == saved
 
 
 def test_third_attempt_can_succeed_and_clears_timeout_error(client, session_factory):
