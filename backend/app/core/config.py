@@ -86,6 +86,8 @@ class Settings(BaseSettings):
     STORAGE_DIR: Path = Path(__file__).resolve().parents[2] / "data" / "uploads"
     BACKUP_DIR: Path = Path(__file__).resolve().parents[2] / "data" / "backups"
     RETENTION_CLEANUP_ENABLED: bool = True
+    JOB_SHUTDOWN_GRACE_SECONDS: float = Field(default=10, ge=0, le=60)
+    JOB_SHUTDOWN_CLEANUP_SECONDS: float = Field(default=8, gt=0, le=30)
     RETENTION_CLEANUP_INTERVAL_SECONDS: int = Field(default=3600, ge=1, le=86400)
     RETENTION_CLEANUP_BATCH_SIZE: int = Field(default=100, ge=1, le=1000)
     GEMINI_API_KEY: SecretStr = SecretStr('')

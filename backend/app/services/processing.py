@@ -1,6 +1,7 @@
 """Per-document processing with bounded, cancellable attempts."""
 import asyncio
 import logging
+import threading
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
@@ -16,6 +17,32 @@ from app.services.document_retention import is_expired_source
 from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
+
+
+class WorkerControl:
+    """Cancel the real coroutine on its worker thread's event loop."""
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.cancelled = threading.Event()
+        self.loop = self.task = None
+
+    def cancel(self):
+        with self.lock:
+            self.cancelled.set()
+            if self.loop is not None and not self.loop.is_closed():
+                self.loop.call_soon_threadsafe(self.task.cancel)
+
+    async def run(self, coroutine):
+        with self.lock:
+            self.loop, self.task = asyncio.get_running_loop(), asyncio.current_task()
+        try:
+            if self.cancelled.is_set():
+                coroutine.close()
+                raise asyncio.CancelledError
+            return await coroutine
+        finally:
+            with self.lock:
+                self.loop = self.task = None
 MAX_ATTEMPTS = 3
 BULLET_TARGET_SECONDS = 180
 TABLE_TARGET_SECONDS = 300
@@ -73,6 +100,9 @@ async def _process_job(job_id, session_factory, processor, analyzer):
         for file in job.job_files:
             if file.status in (JobStatus.COMPLETED, JobStatus.FAILED):
                 continue
+            db.refresh(job)
+            if job.status in (JobStatus.COMPLETED, JobStatus.FAILED):
+                return
             document = file.document
             if document.owner_id != job.owner_id:
                 file.status = JobStatus.FAILED
@@ -144,6 +174,8 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                     if is_expired_source(document):
                         raise ReaderConversionError('source_expired', 'Source expired and is no longer available.')
                     db.refresh(job, with_for_update=True)
+                    if job.status in (JobStatus.COMPLETED, JobStatus.FAILED):
+                        return  # Never publish late work after interruption recovery.
                     if prepared is not None:
                         with publish_reader(document, prepared):
                             result = save_analysis(db, job, document, prepared, result)
@@ -194,7 +226,7 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                     file.status = JobStatus.FAILED
                     file.error_message = "Document processing failed. Please retry."
                     db.commit()
-                    logger.exception("job=%s document=%s attempt=%s/%s failed",
+                    logger.error("job=%s document=%s attempt=%s/%s failed",
                                      job_id, source.id, attempt, MAX_ATTEMPTS)
                     break
                 else:
@@ -237,7 +269,7 @@ def _save_success(db, job, file, document_id, result, versioned=False):
     db.commit()
 
 
-def process_job(job_id, session_factory, processor=None, *, analyzer=None):
+def process_job(job_id, session_factory, processor=None, *, analyzer=None, control=None):
     """Queue entry point, outside the HTTP event loop.
 
     analyzer is an async adapter returning AnalysisResult after native extraction.
@@ -245,4 +277,5 @@ def process_job(job_id, session_factory, processor=None, *, analyzer=None):
     processor is the existing low-level test/worker override; it owns extraction
     and its result shape. Normal queue execution always uses the full pipeline.
     """
-    asyncio.run(_process_job(job_id, session_factory, processor, analyzer or process_document))
+    coroutine = _process_job(job_id, session_factory, processor, analyzer or process_document)
+    asyncio.run(control.run(coroutine) if control is not None else coroutine)

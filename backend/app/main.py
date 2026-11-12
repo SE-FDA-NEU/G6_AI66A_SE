@@ -5,6 +5,9 @@ from app.db.database import SessionLocal
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.services.job_queue import JobQueue
+from app.services.job_recovery import recover_interrupted_jobs
+import asyncio
+import logging
 from app.services.retention_cleanup import RetentionCleanupScheduler
 from app.services.storage_ops import ensure_writable_storage
 from app.core.config import settings
@@ -18,6 +21,8 @@ async def lifespan(app: FastAPI):
     # --- Startup ---
     print("Starting server (Database-first approach)...")
     app.state.storage_dir = ensure_writable_storage(settings.STORAGE_DIR)
+    recovered = await asyncio.to_thread(recover_interrupted_jobs, SessionLocal)
+    logging.getLogger(__name__).info('Interrupted jobs marked failed count=%s', recovered)
     app.state.job_queue = JobQueue(SessionLocal)
     app.state.retention_cleanup = RetentionCleanupScheduler(SessionLocal) if settings.RETENTION_CLEANUP_ENABLED else None
     if app.state.retention_cleanup:
@@ -35,12 +40,16 @@ async def lifespan(app: FastAPI):
 # Initialize app with lifespan
 app = FastAPI(title="DocuMind API", lifespan=lifespan)
 
+from app.services.operational_logging import log_request
+app.middleware('http')(log_request)
+
 from app.api.auth import router as auth_router
 from app.api.upload import router as upload_router
 from app.api.document import router as document_router
 from app.api.job import router as job_router
 from app.api.search import router as search_router
 from app.api.folder import router as folder_router
+from app.api.health import router as health_router
 
 app.include_router(auth_router)
 app.include_router(upload_router)
@@ -48,6 +57,7 @@ app.include_router(document_router)
 app.include_router(job_router)
 app.include_router(search_router)
 app.include_router(folder_router)
+app.include_router(health_router)
 
 @app.get("/")
 def read_root():

@@ -1,6 +1,21 @@
 import { test, expect } from '@playwright/test';
 import { user } from './helpers';
 
+test('interrupted jobs show resubmission guidance in both languages', async ({ page }) => {
+  await page.route('**/jobs/78', route => route.fulfill({ json: {
+    id: 78, status: 'failed', file_count: 1, completed_count: 0, result_data: null,
+    job_files: [{ id: 1, document_id: 1, original_filename: 'interrupted.pdf', status: 'failed',
+      attempt_count: 1, timeout_seconds: 75,
+      error_message: 'Processing was interrupted by a server restart or deployment. Please upload the unfinished files again.' }],
+  } }));
+  await page.goto('/results/78');
+  await expect(page.locator('.job-file-error')).toContainText('Vui lòng tải lại các tệp chưa hoàn tất.');
+  await page.locator('#app-language').selectOption('en');
+  await expect(page.locator('.job-file-error')).toContainText('Please upload the unfinished files again.');
+  await page.reload();
+  await expect(page.locator('.job-file-error')).toContainText('Please upload the unfinished files again.');
+});
+
 test.beforeEach(async ({ page }) => {
   const login = await page.request.post('/auth/login', {
     form: { username: user.email, password: user.password },
