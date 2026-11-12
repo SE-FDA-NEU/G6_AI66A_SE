@@ -43,12 +43,12 @@ class JobQueue:
             # Synchronous processing/DB work must not block the event loop.
             await asyncio.to_thread(self.processor, job_id, self.session_factory)
         except Exception:
-            logger.exception("Processing job %s failed", job_id)
+            logger.error("Processing job %s failed", job_id)
             try:
                 await asyncio.to_thread(mark_failed, job_id, self.session_factory,
                                         "Background processing failed. Please retry.")
             except Exception:
-                logger.exception("Could not record failure for job %s", job_id)
+                logger.error("Could not record failure for job %s", job_id)
 
     async def close(self):
         self.closing = True
