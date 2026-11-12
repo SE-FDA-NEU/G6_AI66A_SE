@@ -21,7 +21,9 @@ def assert_empty(session_factory, job_queue):
         for model in (Job, JobFile, Document):
             assert db.query(model).count() == 0
     assert job_queue.enqueued == []
-    assert not list(settings.STORAGE_DIR.rglob('*.*'))
+    # Startup prepares an empty .analysis-cache directory on Linux too.
+    # Rejected uploads must leave no files, including cache or partial files.
+    assert not any(path.is_file() for path in settings.STORAGE_DIR.rglob('*'))
 
 
 def test_upload_destination_is_committed_before_enqueue_and_survives_processing(client, session_factory, job_queue, monkeypatch):
