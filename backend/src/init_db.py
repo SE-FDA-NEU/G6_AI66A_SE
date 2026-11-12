@@ -388,11 +388,13 @@ def seed_database():
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='Initialize local demo data.')
+    parser = argparse.ArgumentParser(description='Initialize local or production demo data.')
     parser.add_argument('--acceptance', action='store_true',
-                        help='Seed the repeatable 20-document acceptance account instead of legacy 10-document demos.')
+                        help='Seed the repeatable 20-PDF + DOCX/PPTX acceptance accounts and P0 Table/Bullet/Concept results.')
     parser.add_argument('--skip-bootstrap', action='store_true',
                         help='Skip schema preparation when python -m app.db.bootstrap was already executed separately.')
+    parser.add_argument('--live-ai', action='store_true',
+                        help='Use the configured live AI provider when generating missing demo job results.')
     args = parser.parse_args()
     print("==================================================")
     print("       DocuMind — All-in-One Database Setup       ")
@@ -402,7 +404,7 @@ def main():
     if args.acceptance:
         sys.path.insert(0, os.path.join(BACKEND_DIR, 'test'))
         from acceptance_fixtures import seed_local
-        seed_local()
+        seed_local(use_live_ai=args.live_ai)
     else:
         seed_database()
 
