@@ -12,6 +12,7 @@ export default function Landing() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
+  const [registering, setRegistering] = useState(false);
   useEffect(() => setReady(true), []);
   async function submit(event) {
     event.preventDefault();
@@ -19,14 +20,27 @@ export default function Landing() {
     setBusy(true);
     setError('');
     const data = new FormData(event.currentTarget);
+    if (registering && data.get('password') !== data.get('confirmation')) {
+      setError(t('Mật khẩu xác nhận không khớp.'));
+      setBusy(false);
+      return;
+    }
+    if (registering && new TextEncoder().encode(data.get('password')).length > 72) {
+      setError(t('Mật khẩu phải có ít nhất 8 ký tự và không quá 72 byte.'));
+      setBusy(false);
+      return;
+    }
     try {
-      const response = await fetch('/auth/login', {
+      const response = await fetch(registering ? '/auth/register' : '/auth/login', {
         method: 'POST', credentials: 'same-origin',
-        body: new URLSearchParams({ username: data.get('email').trim(), password: data.get('password') }),
+        ...(registering ? {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: data.get('username').trim(), email: data.get('email').trim(), password: data.get('password') }),
+        } : { body: new URLSearchParams({ username: data.get('email').trim(), password: data.get('password') }) }),
       });
       if (!response.ok) {
         const result = await response.json().catch(() => ({}));
-        throw new Error(typeof result.detail === 'string' ? result.detail : t("Không thể đăng nhập. Vui lòng thử lại."));
+        throw new Error(typeof result.detail === 'string' ? result.detail : t(registering ? 'Thông tin đăng ký không hợp lệ. Vui lòng kiểm tra lại.' : "Không thể đăng nhập. Vui lòng thử lại."));
       }
       window.location.assign('/workspace');
     } catch (err) {
@@ -35,7 +49,7 @@ export default function Landing() {
     }
   }
   return <>
-    <Head><title>{t("DocuMind · Đăng nhập")}</title><meta name="description" content={t("Tóm tắt, phân loại và tìm kiếm tài liệu trong không gian riêng của bạn.")} /></Head>
+    <Head><title>{t(registering ? 'DocuMind · Đăng ký' : "DocuMind · Đăng nhập")}</title><meta name="description" content={t("Tóm tắt, phân loại và tìm kiếm tài liệu trong không gian riêng của bạn.")} /></Head>
     <main className="auth-page mx-auto min-h-screen max-w-7xl border-x border-line">
       <header className="flex h-14 items-center justify-between border-b border-line px-5 sm:px-6">
         <a href="/" className={ui('brand')}><span className="size-2 bg-emerald-500 motion-safe:animate-pulse rounded-full" aria-hidden="true"/>DOCUMIND<span className="text-zinc-600">/</span></a>
@@ -56,14 +70,17 @@ export default function Landing() {
         <section id="login" className="auth-form-wrap scroll-mt-4 border-t border-line bg-surface px-6 py-10 sm:px-10 lg:flex lg:items-center lg:border-t-0 lg:border-l">
           <div className="auth-form w-full">
             <p className="mb-6 font-mono text-[10px] tracking-[.18em] text-zinc-500">ACCESS // YOUR_WORKSPACE</p>
-            <h2 className="text-2xl font-semibold">{t('Tiếp tục công việc của bạn')}</h2>
-            <p className="mt-3 mb-7 text-sm leading-7 text-zinc-400">{t('Đăng nhập để mở không gian tài liệu cá nhân.')}</p>
-            <form onSubmit={submit} method="post" aria-busy={busy} className="space-y-5">
+            <h2 className="text-2xl font-semibold">{t(registering ? 'Tạo tài khoản DocuMind' : 'Tiếp tục công việc của bạn')}</h2>
+            <p className="mt-3 mb-7 text-sm leading-7 text-zinc-400">{t(registering ? 'Tạo tài khoản để bắt đầu với không gian tài liệu riêng.' : 'Đăng nhập để mở không gian tài liệu cá nhân.')}</p>
+            <form key={registering ? 'register' : 'login'} onSubmit={submit} method="post" aria-busy={busy} className="space-y-5">
               <div role="alert" aria-live="polite" id="login-error">{error && <p className={ui('error-box')}>{errorText(error)}</p>}</div>
+              {registering && <div><label htmlFor="username">{t('Tên tài khoản')}</label><input id="username" name="username" autoComplete="username" required minLength={3} maxLength={100} pattern="[a-zA-Z0-9_.\-]+" disabled={busy} aria-describedby="username-help"/><p id="username-help" className="mt-2 text-xs leading-6 text-zinc-500">{t('3–100 ký tự: chữ không dấu, số, dấu chấm, gạch dưới hoặc gạch ngang.')}</p></div>}
               <div><label htmlFor="email">{t('Email')}</label><input id="email" name="email" type="email" autoComplete="username" placeholder={t('ban@example.com')} required maxLength={255} disabled={busy} aria-describedby={error ? 'login-error' : undefined}/></div>
-              <div><label htmlFor="password">{t('Mật khẩu')}</label><input id="password" name="password" type="password" autoComplete="current-password" placeholder={t('Nhập mật khẩu của bạn')} required disabled={busy} aria-describedby={error ? 'login-error' : undefined}/></div>
-              <button className={ui('btn primary w-full justify-between')} type="submit" disabled={!ready || busy}>{busy ? t('Đang đăng nhập…') : t('Đăng nhập')}<ArrowRight size={15} aria-hidden="true"/></button>
+              <div><label htmlFor="password">{t('Mật khẩu')}</label><input id="password" name="password" type="password" autoComplete={registering ? 'new-password' : 'current-password'} placeholder={t('Nhập mật khẩu của bạn')} required minLength={registering ? 8 : undefined} disabled={busy} aria-describedby={registering ? 'password-help' : error ? 'login-error' : undefined}/>{registering && <p id="password-help" className="mt-2 text-xs leading-6 text-zinc-500">{t('Mật khẩu phải có ít nhất 8 ký tự và không quá 72 byte.')}</p>}</div>
+              {registering && <div><label htmlFor="confirmation">{t('Xác nhận mật khẩu')}</label><input id="confirmation" name="confirmation" type="password" autoComplete="new-password" required disabled={busy}/></div>}
+              <button className={ui('btn primary w-full justify-between')} type="submit" disabled={!ready || busy}>{busy ? t(registering ? 'Đang tạo tài khoản…' : 'Đang đăng nhập…') : t(registering ? 'Đăng ký' : 'Đăng nhập')}<ArrowRight size={15} aria-hidden="true"/></button>
             </form>
+            <p className="mt-5 text-sm text-zinc-400">{t(registering ? 'Đã có tài khoản?' : 'Chưa có tài khoản?')} <button type="button" disabled={busy} onClick={() => { setRegistering(!registering); setError(''); }} className="text-orange-400 underline underline-offset-4">{t(registering ? 'Đăng nhập' : 'Đăng ký')}</button></p>
             <p className="mt-7 flex gap-2 border-t border-line pt-5 text-xs leading-6 text-zinc-500"><ShieldCheck size={14} className="mt-1"/>{t('Tài liệu cá nhân chỉ được truy cập sau khi đăng nhập.')}</p>
           </div>
         </section>

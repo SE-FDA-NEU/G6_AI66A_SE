@@ -61,6 +61,8 @@ python run.py --setup-only
 
 This creates `backend/.venv`, installs backend dependencies, runs `npm ci` when the frontend is not installed, and prepares the database. It does not create a login account or run tests.
 
+To create your own account, start the application, open the landing page and select **Sign up / Đăng ký** below the sign-in form. Enter a unique username (3–100 ASCII letters, numbers, dots, underscores or hyphens), email, password and matching confirmation. Passwords require at least 8 characters and at most 72 UTF-8 bytes. Registration signs you into a new private workspace; no database migration or demo seed is needed beyond the existing schema preparation. You can also create an account through `POST /auth/register` with JSON fields `username`, `email` and `password`; success returns 201 with the existing token response and HttpOnly session cookie. Duplicate identities return 409 and invalid input returns 422.
+
 Create the local demo account and its 20 synthetic PDF documents:
 
 ```powershell
