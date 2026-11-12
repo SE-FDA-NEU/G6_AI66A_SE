@@ -194,7 +194,7 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                     file.status = JobStatus.FAILED
                     file.error_message = "Document processing failed. Please retry."
                     db.commit()
-                    logger.exception("job=%s document=%s attempt=%s/%s failed",
+                    logger.error("job=%s document=%s attempt=%s/%s failed",
                                      job_id, source.id, attempt, MAX_ATTEMPTS)
                     break
                 else:
