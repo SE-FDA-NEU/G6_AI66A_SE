@@ -41,6 +41,9 @@ def test_probe_deadline_does_not_accumulate_workers_and_recovers():
         finally:
             release.set()
         assert await probe.pending
+        # The first assertion tests the deadline. Recovery must not depend on
+        # Windows scheduling a fresh thread within an artificial 20 ms budget.
+        probe.timeout = 1
         assert await probe.ready()
         assert len(calls) == 2
     asyncio.run(scenario())
