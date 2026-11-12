@@ -223,6 +223,8 @@ def test_reader_citations_search_and_cache_survive_restart_and_coordinated_resto
 
         monkeypatch.setattr(settings, "STORAGE_DIR", restored_storage)
         app.dependency_overrides[get_db] = restored_db_dep
+        import app.main as main_module
+        monkeypatch.setattr(main_module, 'SessionLocal', restored_factory)
         with TestClient(app) as restored_client:
             restored_client.headers["Authorization"] = f"Bearer {create_access_token({'sub': '123'})}"
             r_pages = restored_client.get(f"/documents/{active_id}/pages")
