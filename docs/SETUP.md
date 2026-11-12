@@ -109,7 +109,33 @@ cd frontend
 npm run dev
 ```
 
-Next.js forwards API requests to `http://127.0.0.1:8001` by default. Set `BACKEND_ORIGIN` in the frontend process only if the backend address changes. Both servers must run for sign-in and document operations.
+In development, Next.js forwards API requests to `http://127.0.0.1:8001` by default. Set `BACKEND_ORIGIN` in the frontend process if the backend address changes. Both servers must run for sign-in and document operations. Production requires an explicit non-loopback `BACKEND_ORIGIN` at both build and runtime.
+
+### Production frontend (Render / #253)
+
+See [the Render deployment guide](deploy-frontend-render.md) and the frontend-only
+`render.yaml` blueprint. Use a Node Web Service with root directory `frontend`,
+build command `npm ci && npm run build`, and start command `npm start`.
+Set `NODE_VERSION=24`, `NODE_ENV=production` and the confirmed HTTPS
+`BACKEND_ORIGIN`. The start command binds `0.0.0.0` and reads the host's `PORT`.
+Rebuild after changing the backend origin: start refuses origins inconsistent
+with the compiled rewrites. Never use a Static Site for this SSR application.
+
+For a local production build against an approved backend (PowerShell):
+
+```powershell
+cd frontend
+$env:BACKEND_ORIGIN = 'https://<backend-host>'
+$env:PORT = '8000'
+npm.cmd ci
+npm.cmd run build
+npm.cmd start
+```
+
+Keep the same origin in the build and running process. The currently supplied
+backend health URL is `https://documind-n9ny.onrender.com/health`; confirm the
+release SHA with its owner. Browser API calls stay on the frontend origin,
+and sessions remain HttpOnly cookies. No CORS change is needed for this flow.
 
 For macOS/Linux, replace `Copy-Item` with `cp`, use `python3` if needed, and run the seed/backend with `backend/.venv/bin/python` or `.venv/bin/python` instead of the Windows executable.
 

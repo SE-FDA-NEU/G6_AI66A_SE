@@ -1,0 +1,19 @@
+# Frontend only. The existing backend is managed separately by its owner.
+services:
+  - type: web
+    name: documind-web
+    runtime: node
+    plan: free
+    branch: main
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "24"
+      - key: BACKEND_ORIGIN
+        sync: false

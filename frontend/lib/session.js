@@ -1,5 +1,7 @@
+import { getBackendOrigin } from './backend-origin.mjs';
+
 export async function getSession(req) {
-  const backend = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:8001';
+  const backend = getBackendOrigin();
   try {
     const response = await fetch(`${backend}/auth/me`, {
       headers: { cookie: req.headers.cookie || '' },
