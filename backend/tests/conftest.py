@@ -56,6 +56,8 @@ def job_queue(session_factory):
 
 @pytest.fixture
 def client(session_factory, job_queue, tmp_path, monkeypatch):
+    import app.main as main_module
+    monkeypatch.setattr(main_module, 'SessionLocal', session_factory)
     def test_db():
         with session_factory() as db:
             yield db

@@ -5,6 +5,9 @@ from app.db.database import SessionLocal
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.services.job_queue import JobQueue
+from app.services.job_recovery import recover_interrupted_jobs
+import asyncio
+import logging
 from app.services.retention_cleanup import RetentionCleanupScheduler
 from app.services.storage_ops import ensure_writable_storage
 from app.core.config import settings
@@ -18,6 +21,8 @@ async def lifespan(app: FastAPI):
     # --- Startup ---
     print("Starting server (Database-first approach)...")
     app.state.storage_dir = ensure_writable_storage(settings.STORAGE_DIR)
+    recovered = await asyncio.to_thread(recover_interrupted_jobs, SessionLocal)
+    logging.getLogger(__name__).info('Interrupted jobs marked failed count=%s', recovered)
     app.state.job_queue = JobQueue(SessionLocal)
     app.state.retention_cleanup = RetentionCleanupScheduler(SessionLocal) if settings.RETENTION_CLEANUP_ENABLED else None
     if app.state.retention_cleanup:
