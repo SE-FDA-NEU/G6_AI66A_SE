@@ -53,6 +53,28 @@ def test_new_database_creates_all_tables_and_next_start_preserves_data(mysql_con
         engine.dispose()
 
 
+def test_default_bootstrap_preserves_shared_tables_and_creates_missing_tables_after_backup(mysql_config, tmp_path):
+    prepare_database(mysql_config, Base.metadata, tmp_path)
+    engine = create_engine(mysql_url(mysql_config, mysql_config.DB_NAME))
+    try:
+        with engine.begin() as connection:
+            connection.exec_driver_sql('DROP TABLE citations')
+            connection.exec_driver_sql('CREATE TABLE shared_platform_table (id INT PRIMARY KEY, note VARCHAR(100))')
+            connection.exec_driver_sql("INSERT INTO shared_platform_table VALUES (1, 'keep-shared')")
+        report = prepare_database(mysql_config, Base.metadata, tmp_path)
+        assert report.created_tables == ('citations',)
+        assert report.removed_tables == ()
+        assert report.preserved_extra_tables == ('shared_platform_table',)
+        assert report.backup_path is not None and report.backup_path.is_file()
+        with engine.connect() as connection:
+            tables = set(inspect(connection).get_table_names())
+            assert set(Base.metadata.tables).issubset(tables)
+            assert 'shared_platform_table' in tables
+            assert connection.exec_driver_sql('SELECT note FROM shared_platform_table WHERE id = 1').scalar_one() == 'keep-shared'
+    finally:
+        engine.dispose()
+
+
 def test_missing_and_extra_tables_are_synced_after_restorable_backup(mysql_config, tmp_path):
     prepare_database(mysql_config, Base.metadata, tmp_path)
     engine = create_engine(mysql_url(mysql_config, mysql_config.DB_NAME))
@@ -67,7 +89,7 @@ def test_missing_and_extra_tables_are_synced_after_restorable_backup(mysql_confi
             connection.exec_driver_sql('INSERT INTO legacy_child VALUES (1,1)')
             connection.execute(User.__table__.insert().values(username='retained', email='retained@example.com', password_hash='test-hash'))
             original = connection.exec_driver_sql('SELECT * FROM legacy_parent').all()
-        report = prepare_database(mysql_config, Base.metadata, tmp_path)
+        report = prepare_database(mysql_config, Base.metadata, tmp_path, remove_extra_tables=True)
         assert report.created_tables == ('citations',)
         assert set(report.removed_tables) == {'legacy_parent', 'legacy_child'}
         assert report.backup_path.is_file() and not list(tmp_path.glob('*.partial'))
@@ -124,7 +146,7 @@ def test_retained_table_reference_blocks_dropping_extra_table(mysql_config, tmp_
             connection.exec_driver_sql('CREATE TABLE legacy_extra (id INT PRIMARY KEY)')
             connection.exec_driver_sql('ALTER TABLE users ADD legacy_id INT, ADD FOREIGN KEY (legacy_id) REFERENCES legacy_extra(id)')
         with pytest.raises(RuntimeError, match='khóa ngoại'):
-            prepare_database(mysql_config, Base.metadata, tmp_path)
+            prepare_database(mysql_config, Base.metadata, tmp_path, remove_extra_tables=True)
         with engine.connect() as connection:
             assert 'legacy_extra' in inspect(connection).get_table_names()
         assert not list(tmp_path.iterdir())

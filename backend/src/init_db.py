@@ -26,9 +26,9 @@ from app.core.security import get_password_hash
 
 
 def create_database_and_tables():
-    """Use the same database preparation as run.py before optional demo seeding."""
+    """Use the same safe database preparation before optional demo seeding."""
     from app.db.bootstrap import main as prepare_database
-    prepare_database()
+    prepare_database([])
 
 
 # 10 mẫu Document đa dạng về format (PDF, DOCX, PPTX), kích thước và trạng thái
@@ -391,11 +391,14 @@ def main():
     parser = argparse.ArgumentParser(description='Initialize local demo data.')
     parser.add_argument('--acceptance', action='store_true',
                         help='Seed the repeatable 20-document acceptance account instead of legacy 10-document demos.')
+    parser.add_argument('--skip-bootstrap', action='store_true',
+                        help='Skip schema preparation when python -m app.db.bootstrap was already executed separately.')
     args = parser.parse_args()
     print("==================================================")
     print("       DocuMind — All-in-One Database Setup       ")
     print("==================================================")
-    create_database_and_tables()
+    if not args.skip_bootstrap:
+        create_database_and_tables()
     if args.acceptance:
         sys.path.insert(0, os.path.join(BACKEND_DIR, 'test'))
         from acceptance_fixtures import seed_local
