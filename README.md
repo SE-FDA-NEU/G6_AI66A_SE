@@ -33,6 +33,11 @@ Xem chi tiết tại [docs/definition-of-done.md](docs/definition-of-done.md) �
 
 ## Running the Project
 
+Local setup: [SETUP](docs/SETUP.md). Production frontend on Render:
+[deployment guide](docs/deploy-frontend-render.md), with a frontend-only
+[Blueprint](render.yaml). Public frontend URL and release evidence must be
+recorded after the service is actually deployed and verified.
+
 ```bash
 # Clone repo
 git clone https://github.com/SE-FDA-NEU/G6_AI66A_SE.git

@@ -190,4 +190,4 @@ app.dependency_overrides[get_db] = test_db
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host='127.0.0.1', port=18001)
+    uvicorn.run(app, host=os.environ.get('E2E_BACKEND_HOST', '127.0.0.1'), port=18001)

@@ -100,11 +100,12 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build
+      - name: Production build and session smoke tests
         if: ${{ !cancelled() && steps.npm.outcome == 'success' }}
         run: |
           mkdir -p test-results
-          npm run build 2>&1 | tee test-results/build.log
+          npm run test:config
+          npm run test:production 2>&1 | tee test-results/build.log
 
       - name: Upload frontend reports
         if: always()
@@ -114,6 +115,7 @@ jobs:
           path: |
             frontend/test-results/
             frontend/playwright-report/
+            frontend/playwright-production-report/
           retention-days: 14
           if-no-files-found: error
 

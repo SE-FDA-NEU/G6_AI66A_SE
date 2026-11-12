@@ -21,6 +21,7 @@ node_modules/
 .next/
 test-results/
 playwright-report/
+playwright-production-report/
 dist/
 build/
 
