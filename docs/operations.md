@@ -2,6 +2,8 @@
 
 ## 1. How to run and release
 
+Published release: [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0), main SHA `0431a5d463295f6acd38b87c367e79c47a7037cc`.
+
 Public app: https://documind-web-k6i1.onrender.com. Frontend and FastAPI backend run on Render; backend: https://documind-n9ny.onrender.com. MySQL-compatible TiDB and persistent backend files are owned by Duong. Platform configuration still requires owner verification.
 
 Run locally using [SETUP](SETUP.md). Release: reviewed PR → merge → successful main CI → deploy the same SHA to both services. The frontend blueprint specifies `checksPass`; Dang must verify the backend gate and Tai the live frontend setting. Keep one backend instance/worker; stop the old process tree before replacement.
@@ -18,7 +20,7 @@ Rollback: stop traffic, select the last verified compatible SHA in both Render s
 | No secrets committed | Credential patterns; no tracked environment files or database dumps |
 | Artifacts | Test/build reports retained 14 days |
 
-Latest verified green main: [43387604003](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43387604003), SHA `ee290ee5206db80f7e0d4e6116689f18404ec577`. Measured start-to-completion: **6 min 6 s**, 2026-11-13 07:41:58–07:48:04 UTC. Refresh this evidence for the release SHA.
+Latest verified green main: [43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569), SHA `0431a5d463295f6acd38b87c367e79c47a7037cc`. Measured start-to-completion: **6 min 20 s**, 2026-11-13 10:52:34–10:58:54 UTC. Refresh this evidence for the release SHA.
 
 [Main protection](https://github.com/SE-FDA-NEU/G6_AI66A_SE/rules/21296815) requires one PR approval and blocks force pushes/deletion. API inspection found no required status checks. An organization administrator must require all three checks and supply a settings screenshot; screenshot and enforcement remain release blockers (#251).
 
@@ -43,7 +45,8 @@ Thresholds are proposed. Monitor URL, notification channel and backup responder 
 | Persistent files | data | DB survives while originals disappear | #246; mounted storage and coordinated restore rehearsal |
 | AI availability | infrastructure | Quota errors or partial batch failures | #254; retest five-file batch after #269 |
 | Required CI checks absent | infrastructure | Broken merge can bypass checks | #251; administrator adds three required checks |
-| Public acceptance incomplete | tests | Local passes hide hosting/browser failures | #257; all nine P0s on public HTTPS |
+| Public acceptance incomplete | tests | Local passes hide hosting/browser failures | #257; live AI/API passes recorded, full click-only P0 acceptance pending |
+| Missing content-search entry | code | US02 cannot start from workspace despite a working API | #257; restore the existing search component behind an explicit button; deploy and retest |
 | Missing deployment/alert evidence | docs | Operator cannot identify release or detect outage | #256; owners verify service settings and evidence |
 | Cold start | infrastructure | First request is slow | Accepted: grading brief permits slow initial visits; check before demo |
 
@@ -68,8 +71,8 @@ Documents expire 30 days after successful open/download/update; warn seven days 
 | Linux CI counted empty `.analysis-cache` as leftover upload | Assert remaining files recursively, allow empty infrastructure directories (#263) | Include hidden paths in cleanup checks |
 | Mobile CI waited for hidden folder controls | Wait for mobile toggle/sidebar visibility ([M4 report](testing.md)) | Test responsive state transitions in CI |
 | Five-file proxy upload exceeded Next's 10 MB default | Set 30 MiB proxy allowance and add 25 MiB production test (#267) | Verify platform limits before deployment |
-| Public batch completed only 3/5 files | #269 changes analysis/key handling; production retest pending | Preserve failed-job evidence and require live AI acceptance (#254) |
+| Public batch completed only 3/5 files | #269 changes analysis/key handling; live follow-up completed five near-5 MiB files 5/5 ([evidence](evidence/m5/live-acceptance-257.md)) | Preserve failed-job evidence and require live AI acceptance (#254) |
 
 ## 7. Availability commitment and verification
 
-Proposed accountable coordinator: Vu (@PhanDangVu), until grades are published. The publication date is unspecified; this is an event-based end date. Vu must confirm the commitment, keep hosting/billing active and arrange backup cover. Dang verifies backend/gates/alerts; Duong verifies MySQL/storage/backups; Tai verifies frontend/proxy; Vu signs release acceptance. Owner confirmations and the final protection screenshot remain pending. Do not mark #256/#257 complete or publish `v1.0` until the recorded blockers are resolved.
+Proposed accountable coordinator: Vu (@PhanDangVu), until grades are published. The publication date is unspecified; this is an event-based end date. Vu must confirm the commitment, keep hosting/billing active and arrange backup cover. Dang verifies backend/gates/alerts; Duong verifies MySQL/storage/backups; Tai verifies frontend/proxy; Vu signs release acceptance. Owner confirmations and the final protection screenshot remain pending. Release [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0) was published on 13 November 2026 from green main `0431a5d463295f6acd38b87c367e79c47a7037cc`.

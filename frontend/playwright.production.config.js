@@ -11,7 +11,7 @@ const origin = `http://${address}:18001`;
 export default {
   ...config,
   outputDir: 'test-results/production',
-  testMatch: /(?:auth|route-guard|production-proxy)\.spec\.js$/,
+  testMatch: /(?:auth|route-guard|production-proxy|health-proxy|workspace-search-entry)\.spec\.js$/,
   reporter: process.env.CI ? [
     ['list'],
     ['junit', { outputFile: 'test-results/production-junit.xml' }],

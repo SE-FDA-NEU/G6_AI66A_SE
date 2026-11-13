@@ -1,0 +1,15 @@
+
+> test:config
+> node --test tests/config/*.node.mjs
+
+✔ production rejects missing, local and malformed backend origins (0.886125ms)
+✔ development retains local fallback; production normalizes explicit origins (0.109666ms)
+✔ runtime must agree with every baked-in proxy destination (0.270542ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.952167

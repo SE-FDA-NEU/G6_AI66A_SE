@@ -10,6 +10,7 @@ import DocumentHistory from './DocumentHistory';
 import DocumentUpload from './DocumentUpload';
 import WorkspaceFolders from './WorkspaceFolders';
 import WorkspaceNavigation from './WorkspaceNavigation';
+import WorkspaceSearch from './WorkspaceSearch';
 
 export default function WorkspaceHome({ user }) {
   const { t } = useI18n();
@@ -17,6 +18,7 @@ export default function WorkspaceHome({ user }) {
   const folderState = useFolders();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [folderOpen, setFolderOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -71,6 +73,12 @@ export default function WorkspaceHome({ user }) {
           <WorkspaceNavigation><button className={ui('btn')} disabled={busy} onClick={logout}>{t('Đăng xuất')}</button></WorkspaceNavigation>
         </header>
         {error && <p role="alert" className={ui('error-box')}>{error}</p>}
+        <div className="mt-5">
+          <button type="button" className={ui('btn')} aria-expanded={searchOpen} aria-controls="workspace-content-search" onClick={() => setSearchOpen(value => !value)}>{t('Tìm kiếm tài liệu')}</button>
+          <div id="workspace-content-search" className="mt-4" hidden={!searchOpen}>
+            {searchOpen && <WorkspaceSearch folders={folderState.folders} foldersUnavailable={folderState.loading || Boolean(folderState.error)} refreshKey={revision}/>}
+          </div>
+        </div>
         {destinationId != null && <div className="mt-5 flex min-w-0 items-center justify-between gap-3 border-b border-line pb-4 text-sm text-zinc-400"><span className="min-w-0 break-words"><Folder size={16} className="mr-2 inline text-orange-400"/>{currentFolder?.name || t('thư mục đang chọn')}</span><button type="button" className={ui('btn shrink-0')} onClick={() => openFolder('')}>{t('Ra ngoài thư mục')}</button></div>}
         {!folderReady && <p role="alert" className={ui('error-box')}>{folderState.loading ? t('Đang kiểm tra thư mục trước khi tải lên…') : t('Không thể dùng thư mục này. Chọn thư mục khác hoặc ra ngoài thư mục.')}</p>}
         <DocumentUpload compact folderId={destinationId} folderName={currentFolder?.name} folderReady={folderReady}/>

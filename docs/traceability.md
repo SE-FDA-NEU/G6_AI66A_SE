@@ -36,3 +36,20 @@ Each feature connects its screens to the story issue and implementation PRs. Pri
 | BR07 | Guests access only `/`; protected routes require sign-in and all document/job operations check ownership. | [Route guard](../frontend/proxy.js), [security](../backend/app/core/security.py), [document API](../backend/app/api/document.py), [job API](../backend/app/api/job.py). | [Route guards](../frontend/tests/route-guard.spec.js), [access denial](../frontend/tests/document-access.spec.js), [file access](../backend/tests/test_document_file.py). |
 
 Coverage links identify existing checks only. Run instructions are in [SETUP.md](SETUP.md); test execution is outside this documentation update.
+
+## Production acceptance follow-up — task #257
+
+US02's API and existing WorkspaceSearch component remained available, but the
+workspace redesign no longer mounted the component on a page. PR #271 restores
+a “Tìm kiếm tài liệu” toggle on `/workspace`; it opens content search and
+citation navigation while keeping the initial upload view.
+[WorkspaceHome](../frontend/components/WorkspaceHome.js) mounts the existing
+[search component](../frontend/components/WorkspaceSearch.js).
+[Entry regression](../frontend/tests/workspace-search-entry.spec.js) checks
+1280 px and 375 px layouts, querying beyond the first metadata page, source-page
+links and closing search while retaining upload access. The production suite
+also includes this regression. Public deployment/retest is still pending.
+
+Live AI, search API, source bytes, ownership and large-batch results are recorded
+in [the #257 acceptance evidence](evidence/m5/live-acceptance-257.md). These
+results do not assert a deployed SHA or final all-P0 acceptance.

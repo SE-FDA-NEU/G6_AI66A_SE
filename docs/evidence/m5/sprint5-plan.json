@@ -1,0 +1,207 @@
+{
+  "recorded_date": "2026-11-13",
+  "sprint": 5,
+  "scrum_master": "duongbui0811",
+  "product_owner": "PhanDangVu",
+  "unit": "Story points; PO refinement estimates, independent of existing issue Estimated hours",
+  "committed_points": 53,
+  "completed_points": null,
+  "velocity": null,
+  "history_note": "First numeric repository baseline recorded at this refinement; not backdated to the issues creation date or represented as the original planning meeting.",
+  "items": [
+    {
+      "issue": 244,
+      "title": "[Chore] Refine backlog for Sprint 5",
+      "sp": 2,
+      "owner": "PhanDangVu",
+      "reviewer": "duongbui0811",
+      "dependencies": [],
+      "schedule": "W13 D1"
+    },
+    {
+      "issue": 245,
+      "title": "[Task] Configure cloud MySQL and prepare the production schema",
+      "sp": 3,
+      "owner": "duongbui0811",
+      "reviewer": "Dangtooo",
+      "dependencies": [
+        244
+      ],
+      "schedule": "W13 D1–D2"
+    },
+    {
+      "issue": 246,
+      "title": "[Task] Configure persistent document storage and verify backup restoration",
+      "sp": 5,
+      "owner": "duongbui0811",
+      "reviewer": "Dangtooo",
+      "dependencies": [
+        245
+      ],
+      "schedule": "W13 D2–D3"
+    },
+    {
+      "issue": 247,
+      "title": "[Task] Prepare production sample data and test accounts",
+      "sp": 3,
+      "owner": "duongbui0811",
+      "reviewer": "taibaonguyen",
+      "dependencies": [
+        245,
+        246
+      ],
+      "schedule": "W13 D3"
+    },
+    {
+      "issue": 248,
+      "title": "[Task] Deploy the FastAPI backend to production",
+      "sp": 5,
+      "owner": "Dangtooo",
+      "reviewer": "duongbui0811",
+      "dependencies": [
+        245,
+        246
+      ],
+      "schedule": "W13 D2–D3"
+    },
+    {
+      "issue": 249,
+      "title": "[Task] Handle interrupted processing jobs after restart or deployment",
+      "sp": 5,
+      "owner": "Dangtooo",
+      "reviewer": "PhanDangVu",
+      "dependencies": [
+        244
+      ],
+      "schedule": "W13 D2–D4"
+    },
+    {
+      "issue": 250,
+      "title": "[Task] Add database-aware health checks and operational monitoring",
+      "sp": 3,
+      "owner": "Dangtooo",
+      "reviewer": "PhanDangVu",
+      "dependencies": [
+        245
+      ],
+      "schedule": "W13 D3–D4"
+    },
+    {
+      "issue": 251,
+      "title": "[Task] Update CI and verify main branch protection",
+      "sp": 3,
+      "owner": "Dangtooo",
+      "reviewer": "PhanDangVu",
+      "dependencies": [
+        244
+      ],
+      "schedule": "W13 D1–D2"
+    },
+    {
+      "issue": 252,
+      "title": "[Task] Gate deployments on CI and verify the rollback procedure",
+      "sp": 3,
+      "owner": "Dangtooo",
+      "reviewer": "taibaonguyen",
+      "dependencies": [
+        248,
+        251,
+        253
+      ],
+      "schedule": "W13 D4–D5"
+    },
+    {
+      "issue": 253,
+      "title": "[Task] Deploy Next.js with the existing API proxy and session flow",
+      "sp": 5,
+      "owner": "taibaonguyen",
+      "reviewer": "Dangtooo",
+      "dependencies": [
+        248
+      ],
+      "schedule": "W13 D3–D4"
+    },
+    {
+      "issue": 254,
+      "title": "[Task] Verify public P0 flows and production proxy limits",
+      "sp": 5,
+      "owner": "taibaonguyen",
+      "reviewer": "PhanDangVu",
+      "dependencies": [
+        247,
+        248,
+        249,
+        250,
+        253
+      ],
+      "schedule": "W14 D1–D3"
+    },
+    {
+      "issue": 255,
+      "title": "[Task] Update README and setup instructions for production",
+      "sp": 3,
+      "owner": "PhanDangVu",
+      "reviewer": "taibaonguyen",
+      "dependencies": [
+        247,
+        248,
+        253
+      ],
+      "schedule": "W14 D2–D3"
+    },
+    {
+      "issue": 256,
+      "title": "[Task] Write the production operations guide",
+      "sp": 3,
+      "owner": "PhanDangVu",
+      "reviewer": "duongbui0811",
+      "dependencies": [
+        246,
+        249,
+        250,
+        251,
+        252
+      ],
+      "schedule": "W14 D2–D4"
+    },
+    {
+      "issue": 257,
+      "title": "[Task] Verify production integration and publish the v1.0 release tag",
+      "sp": 3,
+      "owner": "PhanDangVu",
+      "reviewer": "Dangtooo",
+      "dependencies": [
+        248,
+        252,
+        254,
+        255,
+        256
+      ],
+      "schedule": "W14 D4"
+    },
+    {
+      "issue": 258,
+      "title": "[Chore] Sprint 5 wrap-up",
+      "sp": 2,
+      "owner": "duongbui0811",
+      "reviewer": "PhanDangVu",
+      "dependencies": [
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255,
+        256,
+        257
+      ],
+      "schedule": "W14 D5"
+    }
+  ]
+}

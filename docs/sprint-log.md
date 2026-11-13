@@ -6,6 +6,93 @@ evidence that the process was real.
 
 ---
 
+## Sprint 5 — November 2026 (weeks 13–14)
+
+### Goal and roles
+
+Keep DocuMind publicly accessible over HTTPS, preserve all P0 document workflows
+with real AI and persistent data, gate releases with CI, and hand over operations
+and final submission material before the week-15 demo.
+
+| Role | Owner / responsibility |
+|---|---|
+| Product Owner | @PhanDangVu — scope, docs, acceptance and release coordination |
+| Scrum Master | @duongbui0811 — Sprint 5 facilitation and wrap-up #258; cloud MySQL, storage and demo data |
+| Backend / CI | @Dangtooo — FastAPI, recovery, readiness, CI and rollback |
+| Frontend / public flows | @taibaonguyen — Next.js deployment, proxy and public P0 checks |
+
+### Committed scope and schedule
+
+**15 tasks, 53 SP.** This is the first numeric repository baseline recorded by
+this refinement on **13 November 2026**. Issues #244–#258 were created on
+6 November; the estimates below are not backdated evidence of that meeting.
+Existing issue “Estimated hours” remain unchanged: these SP estimates describe
+relative complexity/risk, not a conversion of hours into points. Planning and
+review assignments are recorded in the issue bodies and
+[machine-readable plan](evidence/m5/sprint5-plan.json).
+
+W13/W14 are the brief’s Sprint 5 teaching weeks; D1–D5 are sequencing windows,
+not newly claimed calendar completion dates. Infrastructure/schema and CI lead
+integration, followed by acceptance/docs, release and wrap-up. Work already
+completed is not re-counted here as accepted velocity.
+
+| Issue | Task | SP | Owner | Reviewer | Dependencies | Schedule |
+|---|---|---:|---|---|---|---|
+| [#244](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/244) | Refine backlog for Sprint 5 | 2 | @PhanDangVu | @duongbui0811 | None | W13 D1 |
+| [#245](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/245) | Configure cloud MySQL and prepare the production schema | 3 | @duongbui0811 | @Dangtooo | #244 | W13 D1–D2 |
+| [#246](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/246) | Configure persistent document storage and verify backup restoration | 5 | @duongbui0811 | @Dangtooo | #245 | W13 D2–D3 |
+| [#247](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/247) | Prepare production sample data and test accounts | 3 | @duongbui0811 | @taibaonguyen | #245, #246 | W13 D3 |
+| [#248](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/248) | Deploy the FastAPI backend to production | 5 | @Dangtooo | @duongbui0811 | #245, #246 | W13 D2–D3 |
+| [#249](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/249) | Handle interrupted processing jobs after restart or deployment | 5 | @Dangtooo | @PhanDangVu | #244 | W13 D2–D4 |
+| [#250](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/250) | Add database-aware health checks and operational monitoring | 3 | @Dangtooo | @PhanDangVu | #245 | W13 D3–D4 |
+| [#251](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/251) | Update CI and verify main branch protection | 3 | @Dangtooo | @PhanDangVu | #244 | W13 D1–D2 |
+| [#252](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/252) | Gate deployments on CI and verify the rollback procedure | 3 | @Dangtooo | @taibaonguyen | #248, #251, #253 | W13 D4–D5 |
+| [#253](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/253) | Deploy Next.js with the existing API proxy and session flow | 5 | @taibaonguyen | @Dangtooo | #248 | W13 D3–D4 |
+| [#254](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/254) | Verify public P0 flows and production proxy limits | 5 | @taibaonguyen | @PhanDangVu | #247, #248, #249, #250, #253 | W14 D1–D3 |
+| [#255](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/255) | Update README and setup instructions for production | 3 | @PhanDangVu | @taibaonguyen | #247, #248, #253 | W14 D2–D3 |
+| [#256](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/256) | Write the production operations guide | 3 | @PhanDangVu | @duongbui0811 | #246, #249, #250, #251, #252 | W14 D2–D4 |
+| [#257](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/257) | Verify production integration and publish the v1.0 release tag | 3 | @PhanDangVu | @Dangtooo | #248, #252, #254, #255, #256 | W14 D4 |
+| [#258](https://github.com/SE-FDA-NEU/G6_AI66A_SE/issues/258) | Sprint 5 wrap-up | 2 | @duongbui0811 | @PhanDangVu | #244, #245, #246, #247, #248, #249, #250, #251, #252, #253, #254, #255, #256, #257 | W14 D5 |
+
+| Accounting field | Value |
+|---|---|
+| Committed baseline | 53 SP across 15 tasks |
+| Completed points | To be recorded from actual accepted work by #258 |
+| Velocity | To be recorded by #258; no closed-issue shortcut |
+
+### Hosting and adjustments to the brief
+
+| Decision | Project-specific implementation and reason |
+|---|---|
+| Frontend | Keep Next.js SSR on a Render Node Web Service with npm ci/build/start. A Static Site or GitHub Pages would not preserve server session lookup and API rewrites. |
+| API address | Use server-only BACKEND_ORIGIN at build and runtime. Browser requests stay same-origin through Next rewrites; VITE_API_URL is not applicable to this Next.js app. |
+| Database | Keep cloud MySQL-compatible TiDB, SQLAlchemy/PyMySQL and utf8mb4. The brief’s Neon/Supabase PostgreSQL examples do not require replacing the existing MySQL schema. |
+| Backend | FastAPI/ASGI with Uvicorn on 0.0.0.0:$PORT, one worker/instance, no reload. Require subprocess support, writable temp space and a persistent mount for originals/reader PDFs/caches. |
+| Upload transport | Require five files up to 5 MiB each plus multipart overhead. Next proxy allowance is 30 MiB; live near-25 MiB upload/processing/download checks passed in #257 evidence. |
+| Availability/storage | A frontend-only Free blueprint is not proof of persistent backend storage. Backend hosting must provide the required persistent filesystem; verify the actual plan/mount separately. |
+| Release and ownership | Reviewed PR, green main CI and deploy-after-green. Dương owns data/storage and wrap-up; Dang owns backend/CI; Tai owns frontend; Vu coordinates acceptance/docs. |
+
+### Planning/refinement board evidence
+
+[Filtered Sprint 5 board](https://github.com/orgs/SE-FDA-NEU/projects/24/views/1?filterQuery=is%3Aissue%20created%3A%3E%3D2026-11-06).
+The GitHub Projects CLI token lacks read:project, so the authenticated browser
+was used to inspect/refine the board. The pre-refinement board had empty
+Estimate fields and omitted #245–#247 (their PRs were present instead).
+All 15 native Estimate values were read back and matched the 53-SP plan; see
+[board-value capture](evidence/m5/sprint5-board-values.json). All issue bodies
+were read back and matched their planned SP/reviewer assignments.
+The capture below is the **13 November refinement snapshot**, not a recreated
+image of the original Planning meeting. Historical meeting-time capture remains
+unavailable; issue bodies, the plan and the commit timestamp document this work.
+
+![Sprint 5 refinement board](evidence/m5/sprint5-refinement-2026-11-13.png)
+
+Completed totals, velocity, final contribution checks and the five-sprint result
+table belong to #258 after actual acceptance. No retrospective totals are invented
+by this backlog-refinement task.
+
+---
+
 ## Sprint 4 - October-November 2026
 
 ### Sprint goal
