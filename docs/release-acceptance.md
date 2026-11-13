@@ -71,9 +71,11 @@ and this test passed, propagating the isolated backend's real 503 status/body
 and `no-store` header. Backend `tests/test_health.py`: 5 passed, covering 200,
 503, timeout, recovery and sanitized logs. Config node tests: 3 passed.
 
-Render Dashboard currently shows sign-in; there is no authenticated deployment
-session. The Render integration was found but its connection is pending user
-sign-in. Repository permissions allow push/triage, not admin/maintain. Required
+Render Dashboard is now authenticated after user sign-in. Its only visible
+workspace is My Workspace with one member and no services; neither DocuMind
+service is accessible from this workspace. The service owner must grant access
+to the workspace that owns the deployed services. Repository permissions allow
+push/triage, not admin/maintain. Required
 status checks, deploy IDs/SHAs, controlled restart/rollback, live AI, seeded
 20-document acceptance and owner confirmations therefore remain unresolved.
 No release tag has been created or moved.
