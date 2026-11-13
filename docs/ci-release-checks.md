@@ -41,3 +41,14 @@ relaxed. The run had 707 passes and five skips before the assertion fix.
 
 The main-green link and final protection screenshot remain pending the merge and
 administrator change; no deployment or production protection change is claimed.
+
+## Updated main evidence (13 November 2026)
+
+[Run 43387604003](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43387604003)
+succeeded on main SHA `ee290ee5206db80f7e0d4e6116689f18404ec577`.
+Elapsed time was 6 min 6 s (07:41:58–07:48:04 UTC). All three jobs succeeded.
+The Node job now includes production configuration/build/session smoke tests.
+The effective-rules API still reports PR approval, deletion and force-push
+protection, with no required status checks. Final administrator configuration
+and screenshot are still pending; no production deploy SHA is inferred from CI.
+See [operations](operations.md) and [release acceptance](release-acceptance.md).
