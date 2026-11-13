@@ -12,7 +12,7 @@ Open the public URL above and sign in. This is an ordinary user account with syn
 |---|---|---|
 | test@gmail.com | 12345678 | Standard user |
 
-The demo corpus contains at least 21 documents, saved Table/Bullet/Concept results and source citations. A valid Gemini key is required for new AI processing; do not commit or publish API keys. The demo sign-in and live AI were verified on 13 November 2026. The v1.0 release is pending deployment-SHA verification and final acceptance.
+The demo corpus contains at least 21 documents, saved Table/Bullet/Concept results and source citations. A valid Gemini key is required for new AI processing; do not commit or publish API keys. The demo sign-in and live AI were verified on 13 November 2026. [Release v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0) is published from green main `0431a5d`.
 
 | P0 story | Starting clicks after sign-in |
 |---|---|

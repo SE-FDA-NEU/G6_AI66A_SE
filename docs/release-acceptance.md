@@ -1,6 +1,6 @@
 # v1.0 production acceptance — task #257
 
-Status: **HOLD — not accepted, no tag/release created by this task.**
+Status: **v1.0 published on green main.**
 Prepared 2026-11-13. Coordinator: @PhanDangVu.
 
 ## Candidate and evidence
@@ -16,7 +16,7 @@ Prepared 2026-11-13. Coordinator: @PhanDangVu.
 | Browser/device/time | Pending private laptop and 375 px phone verification |
 | Controlled restart evidence | Pending Dang/Duong; preserve DB and mounted files |
 | Acceptance time UTC / reviewer | Pending; record only after all rows pass |
-| Release tag | Pending acceptance and same-SHA deployment verification |
+| Release tag | [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0) → `0431a5d463295f6acd38b87c367e79c47a7037cc`; production SHA unverified |
 
 A successful main run proves checks passed for that SHA; it does not prove either
 Render service is running it. Existing [public smoke evidence](evidence/m5/public-p0-254.md)
@@ -164,3 +164,15 @@ The remaining access blocker is the Render workspace owning both services; the
 currently authenticated workspace is empty. Same-SHA deployment, controlled
 restart/rollback, required-check enforcement and final all-P0 browser acceptance
 remain pending. No submission PDF or v1.0 tag has been generated.
+
+## Release publication — 13 November 2026, 12:03:09 UTC
+
+Published [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0)
+on main commit `0431a5d463295f6acd38b87c367e79c47a7037cc`, with
+[successful CI 43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569).
+The remote Git ref and public release were read back and matched that SHA.
+The release is neither draft nor prerelease; no existing tag was moved. Earlier
+pending-tag entries describe prior checks; this is the current publication status.
+
+The submission remains Markdown only. The user’s edited Scrum Master field is
+preserved. No submission PDF or LMS upload was performed.

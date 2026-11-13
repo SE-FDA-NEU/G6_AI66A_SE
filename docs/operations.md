@@ -2,6 +2,8 @@
 
 ## 1. How to run and release
 
+Published release: [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0), main SHA `0431a5d463295f6acd38b87c367e79c47a7037cc`.
+
 Public app: https://documind-web-k6i1.onrender.com. Frontend and FastAPI backend run on Render; backend: https://documind-n9ny.onrender.com. MySQL-compatible TiDB and persistent backend files are owned by Duong. Platform configuration still requires owner verification.
 
 Run locally using [SETUP](SETUP.md). Release: reviewed PR → merge → successful main CI → deploy the same SHA to both services. The frontend blueprint specifies `checksPass`; Dang must verify the backend gate and Tai the live frontend setting. Keep one backend instance/worker; stop the old process tree before replacement.
@@ -73,4 +75,4 @@ Documents expire 30 days after successful open/download/update; warn seven days 
 
 ## 7. Availability commitment and verification
 
-Proposed accountable coordinator: Vu (@PhanDangVu), until grades are published. The publication date is unspecified; this is an event-based end date. Vu must confirm the commitment, keep hosting/billing active and arrange backup cover. Dang verifies backend/gates/alerts; Duong verifies MySQL/storage/backups; Tai verifies frontend/proxy; Vu signs release acceptance. Owner confirmations and the final protection screenshot remain pending. Do not mark #256/#257 complete or publish `v1.0` until the recorded blockers are resolved.
+Proposed accountable coordinator: Vu (@PhanDangVu), until grades are published. The publication date is unspecified; this is an event-based end date. Vu must confirm the commitment, keep hosting/billing active and arrange backup cover. Dang verifies backend/gates/alerts; Duong verifies MySQL/storage/backups; Tai verifies frontend/proxy; Vu signs release acceptance. Owner confirmations and the final protection screenshot remain pending. Release [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0) was published on 13 November 2026 from green main `0431a5d463295f6acd38b87c367e79c47a7037cc`.
