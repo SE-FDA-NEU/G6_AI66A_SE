@@ -78,7 +78,7 @@ test('five 5 MiB files survive upload and download rewrites without corruption',
   bytes.write(pdf);
   bytes.write('\n%%EOF\n', size - 7);
   for (let i = 0; i < 5; i++) form.append('files', new Blob([bytes], { type: 'application/pdf' }), `production-batch-${i}.pdf`);
-  const response = await request.post('/api/upload', { multipart: form });
+  const response = await request.post('/api/upload', { headers: { 'X-Gemini-Api-Key': 'test-user-key' }, multipart: form });
   expect(response.status(), await response.text()).toBe(202);
   const { jobId } = await response.json();
   expect((await request.get(`/jobs/${jobId}`)).status()).toBe(200);

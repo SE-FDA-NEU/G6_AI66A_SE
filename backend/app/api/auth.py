@@ -10,6 +10,8 @@ from app.models.user import User
 from app.schemas.auth import RegisterRequest, TokenResponse
 from app.core.security import get_password_hash, verify_password, create_access_token, get_current_user_id, SESSION_COOKIE
 from app.core.config import settings
+from app.services.saved_api_keys import validate_key, encrypt_key
+from pydantic import BaseModel, SecretStr
 
 class AuthRoute(APIRoute):
     def get_route_handler(self):
@@ -19,6 +21,8 @@ class AuthRoute(APIRoute):
             try:
                 return await handler(request)
             except RequestValidationError:
+                if self.path == '/auth/gemini-key':
+                    raise HTTPException(422, 'Invalid API key request.') from None
                 if self.path == '/auth/register':
                     # Default validation details can echo the submitted password.
                     raise HTTPException(422, 'Thông tin đăng ký không hợp lệ. Vui lòng kiểm tra lại.') from None
@@ -28,6 +32,41 @@ class AuthRoute(APIRoute):
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"], route_class=AuthRoute)
+
+
+class SaveGeminiKey(BaseModel):
+    api_key: SecretStr
+
+
+def account(db, user_id):
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(401, 'Account no longer exists.')
+    return user
+
+
+@router.get('/gemini-key')
+def saved_gemini_key(response: Response, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    response.headers['Cache-Control'] = 'no-store'
+    return {'configured': bool(account(db, user_id).gemini_api_key_encrypted)}
+
+
+@router.put('/gemini-key')
+def save_gemini_key(request: SaveGeminiKey, response: Response,
+                    user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    key = validate_key(request.api_key.get_secret_value())
+    user = account(db, user_id)
+    user.gemini_api_key_encrypted = encrypt_key(user_id, key)
+    db.commit()
+    response.headers['Cache-Control'] = 'no-store'
+    return {'configured': True}
+
+
+@router.delete('/gemini-key', status_code=204)
+def delete_gemini_key(response: Response, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
+    account(db, user_id).gemini_api_key_encrypted = None
+    db.commit()
+    response.headers['Cache-Control'] = 'no-store'
 
 
 def start_session(response: Response, http_request: Request, user_id: int):

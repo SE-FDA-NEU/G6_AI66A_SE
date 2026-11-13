@@ -30,6 +30,7 @@ test('folder upload assigns every file before processing; leaving the folder upl
   expect(created.status()).toBe(201);
   const folder = await created.json();
   await page.goto(`/workspace?folder=${folder.id}`);
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await expect(page.getByRole('status').filter({ hasText: 'Tài liệu mới sẽ được lưu' })).toContainText(folder.name);
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Chọn tệp tài liệu', exact: true }).click();
@@ -50,6 +51,7 @@ test('folder upload assigns every file before processing; leaving the folder upl
   await page.getByRole('button', { name: 'Ra ngoài thư mục' }).click();
   await expect(page).toHaveURL('/workspace');
   await expect(page.getByRole('status').filter({ hasText: 'Tài liệu mới sẽ nằm ngoài' })).toBeVisible();
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByLabel('Chọn tệp tài liệu', { exact: true }).setInputFiles({ name: 'outside.pdf', mimeType: 'application/pdf', buffer: pdfFixture() });
   const outsideResponse = page.waitForResponse(r => new URL(r.url()).pathname === '/api/upload' && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Tải lên và phân tích' }).click();
@@ -69,6 +71,7 @@ test('a stale folder cannot silently turn an upload into an outside document', a
   let uploads = 0;
   await page.route('**/api/upload', route => { uploads++; return route.abort(); });
   await page.goto('/workspace?folder=99999');
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByLabel('Chọn tệp tài liệu', { exact: true }).setInputFiles({ name: 'saved.pdf', mimeType: 'application/pdf', buffer: pdfFixture() });
   await expect(page.getByRole('main').getByRole('alert')).toContainText('Không thể dùng thư mục này');
   await expect(page.getByRole('button', { name: 'Tải lên và phân tích' })).toBeDisabled();
@@ -83,6 +86,7 @@ test('folder access failure retains files and keeps the selected destination', a
   await page.route('**/api/documents?*', route => route.fulfill({ json: [] }));
   await page.route('**/api/upload', route => route.fulfill({ status: 404 }));
   await page.goto('/workspace?folder=71');
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByLabel('Chọn tệp tài liệu', { exact: true }).setInputFiles({ name: 'saved.pdf', mimeType: 'application/pdf', buffer: pdfFixture() });
   await page.getByRole('button', { name: 'Tải lên và phân tích' }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('Thư mục không còn khả dụng');

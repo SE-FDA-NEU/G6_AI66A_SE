@@ -18,6 +18,7 @@ export function getBackendOrigin(env = process.env, production = env.NODE_ENV ==
 
 export function backendRewrites(origin) {
   return [
+    { source: '/health', destination: `${origin}/health` },
     { source: '/auth/:path*', destination: `${origin}/auth/:path*` },
     { source: '/jobs/:path*', destination: `${origin}/jobs/:path*` },
     { source: '/api/upload', destination: `${origin}/upload` },

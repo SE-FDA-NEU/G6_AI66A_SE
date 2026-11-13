@@ -14,9 +14,22 @@ def source_topics(wire):
     A table of contents alone does not establish a detailed topic. Require a
     section heading in an excerpt, and retain its exact original spelling.
     """
-    headings = []
+    candidates = []
     for source_id, text in wire:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if not lines:
+            continue
+        candidates.append((source_id, lines))
+    first_lines = Counter(lines[0] for _, lines in candidates)
+    # Reports often repeat their faculty/university masthead on every page.
+    # A repeated institution label is document furniture, not a subject that
+    # the summary must explain. Skip it only for topic detection; source text
+    # and offsets used by citations remain untouched.
+    institution = re.compile(r'faculty\s*of\b|department\s*of\b|\buniversity\b|trường\s+đại\s+học', re.I)
+    headings = []
+    for source_id, lines in candidates:
+        if first_lines[lines[0]] >= 3 and institution.search(lines[0]):
+            lines = lines[1:]
         if not lines:
             continue
         heading = lines[0]

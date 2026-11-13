@@ -13,6 +13,7 @@ class User(Base):
     username = Column(String(100), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+    gemini_api_key_encrypted = Column(String(1024), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now(), default=datetime.utcnow)
 
     folders = relationship("Folder", back_populates="owner", cascade="all, delete-orphan")

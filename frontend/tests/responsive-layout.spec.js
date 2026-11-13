@@ -100,6 +100,7 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
     }
     return route.fulfill({ status: 202, json: { jobId: 129 } });
   });
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).tap();
   await expect.poll(() => uploads).toBe(1);
   try {
@@ -111,6 +112,7 @@ test('US05 login leads through workspace, upload retry and completed bullet resu
   await expect(page.locator('.upload-files').getByRole('listitem')).toHaveCount(5);
   await expect(selector).toHaveValue('bullet');
   await expectNoOverflow(page);
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).tap();
   await expect(page).toHaveURL('/results/129');
   await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất');

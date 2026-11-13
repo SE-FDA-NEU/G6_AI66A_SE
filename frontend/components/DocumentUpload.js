@@ -12,8 +12,26 @@ export default function DocumentUpload({ compact = false, folderId = null, folde
   const [entries, setEntries] = useState([]);
   const [ready, setReady] = useState(false);
   const [mode, setMode] = useState('bullet');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [savedKey, setSavedKey] = useState(false);
+  const [keyBusy, setKeyBusy] = useState(false);
+  const [keyError, setKeyError] = useState('');
+  const keyRevision = useRef(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  useEffect(() => {
+    const controller = new AbortController();
+    const revision = keyRevision.current;
+    fetch('/auth/gemini-key', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error();
+        const result = await response.json();
+        if (revision === keyRevision.current) setSavedKey(result.configured === true);
+      }).catch(error => {
+        if (error.name !== 'AbortError' && revision === keyRevision.current) setKeyError(t('Could not load the saved API key. Please retry.'));
+      });
+    return () => controller.abort();
+  }, [t]);
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem('upload_analysis_mode');
@@ -58,8 +76,36 @@ export default function DocumentUpload({ compact = false, folderId = null, folde
     });
   }
 
+  async function saveKey() {
+    const response = await fetch('/auth/gemini-key', { method: 'PUT', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: geminiKey.trim() }) });
+    if (!response.ok) throw new Error('Could not save the API key. Please retry.');
+    keyRevision.current++;
+    setSavedKey(true);
+    setGeminiKey('');
+    setKeyError('');
+  }
+
+  async function updateKey(remove = false) {
+    setKeyBusy(true);
+    setKeyError('');
+    try {
+      if (remove) {
+        const response = await fetch('/auth/gemini-key', { method: 'DELETE', credentials: 'same-origin' });
+        if (!response.ok) throw new Error();
+        keyRevision.current++;
+        setSavedKey(false);
+        setGeminiKey('');
+      } else {
+        await saveKey();
+      }
+    } catch {
+      setKeyError(t(remove ? 'Could not remove the API key. Please retry.' : 'Could not save the API key. Please retry.'));
+    } finally { setKeyBusy(false); }
+  }
+
   async function submit() {
-    if (!ready || submitting || !accepted.length || rejected || !folderReady) return;
+    if (!ready || submitting || keyBusy || !accepted.length || rejected || !folderReady || (!geminiKey.trim() && !savedKey)) return;
     setSubmitting(true);
     setError('');
     const body = new FormData();
@@ -68,16 +114,30 @@ export default function DocumentUpload({ compact = false, folderId = null, folde
     body.append('language', locale);
     if (folderId != null) body.append('folder_id', String(folderId));
     try {
-      const response = await fetch('/api/upload', { method: 'POST', credentials: 'same-origin', body });
+      // Save first, then use this exact replacement for the current batch.
+      const enteredKey = geminiKey.trim();
+      if (enteredKey) {
+        try { await saveKey(); }
+        catch { setError(t('Could not save the API key. Please retry.')); setSubmitting(false); return; }
+      }
+      const response = await fetch('/api/upload', { method: 'POST', credentials: 'same-origin',
+        headers: enteredKey ? { 'X-Gemini-Api-Key': enteredKey } : {}, body });
       if (response.status === 401) { window.location.assign('/'); return; }
       if (folderId != null && (response.status === 403 || response.status === 404)) {
         setError(t('Thư mục không còn khả dụng. Chọn thư mục khác hoặc ra ngoài thư mục rồi thử lại.'));
         setSubmitting(false);
         return;
       }
+      if (response.status === 400 || response.status === 409) {
+        setSavedKey(false);
+        setError(t(response.status === 409 ? 'Saved Gemini API key could not be read. Please replace it.' : 'Enter your Gemini API key to analyze documents.'));
+        setSubmitting(false);
+        return;
+      }
       if (!response.ok) throw new Error('Upload failed');
       const result = await response.json();
       if (!/^[1-9]\d*$/.test(String(result.jobId))) throw new Error('Invalid job');
+      setGeminiKey('');
       window.location.assign(`/results/${result.jobId}`);
     } catch {
       setError(t("Không thể gửi tài liệu. Kiểm tra kết nối và thử lại."));
@@ -138,7 +198,27 @@ export default function DocumentUpload({ compact = false, folderId = null, folde
           {!compact && <><BeginnerGuide context="upload" />
           <p className="font-mono text-[10px] tracking-widest text-zinc-500">02 // {t('Chọn kiểu phân tích')}</p></>}
           <UploadModeSelector value={mode} disabled={!ready || submitting} onChange={handleModeChange} variant={compact ? 'cards' : 'select'} />
-          <button type="button" className={ui(compact ? 'btn primary w-full' : 'btn primary')} disabled={!ready || submitting || !accepted.length || rejected > 0 || !folderReady}
+          <div className="space-y-2 text-left">
+            <label htmlFor="gemini-api-key" className="block text-sm">{t('Your Gemini API key')}</label>
+            {savedKey && <p className="text-xs text-zinc-400" aria-live="polite">{t('An API key is saved to your account. Leave this field empty to use it, or enter a replacement.')}</p>}
+            <input id="gemini-api-key" type="password" autoComplete="off" spellCheck={false}
+              maxLength={256} value={geminiKey} disabled={!ready || submitting || keyBusy}
+              aria-describedby="gemini-key-help" placeholder="AIza…"
+              className="w-full rounded border border-zinc-600 bg-surface px-3 py-2 text-sm"
+              onChange={event => setGeminiKey(event.target.value)} />
+            <p id="gemini-key-help" className="text-xs leading-6 text-zinc-400">
+              {t('Your key is saved encrypted to your account and reused for future uploads. A replacement overwrites the saved key. Gemini quota applies to your key.')}{' '}
+              <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">{t('Get a Gemini API key')}</a>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className={ui('btn')} disabled={!ready || submitting || keyBusy || !geminiKey.trim()}
+                onClick={() => updateKey()}>{t(savedKey ? 'Change API key' : 'Save API key')}</button>
+              {savedKey && <button type="button" className={ui('btn')} disabled={submitting || keyBusy}
+                onClick={() => updateKey(true)}>{t('Remove saved key')}</button>}
+            </div>
+            {keyError && <p role="alert" className={ui('error-box')}>{t(keyError)}</p>}
+          </div>
+          <button type="button" className={ui(compact ? 'btn primary w-full' : 'btn primary')} disabled={!ready || submitting || keyBusy || !accepted.length || rejected > 0 || !folderReady || (!geminiKey.trim() && !savedKey)}
             onClick={submit}>{submitting ? t("Đang gửi…") : t("Tải lên và phân tích")}</button>
           {error && <p className={ui('error-box')} role="alert">{errorText(error)}</p>}
         </div>

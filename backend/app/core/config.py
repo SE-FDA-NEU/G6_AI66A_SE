@@ -94,7 +94,7 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = Field(default='gemini-3.5-flash', pattern=r'^gemini-[a-z0-9.-]+$')
     # Character budget for source excerpts; not an exact tokenizer count.
     GEMINI_MAX_INPUT_CHARS: int = Field(default=24000, ge=500, le=100000)
-    GEMINI_MAP_CONCURRENCY: int = Field(default=2, ge=1, le=4)
+    GEMINI_MAP_CONCURRENCY: int = Field(default=1, ge=1, le=4)
     GEMINI_MAX_OUTPUT_TOKENS: int = Field(default=4096, ge=256, le=8192)
     GEMINI_REQUEST_TIMEOUT_SECONDS: int = Field(default=45, ge=1, le=300)
     GEMINI_CACHE_ENABLED: bool = True

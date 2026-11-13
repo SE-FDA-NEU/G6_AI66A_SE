@@ -1,0 +1,18 @@
+[
+  ["Đã lưu API key vào tài khoản. Để trống ô này để dùng key đã lưu, hoặc nhập key thay thế.", "An API key is saved to your account. Leave this field empty to use it, or enter a replacement."],
+  ["Key được mã hóa và lưu theo tài khoản để dùng cho các lần tải sau. Key mới sẽ thay thế key đã lưu. Hạn mức Gemini áp dụng cho key của bạn.", "Your key is saved encrypted to your account and reused for future uploads. A replacement overwrites the saved key. Gemini quota applies to your key."],
+  ["Lưu API key", "Save API key"],
+  ["Đổi API key", "Change API key"],
+  ["Xóa key đã lưu", "Remove saved key"],
+  ["Không thể tải trạng thái API key đã lưu. Vui lòng thử lại.", "Could not load the saved API key. Please retry."],
+  ["Không thể lưu API key. Vui lòng thử lại.", "Could not save the API key. Please retry."],
+  ["Không thể xóa API key. Vui lòng thử lại.", "Could not remove the API key. Please retry."],
+  ["Không thể đọc Gemini API key đã lưu. Vui lòng thay key mới.", "Saved Gemini API key could not be read. Please replace it."],
+  ["Gemini API key của bạn", "Your Gemini API key"],
+  ["Lấy Gemini API key", "Get a Gemini API key"],
+  ["Nhập Gemini API key của bạn để phân tích tài liệu.", "Enter your Gemini API key to analyze documents."],
+  ["Gemini API key của bạn không hợp lệ hoặc không có quyền dùng model đã cấu hình. Kiểm tra key rồi tải lại tài liệu.", "Your Gemini API key is invalid or cannot access the configured model. Check the key and upload again."],
+  ["Gemini key của bạn đã chạm hạn mức hoặc giới hạn lượt gọi. Kiểm tra hạn mức trong Google AI Studio và thử lại sau.", "Your Gemini key has reached its quota or rate limit. Check your Google AI Studio quota and retry later."],
+  ["Gemini tạm thời không khả dụng. Vui lòng tải lại tài liệu sau.", "Gemini is temporarily unavailable. Please upload again later."],
+  ["Gemini chưa trả về bản tóm tắt đầy đủ, hợp lệ. Vui lòng thử tải lại tài liệu.", "Gemini did not return a complete, valid summary. Please try uploading again."]
+]

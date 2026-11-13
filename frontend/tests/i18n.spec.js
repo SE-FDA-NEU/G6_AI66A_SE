@@ -109,6 +109,7 @@ test('upload captures the selected language in the submitted job', async ({ page
   await page.locator('input[type="file"]').setInputFiles({ name: 'source.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n%%EOF') });
   let body;
   await page.route('**/api/upload', route => { body = route.request().postData(); return route.fulfill({ status: 503, json: { detail: 'Unavailable' } }); });
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByRole('button', { name: /Upload.*analy/i }).click();
   await expect.poll(() => body).toContain('name="language"\r\n\r\nen');
 });

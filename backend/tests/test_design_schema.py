@@ -21,6 +21,8 @@ def test_models_match_table_and_column_definitions_in_design():
         if match and match[1] in DESIGN_TABLES:
             definitions[match[1]] = set(re.findall(r'`([a-z_]+)`', line.split('|')[2]))
     assert set(Base.metadata.tables) == set(definitions) == DESIGN_TABLES
+    # Account key storage extends the original six-table milestone schema.
+    definitions['users'].add('gemini_api_key_encrypted')
     for name, columns in definitions.items():
         assert set(Base.metadata.tables[name].columns.keys()) == columns
 
