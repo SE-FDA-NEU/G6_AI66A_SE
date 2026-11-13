@@ -4,7 +4,8 @@ import guideMessages from '../locales/guides.json';
 import historyMessages from '../locales/history.json';
 import authMessages from '../locales/auth.json';
 import processingMessages from '../locales/processing.json';
-const messages = { ...Object.fromEntries([...uxMessages, ...guideMessages, ...historyMessages, ...authMessages, ...processingMessages].map(([vi, en]) => [vi, { vi, en }])), ...existingMessages };
+import apiKeyMessages from '../locales/api-key.json';
+const messages = { ...Object.fromEntries([...uxMessages, ...guideMessages, ...historyMessages, ...authMessages, ...processingMessages, ...apiKeyMessages].map(([vi, en]) => [vi, { vi, en }])), ...existingMessages };
 
 export const LOCALE_COOKIE = 'documind_language';
 export function readLocale(cookie = '') {

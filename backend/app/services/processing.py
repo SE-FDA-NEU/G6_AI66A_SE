@@ -14,6 +14,7 @@ from app.services.result_persistence import InvalidAnalysisResult, publish_reade
 from app.core.config import settings
 from app.services.gemini_analysis import GeminiAnalysisError, analyze_document
 from app.services.document_retention import is_expired_source
+from app.services.analysis_credentials import user_gemini_key
 from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,9 @@ class DocumentInput:
 
 async def process_document(document, mode):
     """Use the selected provider, or persist an explicit extraction-only result."""
-    key = settings.GROQ_API_KEY if settings.ANALYSIS_PROVIDER == 'groq' else settings.GEMINI_API_KEY
+    key = user_gemini_key.get()
+    if key is None:
+        key = settings.GROQ_API_KEY if settings.ANALYSIS_PROVIDER == 'groq' else settings.GEMINI_API_KEY
     if key.get_secret_value().strip():
         return await analyze_document(document, mode)
     outputs = {'bullet': BulletOutput, 'table': TableOutput, 'concept': ConceptOutput}

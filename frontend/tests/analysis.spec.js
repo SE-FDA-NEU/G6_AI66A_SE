@@ -122,6 +122,7 @@ test('financial clause upload submits five contracts in one job through the real
   await page.getByLabel('Chọn tệp tài liệu').setInputFiles(contracts);
   await page.getByLabel('Kiểu phân tích').selectOption('table');
   await expect(page.getByRole('status')).toContainText('5/5 tệp hợp lệ');
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).click();
   await expect(page).toHaveURL(/\/results\/\d+$/);
   await expect(page.getByLabel('Trạng thái tác vụ')).toHaveText('Hoàn tất', { timeout: 15000 });
@@ -174,6 +175,7 @@ for (const failure of ['server', 'network', 'invalid job']) {
     }));
     const picker = page.getByLabel('Chọn tệp tài liệu');
     await picker.setInputFiles(contracts);
+    await page.locator('#gemini-api-key').fill('test-user-key');
     await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).click();
     await expect.poll(() => uploads.length).toBe(1);
     try {
@@ -226,6 +228,7 @@ test('upload errors keep selection and allow an explicit retry', async ({ page }
   await page.route('**/api/upload', route => route.fulfill({ status: 503, json: { detail: 'Unavailable' } }));
   await page.goto('/upload');
   await page.getByLabel('Chọn tệp tài liệu').setInputFiles({ name: 'retry.pdf', mimeType: 'application/pdf', buffer: pdf() });
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).click();
   await expect(page.locator('.upload-page').getByRole('alert')).toHaveText(/Không thể gửi tài liệu/);
   await expect(page.getByRole('button', { name: 'Tải lên và phân tích', exact: true })).toBeEnabled();

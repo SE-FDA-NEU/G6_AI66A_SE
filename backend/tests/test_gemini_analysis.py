@@ -271,13 +271,16 @@ def test_table_budget_prioritizes_financial_clause_over_unrelated_text():
 @pytest.mark.parametrize('status, code', [(400, 'gemini_configuration_error'), (401, 'gemini_configuration_error'),
                                         (403, 'gemini_configuration_error'), (429, 'gemini_quota_exceeded'),
                                         (503, 'gemini_unavailable')])
-def test_api_errors_are_sanitized_and_do_not_retry_or_cache(document, api, status, code):
+def test_api_errors_are_sanitized_with_bounded_transient_retries_and_no_cache(document, api, monkeypatch, status, code):
+    async def no_wait(delay):
+        pass
+    monkeypatch.setattr(gemini, '_retry_sleep', no_wait)
     state, calls = api
     state.update(status=status, response={'error': {'message': 'test-only-secret-never-live private document'}})
     with pytest.raises(gemini.GeminiAnalysisError) as error:
         asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
     assert error.value.code == code and 'private' not in str(error.value) and 'secret' not in str(error.value)
-    assert len(calls) == 1 and not list(settings.STORAGE_DIR.rglob('*.json'))
+    assert len(calls) == (3 if status == 503 else 1) and not list(settings.STORAGE_DIR.rglob('*.json'))
 
 
 @pytest.mark.parametrize('payload, code', [

@@ -9,6 +9,10 @@ from dataclasses import dataclass, replace
 import hashlib
 import json
 import logging
+import math
+import random
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import os
 from pathlib import Path
 import re
@@ -22,14 +26,82 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from app.core.config import settings
 from app.services.bullet_output import finalize_bullet_actions
 from app.services.summary_quality import coverage_instructions, quality_issues
+from app.services.analysis_credentials import user_gemini_key
 from copy import deepcopy
 from app.schemas.result import (AnalysisMetadata, AnalysisResult, BulletOutput, Claim,
                                 Concept, ConceptOutput, Evidence, LabelSuggestion, TableOutput)
 
 logger = logging.getLogger(__name__)
-PROMPT_VERSION = 'documind-9-bounded-concepts-and-repair'
+PROMPT_VERSION = 'documind-10-running-header-coverage'
 ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models'
 _provider = ContextVar('analysis_provider', default='gemini')
+MAX_REQUEST_ATTEMPTS = 3
+_retry_sleep = asyncio.sleep
+
+
+def daily_quota(response):
+    try:
+        details = response.json().get('error', {}).get('details', [])
+        return any('perday' in str(violation.get('quotaId', '')).lower()
+                   for detail in details if isinstance(detail, dict)
+                   for violation in detail.get('violations', []) if isinstance(violation, dict))
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def retry_after_seconds(response):
+    value = response.headers.get('retry-after')
+    if value is None:
+        return None
+    try:
+        seconds = float(value)
+    except ValueError:
+        try:
+            when = parsedate_to_datetime(value)
+            if when.tzinfo is None:
+                when = when.replace(tzinfo=timezone.utc)
+            seconds = max(0, (when - datetime.now(timezone.utc)).total_seconds())
+        except (ValueError, TypeError, OverflowError):
+            return None
+    return seconds if math.isfinite(seconds) and seconds >= 0 else None
+
+
+async def post_with_retry(client, body, deadline):
+    """Retry transport failures within one request budget, not a fresh timeout each time."""
+    loop = asyncio.get_running_loop()
+    key = user_gemini_key.get()
+    if key is None:
+        key = settings.GEMINI_API_KEY
+    for attempt in range(1, MAX_REQUEST_ATTEMPTS + 1):
+        response = None
+        try:
+            response = await client.post(f'{ENDPOINT}/{settings.GEMINI_MODEL}:generateContent',
+                headers={'x-goog-api-key': key.get_secret_value().strip()}, json=body)
+        except httpx.TimeoutException:
+            raise  # Preserve the worker's existing bounded timeout/retry rules.
+        except (httpx.NetworkError, httpx.RemoteProtocolError) as error:
+            logger.warning('Gemini transport failure model=%s request_attempt=%s/%s reason=%s',
+                           settings.GEMINI_MODEL, attempt, MAX_REQUEST_ATTEMPTS, type(error).__name__)
+            if attempt == MAX_REQUEST_ATTEMPTS:
+                raise
+        else:
+            delay = retry_after_seconds(response)
+            retryable = (response.status_code in (408, 500, 502, 503, 504)
+                         or response.status_code == 429 and delay is not None and not daily_quota(response))
+            if not response.is_success:
+                logger.warning('Gemini HTTP failure model=%s status=%s request_attempt=%s/%s',
+                               settings.GEMINI_MODEL, response.status_code, attempt, MAX_REQUEST_ATTEMPTS)
+            if not retryable or attempt == MAX_REQUEST_ATTEMPTS:
+                return response
+        delay = retry_after_seconds(response) if response is not None else None
+        delay = max(.1, delay) if delay is not None else 2 ** (attempt - 1) + random.uniform(0, .25)
+        if loop.time() + delay >= deadline:
+            if response is not None:
+                return response  # Do not retry earlier than Retry-After requests.
+            raise GeminiAnalysisError('gemini_connection_failed', 'Cannot connect to Gemini. Please retry later.')
+        logger.warning('Gemini retry scheduled request_attempt=%s/%s delay_seconds=%.2f',
+                       attempt + 1, MAX_REQUEST_ATTEMPTS, delay)
+        await _retry_sleep(delay)
 
 
 def active_model():
@@ -294,6 +366,8 @@ def request_body(mode, wire, language="vi"):
 
 
 def cache_file(document, body):
+    if user_gemini_key.get() is not None:
+        return None  # Each user-key upload must use that credential, not a shared cached response.
     if not settings.GEMINI_CACHE_ENABLED or getattr(document, 'owner_id', None) is None:
         return None
     first_page = document.extracted_text[0] if document.extracted_text else {}
@@ -340,25 +414,21 @@ async def generate(body):
         from app.services.groq_analysis import generate_groq
         return await generate_groq(body)
     try:
-        async with httpx.AsyncClient(timeout=settings.GEMINI_REQUEST_TIMEOUT_SECONDS) as client:
-            response = await client.post(f'{ENDPOINT}/{settings.GEMINI_MODEL}:generateContent',
-                                         headers={'x-goog-api-key': settings.GEMINI_API_KEY.get_secret_value().strip()},
-                                         json=body)
-    except httpx.TimeoutException:
+        deadline = asyncio.get_running_loop().time() + settings.GEMINI_REQUEST_TIMEOUT_SECONDS
+        async with asyncio.timeout_at(deadline):
+            async with httpx.AsyncClient(timeout=settings.GEMINI_REQUEST_TIMEOUT_SECONDS) as client:
+                response = await post_with_retry(client, body, deadline)
+    except (httpx.TimeoutException, TimeoutError):
         raise TimeoutError('Gemini request timed out.') from None
     except httpx.RequestError:
         raise GeminiAnalysisError('gemini_connection_failed', 'Cannot connect to Gemini. Please retry later.') from None
-    if response.status_code in (400, 401, 403, 404):
+    if response.status_code in (400, 401, 402, 403, 404):
+        if user_gemini_key.get() is not None:
+            raise GeminiAnalysisError('gemini_configuration_error',
+                                      'Your Gemini API key is invalid or cannot access the configured model. Check the key and upload again.')
         raise GeminiAnalysisError('gemini_configuration_error', 'Check GEMINI_API_KEY, model access and Gemini configuration.')
     if response.status_code == 429:
-        try:
-            details = response.json().get('error', {}).get('details', [])
-            daily = any('perday' in str(violation.get('quotaId', '')).lower()
-                        for detail in details if isinstance(detail, dict)
-                        for violation in detail.get('violations', []) if isinstance(violation, dict))
-        except (ValueError, TypeError, AttributeError):
-            daily = False
-        if daily:
+        if daily_quota(response):
             raise GeminiAnalysisError('gemini_daily_quota_exceeded',
                                       'Gemini daily quota reached. Wait for quota reset or configure a model/project with available quota.')
         raise GeminiAnalysisError('gemini_quota_exceeded', 'Gemini quota/rate limit reached. Please retry later.')
@@ -536,6 +606,13 @@ async def generate_validated(body, wire, mode):
                 issues.append('Shorten to fewer than 900 words, retaining supported facts and source IDs')
         if not issues:
             return raw, usage_total
+        categories = sorted({
+            'coverage' if issue.startswith('Missing substantive coverage:') else
+            'abbreviation' if issue.startswith('Check unsupported or misspelled abbreviations:') else
+            'word_limit' if issue.startswith('Shorten to fewer') else 'schema'
+            for issue in issues})
+        logger.warning('Analysis review required provider=%s mode=%s review_attempt=%s/2 issue_types=%s',
+                       _provider.get(), mode, attempt + 1, ','.join(categories))
         if attempt:
             if raw is None or over_budget:
                 raise GeminiAnalysisError(_provider.get() + '_invalid_response',
@@ -715,20 +792,23 @@ async def analyze_document(document, mode):
     # Context-local selection isolates concurrent jobs and propagates to map
     # tasks. Re-run the complete pipeline on Groq to keep one provider per
     # result and retain the existing prompts, validation and citation mapping.
-    token = _provider.set(settings.ANALYSIS_PROVIDER)
+    personal_key = user_gemini_key.get()
+    provider = 'gemini' if personal_key is not None else settings.ANALYSIS_PROVIDER
+    token = _provider.set(provider)
     try:
-        if settings.ANALYSIS_PROVIDER == 'groq':
+        if provider == 'groq':
             if not settings.GROQ_API_KEY.get_secret_value().strip():
                 raise GeminiAnalysisError('groq_configuration_error', 'Set GROQ_API_KEY in backend/.env.')
             return await _analyze_document(document, mode)
         try:
             return await _analyze_document(document, mode)
         except GeminiAnalysisError as error:
-            if (error.code not in ('gemini_quota_exceeded', 'gemini_daily_quota_exceeded')
+            if (personal_key is not None or error.code not in ('gemini_quota_exceeded', 'gemini_daily_quota_exceeded',
+                                   'gemini_unavailable', 'gemini_connection_failed')
                     or not settings.GROQ_FALLBACK_ENABLED
                     or not settings.GROQ_API_KEY.get_secret_value().strip()):
                 raise
-            logger.info('Gemini quota exhausted; using Groq model=%s', settings.GROQ_MODEL)
+            logger.info('Gemini failed code=%s; using Groq model=%s', error.code, settings.GROQ_MODEL)
             _provider.set('groq')
             return await _analyze_document(document, mode)
     finally:

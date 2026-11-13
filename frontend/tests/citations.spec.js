@@ -356,6 +356,7 @@ test.describe('Citation and Evidence Shared Components (US08 / BR05)', () => {
 test('TC-US09-14 citation jumps to the real evidence page, highlights it and returns to its originating job', async ({ page }) => {
   const source = readFileSync(new URL('../../backend/test/fixtures/acceptance/report-15-pages.pdf', import.meta.url));
   const uploaded = await page.request.post('/api/upload', {
+    headers: { 'X-Gemini-Api-Key': 'test-user-key' },
     multipart: { files: { name: 'citation-report.pdf', mimeType: 'application/pdf', buffer: source }, mode: 'bullet' },
   });
   expect(uploaded.status()).toBe(202);

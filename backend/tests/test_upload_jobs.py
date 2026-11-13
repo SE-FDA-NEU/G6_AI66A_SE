@@ -33,13 +33,13 @@ def test_upload_destination_is_committed_before_enqueue_and_survives_processing(
         db.add(folder); db.commit()
         folder_id = folder.id
     enqueue = job_queue.enqueue
-    def inspect_committed_destination(job_id):
+    def inspect_committed_destination(job_id, **credentials):
         with session_factory() as db:
             job = db.get(Job, job_id)
             assert job.status == JobStatus.PENDING
             assert len(job.job_files) == 2
             assert all(link.document.folder_id == folder_id for link in job.job_files)
-        enqueue(job_id)
+        enqueue(job_id, **credentials)
     monkeypatch.setattr(job_queue, 'enqueue', inspect_committed_destination)
     response = client.post('/upload', files=parts('first.pdf', 'second.pdf'), data={'folder_id': folder_id})
     assert response.status_code == 202
@@ -190,7 +190,7 @@ def test_existing_batch_directory_is_never_deleted(client, session_factory, job_
 
 
 def test_queue_failure_is_recorded_instead_of_leaving_pending_job(client, session_factory, job_queue, monkeypatch):
-    def unavailable(_):
+    def unavailable(_, **credentials):
         raise RuntimeError('queue unavailable')
     monkeypatch.setattr(job_queue, 'enqueue', unavailable)
     response = client.post('/upload', files=parts('a.pdf'))

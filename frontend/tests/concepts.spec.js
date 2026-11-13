@@ -140,6 +140,7 @@ test.describe('Shared Upload Selector and Concept Submission (US04, BR04, BR05)'
       { name: 'macroeconomics.pdf', mimeType: 'application/pdf', buffer: pdfFixture() },
     ]);
 
+    await page.locator('#gemini-api-key').fill('test-user-key');
     await page.getByRole('button', { name: 'Tải lên và phân tích', exact: true }).click();
     await expect(page).toHaveURL('/results/123');
     expect(capturedMode).toBe('concept');

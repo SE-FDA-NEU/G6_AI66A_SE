@@ -67,10 +67,12 @@ test('home upload retains selection after failure and sends the existing upload 
   await expect(page.getByRole('button', { name: 'Tải lên và phân tích' })).toBeDisabled();
   await page.getByLabel('Chọn tệp tài liệu', { exact: true }).setInputFiles({ name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from('fixture') });
   await page.getByRole('button', { name: 'Hiểu các khái niệm' }).click();
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByRole('button', { name: 'Tải lên và phân tích' }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('Không thể gửi tài liệu');
   await expect(page.locator('.upload-files')).toContainText('notes.pdf');
   await expect(page.getByRole('button', { name: 'Hiểu các khái niệm' })).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#gemini-api-key').fill('test-user-key');
   await page.getByRole('button', { name: 'Tải lên và phân tích' }).click();
   await expect(page).toHaveURL('/results/801');
   expect(calls).toBe(2);

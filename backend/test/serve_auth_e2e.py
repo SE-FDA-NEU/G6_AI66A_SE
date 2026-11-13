@@ -1,4 +1,4 @@
-"""Real auth/document APIs with an in-memory DB; never connects to local MySQL."""
+"""Real auth/document APIs with an isolated temporary DB; never uses local MySQL."""
 import os
 import sys
 import atexit
@@ -10,11 +10,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ['DB_PASSWORD'] = 'unused-test-password'
 os.environ['SECRET_KEY'] = 'isolated-playwright-test-key-not-for-production'
 os.environ['GEMINI_API_KEY'] = ''
+os.environ['GROQ_API_KEY'] = ''
+os.environ['ANALYSIS_PROVIDER'] = 'gemini'
+os.environ['GROQ_FALLBACK_ENABLED'] = 'false'
 os.environ['RETENTION_CLEANUP_ENABLED'] = 'false'
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 from app.main import app
 from app.db.database import Base, get_db
 from app.models import User, Document, FileFormat, Folder, Job, JobFile, JobMode, JobStatus, ReviewState
@@ -22,14 +24,32 @@ from app.core.security import get_password_hash
 from app.core.config import settings
 from app.services.reader_extraction import extract_document_for_reader
 import app.main as main_module
+from app.services import processing
+from app.services.analysis_credentials import use_gemini_key
 
-engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
+# Browser contract tests send dummy personal keys. Keep real auth, uploads,
+# extraction and persistence, but never send those keys or source text online.
+# Provider HTTP behavior and personal-key worker propagation have separate tests.
+real_process_document = processing.process_document
+
+
+async def extraction_only(document, mode):
+    with use_gemini_key(None):
+        return await real_process_document(document, mode)
+
+
+processing.process_document = extraction_only
+
+test_storage = tempfile.TemporaryDirectory(prefix='documind-reader-e2e-')
+# Give concurrent HTTP requests and worker threads their own connections.
+engine = create_engine('sqlite:///' + str(Path(test_storage.name) / 'e2e.sqlite3'),
+                       connect_args={'check_same_thread': False, 'timeout': 30})
 Base.metadata.create_all(engine)
 TestSession = sessionmaker(bind=engine)
 main_module.SessionLocal = TestSession
-test_storage = tempfile.TemporaryDirectory(prefix='documind-reader-e2e-')
 settings.STORAGE_DIR = Path(test_storage.name)
 atexit.register(test_storage.cleanup)
+atexit.register(engine.dispose)
 
 
 def metadata_pdf(path):

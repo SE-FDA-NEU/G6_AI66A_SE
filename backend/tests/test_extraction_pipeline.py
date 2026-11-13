@@ -17,6 +17,7 @@ from app.models import Document, FileFormat, Folder, Job, JobFile, JobStatus, Re
 from app.schemas.result import JobResultData
 from app.services import job_extraction, processing
 from app.services.job_queue import JobQueue, get_job_queue
+from app.services.analysis_credentials import use_gemini_key
 from app.services.pdf_extraction import extract_pdf
 from test_pdf_extraction import make_pdf
 from test_reader_extraction import sources  # actual DOCX/PPTX fixtures, not extraction mocks
@@ -52,7 +53,13 @@ def analysis(document, mode, confidence=.72, mutation=None):
 
 
 @pytest.mark.parametrize('mode', ['bullet', 'table', 'concept'])
-def test_real_queue_extracts_five_documents_and_revisit_keeps_results(client, session_factory, tmp_path, mode):
+def test_real_queue_extracts_five_documents_and_revisit_keeps_results(client, session_factory, tmp_path, mode, monkeypatch):
+    # This test covers extraction-only persistence, not live model inference.
+    real_analyzer = processing.process_document
+    async def extraction_only(document, requested_mode):
+        with use_gemini_key(None):
+            return await real_analyzer(document, requested_mode)
+    monkeypatch.setattr(processing, 'process_document', extraction_only)
     queue = JobQueue(session_factory)
     app.dependency_overrides[get_job_queue] = lambda: queue
     try:

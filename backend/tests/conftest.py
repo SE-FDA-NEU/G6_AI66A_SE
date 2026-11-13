@@ -49,7 +49,7 @@ def job_queue(session_factory):
             self.session_factory = session_factory
             self.enqueued = []
 
-        def enqueue(self, job_id):
+        def enqueue(self, job_id, *, gemini_api_key=None):
             self.enqueued.append(job_id)
     return RecordingQueue()
 
@@ -68,6 +68,7 @@ def client(session_factory, job_queue, tmp_path, monkeypatch):
     try:
         with TestClient(app) as client:
             client.headers['Authorization'] = f"Bearer {create_access_token({'sub': '123'})}"
+            client.headers['X-Gemini-Api-Key'] = 'test-user-gemini-key'
             yield client
     finally:
         app.dependency_overrides.clear()
