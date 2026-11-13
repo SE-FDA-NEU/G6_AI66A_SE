@@ -1,12 +1,8 @@
 Running app: https://documind-web-k6i1.onrender.com
 
-# Milestone 5 — Team 06 submission
+# Team 06 — Milestone 5 submission
 
-**Draft — do not upload to LMS yet.** Public smoke checks passed, but full P0 acceptance, deployed SHAs and `v1.0` publication are pending. The PDF explicitly preserves this status.
-
-## 7. What to submit here
-
-Submit one file named **`Team06_M5.pdf`**. The first line identifies the running app. The table below contains every field required by section 7; no private credentials belong in the PDF.
+**Draft for review.** Release and production-account details marked PENDING await verification.
 
 | Field | Value |
 |---|---|
@@ -19,27 +15,80 @@ Submit one file named **`Team06_M5.pdf`**. The first line identifies the running
 | Latest green CI run on main | https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569 |
 | Test accounts | See the first screen of README.md. PENDING: README currently has no verified production demo accounts; task #255 must supply them. Local seed credentials failed production login. |
 
-The verified main SHA is `0431a5d463295f6acd38b87c367e79c47a7037cc`; all three CI jobs passed. This does not establish which SHA Render is running. Refresh the CI URL after the final merge and deployment.
+---
 
-## 6. Submission workflow
+# Production operations
 
-| Step | Required action | Actual state / evidence |
+## 1. How to run and release
+
+Public app: https://documind-web-k6i1.onrender.com. Frontend and FastAPI backend run on Render; backend: https://documind-n9ny.onrender.com. MySQL-compatible TiDB and persistent backend files are owned by Duong. Platform configuration still requires owner verification.
+
+Run locally using [SETUP](SETUP.md). Release: reviewed PR → merge → successful main CI → deploy the same SHA to both services. The frontend blueprint specifies `checksPass`; Dang must verify the backend gate and Tai the live frontend setting. Keep one backend instance/worker; stop the old process tree before replacement.
+
+Rollback: stop traffic, select the last verified compatible SHA in both Render services, redeploy, then check login, DB, files and citations. Keep the same DB/storage. If schema changes are incompatible, stop and restore into a separate environment before switching; code rollback does not restore data. Record both deploy IDs and smoke results in [release acceptance](release-acceptance.md).
+
+## 2. The CI pipeline
+
+| Step | Checks |
+|---|---|
+| Setup/install | Python 3.12; Node 24; pip development requirements; npm lockfile; Chromium/WebKit |
+| Python tests | Full pytest; JUnit artifact |
+| Node build and tests | Desktop/Android/iOS Playwright; production configuration, build and session tests; reports |
+| No secrets committed | Credential patterns; no tracked environment files or database dumps |
+| Artifacts | Test/build reports retained 14 days |
+
+Latest verified green main: [43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569), SHA `0431a5d463295f6acd38b87c367e79c47a7037cc`. Measured start-to-completion: **6 min 20 s**, 2026-11-13 10:52:34–10:58:54 UTC. Refresh this evidence for the release SHA.
+
+[Main protection](https://github.com/SE-FDA-NEU/G6_AI66A_SE/rules/21296815) requires one PR approval and blocks force pushes/deletion. API inspection found no required status checks. An organization administrator must require all three checks and supply a settings screenshot; screenshot and enforcement remain release blockers (#251).
+
+## 3. Monitoring
+
+Backend `/health` runs bounded `SELECT 1`: 200 ready, 503 unavailable; it does not check AI. Verify `/health` on the public frontend too. Render service Logs contain sanitized request route/status/duration and processing state/error codes. Never log passwords, tokens, keys, personal data, document contents or search text. Use the [logging configuration](backend-monitoring.md).
+
+| Signal | Detection and response | Owner |
 |---|---|---|
-| 1. Deploy early | Connect both production services to main and deploy only after CI passes. Keep the public HTTPS URL online until grades are published. | App is reachable. Render blueprint specifies checksPass for frontend. Live service settings, both deployed SHAs and backend CI gate remain unverified. The authenticated Render account currently has an empty workspace and no services. |
-| 2. Branch and commit | Commit docs/operations.md and production README changes on a branch. | Operations committed in PR #270. Follow-up checks/docs in PR #271. Production README changes and verified demo accounts remain task #255. |
-| 3. Review and merge | Another member uses Review changes to leave a substantive comment, approve, then merge into main. A plain issue/PR comment is not a formal review. | PR #270 approved by Dangtooo and merged; the approval body was empty, so a substantive review comment is not evidenced. PR #271 has green CI but is still open at this audit. |
-| 4. Wait and accept | Wait for green main CI and deployment. In private laptop/phone browsers, complete all nine P0 stories by clicking from the landing page; verify reload and restart persistence. | Read-only public checks 11/11; registration, session reload and 375 px six-file validation checked. Full P0, live AI, physical phone/private window and controlled restart remain pending. See docs/release-acceptance.md. |
-| 5. Publish release | After acceptance, create v1.0 on the exact green-main SHA running on both services and publish three release-note lines. Never move an existing published tag silently. | PENDING. No tag/release created. Record accepted SHA, frontend/backend deploy IDs, UTC acceptance time and CI URL first. |
-| 6. Export and submit | Export the section 7 block as Team06_M5.pdf; check all fields and links, then upload that single PDF to LMS. | Draft PDF generated in docs/Team06_M5.pdf, with this workflow as page 2. Do not upload until all pending fields are resolved. No LMS submission performed. |
+| Health | Check every 60 s; alert after three failures; inspect service/DB | Dang |
+| Error rate | 5xx >5% over 5 min, ≥20 requests; inspect logs/release | Dang |
+| Response time | Ordinary JSON p95 >2 s over 5 min; inspect DB/load | Dang |
+| Jobs/quota/disk | Three job failures/10 min, any quota error, disk >80%; inspect provider/storage | Dang / Duong |
 
-## Rebuild the PDF
+Thresholds are proposed. Monitor URL, notification channel and backup responder must be verified before acceptance; no active alert integration is claimed.
 
-From the repository root, using the backend development environment:
+## 4. Known risks and technical debt
 
-```bash
-python scripts/export_m5_submission.py
-```
+| Item | Layer | What could happen | Plan |
+|---|---|---|---|
+| In-memory queue | code | Restart interrupts work; concurrency has no explicit admission cap | #249; single process, failed-job resubmission; capacity verification #248 |
+| Persistent files | data | DB survives while originals disappear | #246; mounted storage and coordinated restore rehearsal |
+| AI availability | infrastructure | Quota errors or partial batch failures | #254; retest five-file batch after #269 |
+| Required CI checks absent | infrastructure | Broken merge can bypass checks | #251; administrator adds three required checks |
+| Public acceptance incomplete | tests | Local passes hide hosting/browser failures | #257; all nine P0s on public HTTPS |
+| Missing deployment/alert evidence | docs | Operator cannot identify release or detect outage | #256; owners verify service settings and evidence |
+| Cold start | infrastructure | First request is slow | Accepted: grading brief permits slow initial visits; check before demo |
 
-The exporter reads these tables and writes `docs/Team06_M5.pdf`. It uses the bundled Noto Sans fonts and ReportLab already listed in backend requirements. Every table has an outer box and internal grid lines; no table is open at its sides. Page 1 starts with the app URL and contains the required submission block; page 2 contains the six-step workflow.
+## 5. Maintenance plan
 
-Before final export, replace pending values only with verified facts, update the latest green main CI link and deployed/tagged SHA, confirm README demo accounts, complete the formal review and full public acceptance, and remove the draft notice only when accurate. The exporter marks the PDF draft while this document contains PENDING or the draft notice.
+| Area | What to do | Owner | How often |
+|---|---|---|---|
+| Bugs | Triage, reproduce, fix through reviewed green PR | Vu coordinates; component owner fixes | Daily and each report |
+| Dependencies | Review advisories/lockfiles; test before update | Dang backend; Tai frontend | Weekly and urgent advisories |
+| Backups | Quiesce writes/workers/retention; coordinated MySQL + files backup; encrypt off-host copy | Duong | Daily and before release/schema changes |
+| Monitoring | Review health, errors, latency, quotas, disk; respond | Dang; Duong storage | Daily; alerts continuously once configured |
+| Documentation | Recheck URLs, SHAs, commands, accounts, ownership | Vu with Dang/Duong/Tai | Each release and weekly |
+
+From `backend`, use `python -m app.services.storage_ops --backup`, then `--restore-test /secure/bundle`. The latter verifies a separate temporary SQLite restore, not MySQL recovery. Rehearse the SQL dump in an empty isolated MySQL database with matching files, then `--verify` and citation checks before cutover. Never restore over live data blindly. Proposed retention: seven daily encrypted backups; Duong must approve and enforce deletion/access controls.
+
+Documents expire 30 days after successful open/download/update; warn seven days beforehand. Listing/polling does not renew expiry. Cleanup defaults to hourly batches of 100. Backups must follow deletion policy. Queue shutdown defaults to 10 s grace plus 8 s cleanup; host shutdown must allow longer. See [restart limits](processing-restart.md).
+
+## 6. Lessons learned
+
+| Incident | Fix | Future change |
+|---|---|---|
+| Linux CI counted empty `.analysis-cache` as leftover upload | Assert remaining files recursively, allow empty infrastructure directories (#263) | Include hidden paths in cleanup checks |
+| Mobile CI waited for hidden folder controls | Wait for mobile toggle/sidebar visibility ([M4 report](testing.md)) | Test responsive state transitions in CI |
+| Five-file proxy upload exceeded Next's 10 MB default | Set 30 MiB proxy allowance and add 25 MiB production test (#267) | Verify platform limits before deployment |
+| Public batch completed only 3/5 files | #269 changes analysis/key handling; production retest pending | Preserve failed-job evidence and require live AI acceptance (#254) |
+
+## 7. Availability commitment and verification
+
+Proposed accountable coordinator: Vu (@PhanDangVu), until grades are published. The publication date is unspecified; this is an event-based end date. Vu must confirm the commitment, keep hosting/billing active and arrange backup cover. Dang verifies backend/gates/alerts; Duong verifies MySQL/storage/backups; Tai verifies frontend/proxy; Vu signs release acceptance. Owner confirmations and the final protection screenshot remain pending. Do not mark #256/#257 complete or publish `v1.0` until the recorded blockers are resolved.
