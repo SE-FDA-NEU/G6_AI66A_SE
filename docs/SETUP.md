@@ -340,3 +340,5 @@ restart. The [release record](release-acceptance.md) contains observed results;
 [CI evidence](ci-release-checks.md) and [operations](operations.md) describe release
 and recovery. Live Render settings must be checked against this configuration;
 the frontend-only Blueprint does not configure the separately managed backend.
+
+Clean-clone verification for this documentation update: [task #255 evidence](evidence/m5/setup-255.md).

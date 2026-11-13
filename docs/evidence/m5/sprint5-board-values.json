@@ -1,0 +1,67 @@
+{
+  "captured_date": "2026-11-13",
+  "source": "Authenticated GitHub Projects UI, Estimate field",
+  "items": [
+    {
+      "estimate": 2,
+      "issue": 244
+    },
+    {
+      "estimate": 5,
+      "issue": 248
+    },
+    {
+      "estimate": 3,
+      "issue": 252
+    },
+    {
+      "estimate": 5,
+      "issue": 253
+    },
+    {
+      "estimate": 5,
+      "issue": 254
+    },
+    {
+      "estimate": 3,
+      "issue": 255
+    },
+    {
+      "estimate": 3,
+      "issue": 256
+    },
+    {
+      "estimate": 3,
+      "issue": 257
+    },
+    {
+      "estimate": 2,
+      "issue": 258
+    },
+    {
+      "estimate": 3,
+      "issue": 245
+    },
+    {
+      "estimate": 5,
+      "issue": 246
+    },
+    {
+      "estimate": 3,
+      "issue": 247
+    },
+    {
+      "estimate": 3,
+      "issue": 251
+    },
+    {
+      "estimate": 3,
+      "issue": 250
+    },
+    {
+      "estimate": 5,
+      "issue": 249
+    }
+  ],
+  "total_sp": 53
+}
