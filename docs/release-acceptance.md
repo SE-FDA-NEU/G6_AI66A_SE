@@ -11,12 +11,12 @@ Prepared 2026-11-13. Coordinator: @PhanDangVu.
 | Public backend | https://documind-n9ny.onrender.com |
 | Candidate main SHA | `0431a5d463295f6acd38b87c367e79c47a7037cc` |
 | Successful candidate main CI | [43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569), all three jobs succeeded |
-| Frontend deployed SHA / deploy ID | Pending Render Events evidence from Tai |
-| Backend deployed SHA / deploy ID | Pending Render Events evidence from Dang |
+| Frontend deployed SHA / deploy ID | User reports `ee290ee5206db80f7e0d4e6116689f18404ec577`; deploy ID not supplied |
+| Backend deployed SHA / deploy ID | User reports `ee290ee5206db80f7e0d4e6116689f18404ec577`; deploy ID not supplied |
 | Browser/device/time | Pending private laptop and 375 px phone verification |
 | Controlled restart evidence | Pending Dang/Duong; preserve DB and mounted files |
 | Acceptance time UTC / reviewer | Pending; record only after all rows pass |
-| Release tag | [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0) → `0431a5d463295f6acd38b87c367e79c47a7037cc`; production SHA unverified |
+| Release tag | [v1.0](https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0) → `0431a5d463295f6acd38b87c367e79c47a7037cc`; differs from reported deployment SHA |
 
 A successful main run proves checks passed for that SHA; it does not prove either
 Render service is running it. Existing [public smoke evidence](evidence/m5/public-p0-254.md)
@@ -176,3 +176,18 @@ pending-tag entries describe prior checks; this is the current publication statu
 
 The submission remains Markdown only. The user’s edited Scrum Master field is
 preserved. No submission PDF or LMS upload was performed.
+
+## Reported deployed SHA
+
+The user reports that both Render services run
+`ee290ee5206db80f7e0d4e6116689f18404ec577`. Its
+[main CI run 43387604003](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43387604003)
+succeeded. This is user-supplied deployment information, not a captured Render
+Events audit; deployment IDs were not supplied.
+
+The published v1.0 tag remains on `0431a5d463295f6acd38b87c367e79c47a7037cc`.
+A Git tree comparison shows only three documentation changes between the two
+commits: `docs/ci-release-checks.md`, `docs/operations.md` and this acceptance
+record. Application source is identical, but the commit identifiers still differ.
+To meet the exact tagged-commit requirement, redeploy both services at the
+existing v1.0 SHA and record the deploy IDs. The published tag was not moved.
