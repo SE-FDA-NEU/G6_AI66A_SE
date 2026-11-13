@@ -18,7 +18,7 @@ Rollback: stop traffic, select the last verified compatible SHA in both Render s
 | No secrets committed | Credential patterns; no tracked environment files or database dumps |
 | Artifacts | Test/build reports retained 14 days |
 
-Latest verified green main: [43387604003](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43387604003), SHA `ee290ee5206db80f7e0d4e6116689f18404ec577`. Measured start-to-completion: **6 min 6 s**, 2026-11-13 07:41:58–07:48:04 UTC. Refresh this evidence for the release SHA.
+Latest verified green main: [43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569), SHA `0431a5d463295f6acd38b87c367e79c47a7037cc`. Measured start-to-completion: **6 min 20 s**, 2026-11-13 10:52:34–10:58:54 UTC. Refresh this evidence for the release SHA.
 
 [Main protection](https://github.com/SE-FDA-NEU/G6_AI66A_SE/rules/21296815) requires one PR approval and blocks force pushes/deletion. API inspection found no required status checks. An organization administrator must require all three checks and supply a settings screenshot; screenshot and enforcement remain release blockers (#251).
 

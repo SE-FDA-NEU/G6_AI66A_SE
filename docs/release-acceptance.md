@@ -9,8 +9,8 @@ Prepared 2026-11-13. Coordinator: @PhanDangVu.
 |---|---|
 | Public frontend | https://documind-web-k6i1.onrender.com |
 | Public backend | https://documind-n9ny.onrender.com |
-| Candidate main SHA | `ee290ee5206db80f7e0d4e6116689f18404ec577` |
-| Successful candidate main CI | [43387604003](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43387604003), all three jobs succeeded |
+| Candidate main SHA | `0431a5d463295f6acd38b87c367e79c47a7037cc` |
+| Successful candidate main CI | [43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569), all three jobs succeeded |
 | Frontend deployed SHA / deploy ID | Pending Render Events evidence from Tai |
 | Backend deployed SHA / deploy ID | Pending Render Events evidence from Dang |
 | Browser/device/time | Pending private laptop and 375 px phone verification |
@@ -34,13 +34,57 @@ must expose public app readiness with the required 200/503 behavior, deploy it
 through green main and recheck. Backend readiness alone does not satisfy the
 brief's `<public app URL>/health` requirement. No outage was induced.
 
+## Follow-up verification (2026-11-13, 10:59–11:01 UTC)
+
+PR #270 was approved by Dangtooo and merged. Main CI [43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569)
+passed all three checks on the candidate SHA above (6 min 20 s).
+
+The earlier frontend health failure did **not** reproduce after the service woke
+up: both frontend and backend now return uncached 200 with DB ready. The public
+landing initially showed Render's waking page and one health request timed out
+at 50 seconds. Keep cold-start evidence separate from warmed readiness.
+
+The [read-only smoke report](evidence/m5/production-readiness-257.json) records
+11/11 passes: real application landing, both readiness endpoints, four guest
+page redirects and four protected API 401 responses. Re-run from the repo root:
+`node scripts/check-production.mjs /tmp/documind-readiness-unique.json`.
+The output file must not already exist; failed checks produce exit code 1.
+This checks public HTTP access, not deployment SHA or all P0 acceptance.
+
+Browser checks used Orca's embedded browser with a newly registered synthetic
+account, **not an independently verified private window or physical phone**:
+
+| Check | Observed result |
+|---|---|
+| Start at landing → sign up → workspace | Passed with synthetic example.com account; `.invalid` email was rejected by registration validation |
+| Session after browser reload | Workspace remained accessible; session cookie was not exposed through `document.cookie` |
+| Mobile viewport | 375 × 812, document scroll width 375; desktop and mobile controls visible in their respective layouts |
+| Six fixture PDFs through file picker | First five remained valid; sixth displayed “Tối đa 5 tệp mỗi lần.”; no analysis submitted |
+| Seeded demo credentials from local SETUP | Login rejected; production demo credentials still required from owner |
+| AI processing | Not run: new account has no Gemini key; UI requires a key and disables analysis |
+
+![375 px public workspace and six-file validation](evidence/m5/mobile-validation-257.png)
+
+Local follow-up: the production Playwright configuration now includes the
+existing health-proxy regression (previously excluded). Production build/start
+and this test passed, propagating the isolated backend's real 503 status/body
+and `no-store` header. Backend `tests/test_health.py`: 5 passed, covering 200,
+503, timeout, recovery and sanitized logs. Config node tests: 3 passed.
+
+Render Dashboard currently shows sign-in; there is no authenticated deployment
+session. The Render integration was found but its connection is pending user
+sign-in. Repository permissions allow push/triage, not admin/maintain. Required
+status checks, deploy IDs/SHAs, controlled restart/rollback, live AI, seeded
+20-document acceptance and owner confirmations therefore remain unresolved.
+No release tag has been created or moved.
+
 ## Public acceptance matrix
 
 Start from the public landing page in private browsers, using ordinary test
 accounts A and B and synthetic documents. Do not publish personal documents,
 cookies, provider keys or real passwords. For each row record UTC time, input
 filename/hash, job/document IDs, actual result, screenshot/log link and reviewer.
-All rows below are **NOT RUN for this candidate**, until evidence is added.
+The full-story rows below remain pending. The narrower checks recorded above do not constitute full story acceptance.
 
 | Story | Click path and checks | Required evidence / status |
 |---|---|---|

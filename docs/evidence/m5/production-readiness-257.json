@@ -1,0 +1,76 @@
+{
+  "started_at": "2026-11-13T10:59:42.455Z",
+  "frontend": "https://documind-web-k6i1.onrender.com",
+  "backend": "https://documind-n9ny.onrender.com",
+  "scope": "read-only health and guest access; not full release acceptance",
+  "checks": [
+    {
+      "name": "public landing",
+      "pass": true,
+      "http_status": 200,
+      "elapsed_ms": 573
+    },
+    {
+      "name": "frontend readiness",
+      "pass": true,
+      "http_status": 200,
+      "elapsed_ms": 411
+    },
+    {
+      "name": "backend readiness",
+      "pass": true,
+      "http_status": 200,
+      "elapsed_ms": 255
+    },
+    {
+      "name": "guest guard /workspace",
+      "pass": true,
+      "http_status": 307,
+      "elapsed_ms": 202
+    },
+    {
+      "name": "guest guard /upload",
+      "pass": true,
+      "http_status": 307,
+      "elapsed_ms": 268
+    },
+    {
+      "name": "guest guard /results/1",
+      "pass": true,
+      "http_status": 307,
+      "elapsed_ms": 337
+    },
+    {
+      "name": "guest guard /documents/1",
+      "pass": true,
+      "http_status": 307,
+      "elapsed_ms": 190
+    },
+    {
+      "name": "guest API /auth/me",
+      "pass": true,
+      "http_status": 401,
+      "elapsed_ms": 517
+    },
+    {
+      "name": "guest API /jobs",
+      "pass": true,
+      "http_status": 401,
+      "elapsed_ms": 459
+    },
+    {
+      "name": "guest API /api/documents",
+      "pass": true,
+      "http_status": 401,
+      "elapsed_ms": 379
+    },
+    {
+      "name": "guest API /api/search?q=synthetic",
+      "pass": true,
+      "http_status": 401,
+      "elapsed_ms": 393
+    }
+  ],
+  "finished_at": "2026-11-13T10:59:46.440Z",
+  "passed": true
+}

@@ -52,3 +52,13 @@ The effective-rules API still reports PR approval, deletion and force-push
 protection, with no required status checks. Final administrator configuration
 and screenshot are still pending; no production deploy SHA is inferred from CI.
 See [operations](operations.md) and [release acceptance](release-acceptance.md).
+
+## Post-operations merge evidence (13 November 2026)
+
+PR #270 received approval from Dangtooo and merged. Main
+[run 43412489569](https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569)
+passed all three checks for `0431a5d463295f6acd38b87c367e79c47a7037cc`,
+10:52:34–10:58:54 UTC (6 min 20 s). Public readiness and guest checks now
+pass; see the [acceptance follow-up](release-acceptance.md). Required main status
+checks and deployment SHA evidence are still pending. The production suite now
+includes `health-proxy.spec.js` to exercise the compiled production rewrite.
