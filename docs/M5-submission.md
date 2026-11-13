@@ -2,7 +2,7 @@ Running app: https://documind-web-k6i1.onrender.com
 
 # Team 06 — Milestone 5 submission
 
-**Draft for review.** Release and production-account details marked PENDING await verification.
+**Draft for review.** Release details marked PENDING await verification.
 
 | Field | Value |
 |---|---|
@@ -13,7 +13,7 @@ Running app: https://documind-web-k6i1.onrender.com
 | Repository | https://github.com/SE-FDA-NEU/G6_AI66A_SE |
 | Release v1.0 | PENDING — not published. Expected URL after verified release: https://github.com/SE-FDA-NEU/G6_AI66A_SE/releases/tag/v1.0 |
 | Latest green CI run on main | https://github.com/SE-FDA-NEU/G6_AI66A_SE/actions/runs/43412489569 |
-| Test accounts | See the first screen of README.md. PENDING: README currently has no verified production demo accounts; task #255 must supply them. Local seed credentials failed production login. |
+| Test accounts | See the first screen of README.md for the verified ordinary demo account and P0 starting clicks. |
 
 ---
 
@@ -62,7 +62,8 @@ Thresholds are proposed. Monitor URL, notification channel and backup responder 
 | Persistent files | data | DB survives while originals disappear | #246; mounted storage and coordinated restore rehearsal |
 | AI availability | infrastructure | Quota errors or partial batch failures | #254; retest five-file batch after #269 |
 | Required CI checks absent | infrastructure | Broken merge can bypass checks | #251; administrator adds three required checks |
-| Public acceptance incomplete | tests | Local passes hide hosting/browser failures | #257; all nine P0s on public HTTPS |
+| Public acceptance incomplete | tests | Local passes hide hosting/browser failures | #257; live AI/API passes recorded, full click-only P0 acceptance pending |
+| Missing content-search entry | code | US02 cannot start from workspace despite a working API | #257; restore the existing search component behind an explicit button; deploy and retest |
 | Missing deployment/alert evidence | docs | Operator cannot identify release or detect outage | #256; owners verify service settings and evidence |
 | Cold start | infrastructure | First request is slow | Accepted: grading brief permits slow initial visits; check before demo |
 
@@ -87,7 +88,7 @@ Documents expire 30 days after successful open/download/update; warn seven days 
 | Linux CI counted empty `.analysis-cache` as leftover upload | Assert remaining files recursively, allow empty infrastructure directories (#263) | Include hidden paths in cleanup checks |
 | Mobile CI waited for hidden folder controls | Wait for mobile toggle/sidebar visibility ([M4 report](testing.md)) | Test responsive state transitions in CI |
 | Five-file proxy upload exceeded Next's 10 MB default | Set 30 MiB proxy allowance and add 25 MiB production test (#267) | Verify platform limits before deployment |
-| Public batch completed only 3/5 files | #269 changes analysis/key handling; production retest pending | Preserve failed-job evidence and require live AI acceptance (#254) |
+| Public batch completed only 3/5 files | #269 changes analysis/key handling; live follow-up completed five near-5 MiB files 5/5 ([evidence](evidence/m5/live-acceptance-257.md)) | Preserve failed-job evidence and require live AI acceptance (#254) |
 
 ## 7. Availability commitment and verification
 

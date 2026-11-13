@@ -140,3 +140,27 @@ Code rollback redeploys the previous compatible pair; data restoration is a
 separate coordinated MySQL/files operation. See operations for quiescing writes,
 separate restore rehearsal and schema compatibility. Do not use `git reset` or
 force-push main as a rollback mechanism.
+
+## Live AI follow-up (13 November 2026, 11:30–11:37 UTC)
+
+The supplied demo account now signs in successfully and its Gemini key was used
+through the normal application flow. Bullet completed in 15 s, five-contract
+Table in 42 s and five-concept overview in 21 s. The near-25 MiB public batch
+completed 5/5 in 52 s and all original downloads matched their input hashes.
+The corpus grew to 26 synthetic documents. Eighteen supplemental public API
+checks passed, including ownership denial, original/range/PDF access and search.
+See the [live acceptance report](evidence/m5/live-acceptance-257.md) and its raw
+JSON links. Earlier “no key/demo account available” statements describe the prior
+audit, not the current state.
+
+A new release blocker was found: WorkspaceSearch exists but is not mounted on
+any page. The current deployed UI offers label-history filtering only, so API
+search success cannot accept US02. The proposed #271 fix restores an explicit
+workspace search toggle while preserving the default upload layout. It must be
+reviewed, merged, deployed from green main and rechecked publicly.
+
+Production account information is now documented on the README first screen.
+The remaining access blocker is the Render workspace owning both services; the
+currently authenticated workspace is empty. Same-SHA deployment, controlled
+restart/rollback, required-check enforcement and final all-P0 browser acceptance
+remain pending. No submission PDF or v1.0 tag has been generated.

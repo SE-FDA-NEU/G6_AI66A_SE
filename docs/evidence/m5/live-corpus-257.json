@@ -1,0 +1,254 @@
+{
+  "started_at": "2026-11-13T11:32:25.421Z",
+  "scope": "Synthetic corpus preparation through public HTTPS; supplemental API checks, not click-only acceptance",
+  "jobs": [
+    {
+      "job": 120002,
+      "status": "completed",
+      "completed": 5,
+      "total": 5,
+      "created": "2026-11-13T11:31:31",
+      "finished": "2026-11-13T11:32:13",
+      "files": [
+        {
+          "document": 120002,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120003,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120004,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120005,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120006,
+          "status": "completed",
+          "error": null
+        }
+      ],
+      "models": [
+        {
+          "mode": "table",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "table",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "table",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "table",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "table",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        }
+      ]
+    },
+    {
+      "job": "120003",
+      "status": "completed",
+      "completed": 5,
+      "total": 5,
+      "created": "2026-11-13T11:32:26",
+      "finished": "2026-11-13T11:33:07",
+      "files": [
+        {
+          "document": 120007,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120008,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120009,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120010,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120011,
+          "status": "completed",
+          "error": null
+        }
+      ],
+      "models": [
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        }
+      ]
+    },
+    {
+      "job": "120005",
+      "status": "completed",
+      "completed": 5,
+      "total": 5,
+      "created": "2026-11-13T11:33:13",
+      "finished": "2026-11-13T11:33:58",
+      "files": [
+        {
+          "document": 120013,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120014,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120015,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120016,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120017,
+          "status": "completed",
+          "error": null
+        }
+      ],
+      "models": [
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        }
+      ]
+    },
+    {
+      "job": "120006",
+      "status": "completed",
+      "completed": 3,
+      "total": 3,
+      "created": "2026-11-13T11:34:01",
+      "finished": "2026-11-13T11:34:35",
+      "files": [
+        {
+          "document": 120018,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120019,
+          "status": "completed",
+          "error": null
+        },
+        {
+          "document": 120020,
+          "status": "completed",
+          "error": null
+        }
+      ],
+      "models": [
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        },
+        {
+          "mode": "bullet",
+          "provider": "gemini",
+          "model": "gemini-3.5-flash-lite",
+          "cache_hit": false
+        }
+      ]
+    }
+  ],
+  "document_count": 21,
+  "finished_at": "2026-11-13T11:34:38.489Z"
+}

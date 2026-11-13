@@ -1,0 +1,267 @@
+{
+  "time": "2026-11-13T11:35:51.234Z",
+  "scope": "Public HTTPS API checks and live synthetic AI jobs; does not establish deployed SHA or controlled restart",
+  "checks": [
+    {
+      "name": "at least 20 documents",
+      "pass": true,
+      "count": 21
+    },
+    {
+      "name": "keyword search Orchid liquidity covenant",
+      "pass": true,
+      "total": 2,
+      "pages": [
+        6,
+        6
+      ]
+    },
+    {
+      "name": "keyword search volcanic submarine zirconium",
+      "pass": true,
+      "total": 0,
+      "pages": []
+    },
+    {
+      "name": "completed job 120001",
+      "pass": true
+    },
+    {
+      "name": "completed job 120002",
+      "pass": true
+    },
+    {
+      "name": "five 0.05 percent daily penalties with page 3 sources",
+      "pass": true
+    },
+    {
+      "name": "completed job 120004",
+      "pass": true
+    },
+    {
+      "name": "completed job 120007",
+      "pass": true
+    },
+    {
+      "name": "concept count 3 to 5",
+      "pass": true
+    },
+    {
+      "name": "original bytes match fixture",
+      "pass": true
+    },
+    {
+      "name": "range download",
+      "pass": true
+    },
+    {
+      "name": "comparison export",
+      "pass": true
+    },
+    {
+      "name": "cross-account denial /api/documents/120001",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "cross-account denial /api/documents/120001/file",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "cross-account denial /api/documents/120001/rendered-file",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "cross-account denial /jobs/120001",
+      "pass": true,
+      "status": 404
+    },
+    {
+      "name": "cross-account denial /jobs/120002/export.pdf",
+      "pass": true,
+      "status": 404
+    },
+    {
+      "name": "cross-account search isolation",
+      "pass": true,
+      "total": 0
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120001,
+      "status": "completed",
+      "created": "2026-11-13T11:30:18",
+      "finished": "2026-11-13T11:30:33",
+      "completed": 1,
+      "total": 1,
+      "documents": [
+        {
+          "id": 120001,
+          "mode": "bullet",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 731,
+            "output_tokens": 783,
+            "total_tokens": 1514
+          },
+          "actions": 2,
+          "limitation": null
+        }
+      ]
+    },
+    {
+      "id": 120002,
+      "status": "completed",
+      "created": "2026-11-13T11:31:31",
+      "finished": "2026-11-13T11:32:13",
+      "completed": 5,
+      "total": 5,
+      "documents": [
+        {
+          "id": 120002,
+          "mode": "table",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 352,
+            "output_tokens": 125,
+            "total_tokens": 477
+          },
+          "penalty": "0.05% per day",
+          "penalty_page": 3,
+          "penalty_verified": true
+        },
+        {
+          "id": 120003,
+          "mode": "table",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 352,
+            "output_tokens": 125,
+            "total_tokens": 477
+          },
+          "penalty": "0.05% per day",
+          "penalty_page": 3,
+          "penalty_verified": true
+        },
+        {
+          "id": 120004,
+          "mode": "table",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 349,
+            "output_tokens": 121,
+            "total_tokens": 470
+          },
+          "penalty": "0.05% mỗi ngày",
+          "penalty_page": 3,
+          "penalty_verified": true
+        },
+        {
+          "id": 120005,
+          "mode": "table",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 343,
+            "output_tokens": 115,
+            "total_tokens": 458
+          },
+          "penalty": "0.05% per day",
+          "penalty_page": 3,
+          "penalty_verified": true
+        },
+        {
+          "id": 120006,
+          "mode": "table",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 347,
+            "output_tokens": 125,
+            "total_tokens": 472
+          },
+          "penalty": "0.05% mỗi ngày",
+          "penalty_page": 3,
+          "penalty_verified": true
+        }
+      ]
+    },
+    {
+      "id": 120004,
+      "status": "completed",
+      "created": "2026-11-13T11:33:05",
+      "finished": "2026-11-13T11:33:15",
+      "completed": 1,
+      "total": 1,
+      "documents": [
+        {
+          "id": 120012,
+          "mode": "concept",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 660,
+            "output_tokens": 188,
+            "total_tokens": 848
+          },
+          "concept_count": 2,
+          "limitation": "Văn bản nguồn cung cấp quá ít khái niệm kỹ thuật hoặc thuật ngữ chuyên ngành để trích xuất đủ từ ba đến năm khái niệm."
+        }
+      ]
+    },
+    {
+      "id": 120007,
+      "status": "completed",
+      "created": "2026-11-13T11:34:13",
+      "finished": "2026-11-13T11:34:34",
+      "completed": 1,
+      "total": 1,
+      "documents": [
+        {
+          "id": 120021,
+          "mode": "concept",
+          "metadata": {
+            "provider": "gemini",
+            "model": "gemini-3.5-flash-lite",
+            "prompt_version": "documind-10-running-header-coverage",
+            "cache_hit": false,
+            "input_truncated": false,
+            "input_tokens": 914,
+            "output_tokens": 359,
+            "total_tokens": 1273
+          },
+          "concept_count": 5,
+          "limitation": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "time": "2026-11-13T11:37:33.847Z",
+  "job": "120008",
+  "bytes_per_file": 5238784,
+  "total_bytes": 26193920,
+  "upload_status": 202,
+  "job_status": "completed",
+  "completed": 5,
+  "total": 5,
+  "created": "2026-11-13T11:36:32",
+  "finished": "2026-11-13T11:37:24",
+  "files": [
+    {
+      "document": 120022,
+      "status": "completed",
+      "error": null
+    },
+    {
+      "document": 120023,
+      "status": "completed",
+      "error": null
+    },
+    {
+      "document": 120024,
+      "status": "completed",
+      "error": null
+    },
+    {
+      "document": 120025,
+      "status": "completed",
+      "error": null
+    },
+    {
+      "document": 120026,
+      "status": "completed",
+      "error": null
+    }
+  ],
+  "downloads": [
+    {
+      "document": 120022,
+      "status": 200,
+      "sha256_matches": true,
+      "sha256": "8ace773cd532b2aead6cf58ad0d2e83b9588632e15fa56c318deebda518b4739"
+    },
+    {
+      "document": 120023,
+      "status": 200,
+      "sha256_matches": true,
+      "sha256": "aa534ee81c2d00297bb2a7683efaa8f70130a5a1dfd0863e1c99b14dd3d62386"
+    },
+    {
+      "document": 120024,
+      "status": 200,
+      "sha256_matches": true,
+      "sha256": "077bc00dc3c2f16de6986fbf06995ba122d9436f1c25d488a3b1f3a58ff20291"
+    },
+    {
+      "document": 120025,
+      "status": 200,
+      "sha256_matches": true,
+      "sha256": "8c5fc29b9c438c3881bfe3e43d867c3d0cb5691cea2d8f03e78c082713ef5ab2"
+    },
+    {
+      "document": 120026,
+      "status": 200,
+      "sha256_matches": true,
+      "sha256": "5528880d5a005301b2ed8e742e60c12228528755604abb9d4bf373d71099be6c"
+    }
+  ]
+}
