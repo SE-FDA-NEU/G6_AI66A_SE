@@ -32,7 +32,7 @@ Công cụ tóm tắt và phân loại văn bản, hệ thống hoá các thư m
 
 **Group:** G6_AI66A
 **Product Owner:** @PhanDangVu
-**Scrum Master (Sprint 5):** @taibaonguyen
+**Scrum Master (Sprint 5):** @duongbui0811
 **Board:** [Sprint Board - Text Classification and Summarization Service](https://github.com/orgs/SE-FDA-NEU/projects/24/views/1)
 
 ---
@@ -41,17 +41,17 @@ Công cụ tóm tắt và phân loại văn bản, hệ thống hoá các thư m
 
 | Thành viên | GitHub | Vai trò |
 | :--- | :--- | :--- |
-| Phan Dang Vu | @PhanDangVu | Product Owner |
-| To Hien Hai Dang | @Dangtooo | Scrum Master (Sprint 1) |
-| Bui Dang Duong | @duongbui0811 | Member |
-| Nguyen Bao Tai | @taibaonguyen | Scrum Master (Sprint 5) |
+| Phan Dang Vu | @PhanDangVu | Product Owner, documentation / release coordination |
+| To Hien Hai Dang | @Dangtooo | Backend / CI |
+| Bui Dang Duong | @duongbui0811 | Scrum Master (Sprint 5), cloud MySQL / storage |
+| Nguyen Bao Tai | @taibaonguyen | Frontend / public-flow verification |
 ---
 
 ## Scrum Master rotation
 
 | Sprint | 1 | 2 | 3 | 4 | 5 |
 | :--- | :--- | :--- | :--- | :--- | --- |
-| Scrum Master | @Dangtooo | @duongbui0811 | @taibaonguyen | @Dangtooo | @taibaonguyen |
+| Scrum Master | @Dangtooo | @duongbui0811 | @taibaonguyen | @Dangtooo | @duongbui0811 |
 ---
 
 ## Definition of Done

@@ -1,6 +1,6 @@
-# Run DocuMind locally
+# Run DocuMind locally and in production
 
-DocuMind uses Next.js on port **8000**, FastAPI on port **8001** and MySQL on port **3306**. Run commands from the repository root unless a step says otherwise. Sections 1-6 cover the application; section 7 covers isolated tests.
+DocuMind uses Next.js on port **8000**, FastAPI on port **8001** and MySQL on port **3306**. Run commands from the repository root unless a step says otherwise. Sections 1–6 cover local startup; section 7 preserves isolated test instructions; section 8 covers production.
 
 ## 1. Prerequisites
 
@@ -10,7 +10,7 @@ DocuMind uses Next.js on port **8000**, FastAPI on port **8001** and MySQL on po
 | Python | 3.11 or newer, with pip and venv. |
 | Node.js and npm | Node.js 20.9 or newer. |
 | MySQL Server | 8.0 or newer; start the local MySQL service. |
-| Gemini API key | Required to generate AI labels, summaries, comparisons and concepts; keep it in the backend environment. |
+| Gemini API key | Enter a personal key in the signed-in upload form for AI analysis; the app stores it encrypted to that account. An optional server key supports semantic search/internal tools. |
 
 PDF, DOCX and PPTX reading uses the Python packages in `backend/requirements.txt`. **LibreOffice and `SOFFICE_BINARY` are not required by the current code.** DOCX is displayed as generated text-reader pages; PPTX uses one generated page per slide. Original Office formatting is not reproduced exactly.
 
@@ -47,9 +47,9 @@ Generate a value for `SECRET_KEY`, then paste it into the file:
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Keep the remaining defaults from `.env.example`. `GEMINI_MODEL` must identify a model available to your key. Without a key, sign-in, file reading and keyword search remain available, but analysis reports that AI is not configured. Semantic search also requires provider access.
+Keep the remaining defaults from `.env.example`. `GEMINI_MODEL` must identify a model available to your key. Sign in and enter your personal key in the upload form before analysis; a server `GEMINI_API_KEY` alone does not satisfy the current upload API’s account-key requirement. Sign-in, source reading and keyword search remain available without AI credentials. Semantic search uses the optional server provider key. Keep `SECRET_KEY` stable so saved personal keys can still be decrypted.
 
-Use a database dedicated to DocuMind. The launcher creates missing tables and removes tables outside the application's six-table schema after making a backup under `backend/data/backups/`. Existing columns are not migrated automatically. The MySQL account needs the corresponding database/schema permissions. Do not commit `.env` or database backups.
+Use a database dedicated to DocuMind. The launcher creates missing tables. Keep `DB_DROP_EXTRA_TABLES=false` on shared/cloud databases; removing extra tables requires explicitly enabling the destructive option and first making a backup under `backend/data/backups/`. Existing columns are not migrated automatically. The MySQL account needs the corresponding database/schema permissions. Do not commit `.env` or database backups.
 
 ## 3. First-time preparation
 
@@ -148,7 +148,7 @@ For macOS/Linux, replace `Copy-Item` with `cp`, use `python3` if needed, and run
 | Sign-in fails on a fresh database | Run the acceptance seed, then use the email/password above. Existing accounts retain their stored credentials. |
 | PowerShell blocks `npm.ps1` | Use `npm.cmd ci` or `npm.cmd run dev`. Venv activation is unnecessary when using the Python executable directly. |
 | Port 8000 or 8001 is occupied | Stop the old launcher/server before starting another instance. |
-| AI is not configured / provider rejects a request | Set a valid backend `GEMINI_API_KEY` and accessible `GEMINI_MODEL`, then restart the backend and submit a new job. |
+| AI is not configured / provider rejects a request | Enter or replace the account’s personal Gemini key in the upload form; the backend model must be available to that key. Server `GEMINI_API_KEY` is separate. |
 | Old `converter_unavailable` / LibreOffice error | Stop old server processes, install the current `backend/requirements.txt` in `backend/.venv`, restart from this checkout and submit again. Current Office reading uses Python libraries. |
 | Reader source is missing | Upload the original file again. Older metadata-only demo rows do not provide real source files. |
 | Dependencies need reinstalling | Run `& ./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt`, then run `npm.cmd ci` inside `frontend`. |
@@ -188,3 +188,155 @@ npm.cmd test
 Playwright starts its own isolated API fixture server on **18001** and Next.js on **18000**; keep these ports free. It uses temporary SQLite/storage and seeded test data rather than the application database. The launcher selects `backend/.venv` automatically; set `E2E_PYTHON` to an absolute Python executable path only when using another environment with the development dependencies installed. Do not start `run.py` for these tests.
 
 For the lifecycle UI checks only, run `npm.cmd test -- tests/job-lifecycle.spec.js --project=chromium` from `frontend/`. On Linux, install browser system dependencies with `npx playwright install --with-deps chromium webkit`. On macOS/Linux, use `.venv/bin/python` in `backend/` and `npm`/`npx` instead of the Windows commands above.
+
+
+## 8. Production: Render + cloud MySQL
+
+### Public entry and local/production distinction
+
+| Surface | Address / purpose |
+|---|---|
+| Public application | https://documind-web-k6i1.onrender.com |
+| Public readiness | https://documind-web-k6i1.onrender.com/health |
+| Backend origin | https://documind-n9ny.onrender.com |
+| Backend readiness | https://documind-n9ny.onrender.com/health |
+| Local application / API | http://127.0.0.1:8000 / http://127.0.0.1:8001; use sections 1–6 |
+
+Run `python run.py` locally only. Production uses two Render **Web Services**:
+Next.js requires SSR, HttpOnly session lookup and external rewrites, so do not
+use a static export or Static Site. FastAPI runs without reload. The backend
+needs hosted MySQL-compatible TiDB, a persistent writable filesystem, writable
+temporary space and extraction subprocess support. PostgreSQL/SQLite substitutions
+would change the existing schema/runtime contract; they are not part of this setup.
+
+### Backend environment and startup
+
+Set values in Render environment/secret settings (and GitHub Secrets only where
+a CI/deploy job needs them). Values below are placeholders, never real secrets.
+Use provider-supplied connection details and a dedicated application database.
+
+```dotenv
+DB_HOST=<cloud-mysql-host>
+DB_PORT=<cloud-mysql-port>
+DB_NAME=<dedicated-database>
+DB_USER=<application-user>
+DB_PASSWORD=<database-password>
+DB_SSL_MODE=verify_identity
+DB_SSL_CA=<absolute-path-to-provider-ca.pem>
+DB_DROP_EXTRA_TABLES=false
+DB_CONNECT_TIMEOUT_SECONDS=10
+DB_READ_TIMEOUT_SECONDS=30
+DB_WRITE_TIMEOUT_SECONDS=30
+DB_POOL_PRE_PING=true
+DB_POOL_RECYCLE_SECONDS=1800
+DB_POOL_SIZE=5
+DB_MAX_OVERFLOW=10
+DB_POOL_TIMEOUT_SECONDS=30
+STORAGE_DIR=/var/data/documind/uploads
+BACKUP_DIR=/var/data/documind/backups
+SECRET_KEY=<stable-generated-random-secret>
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+ANALYSIS_PROVIDER=gemini
+GROQ_FALLBACK_ENABLED=false
+GEMINI_MODEL=gemini-3.5-flash-lite
+GEMINI_API_KEY=<optional-server-key-for-semantic-search>
+JOB_SHUTDOWN_GRACE_SECONDS=10
+JOB_SHUTDOWN_CLEANUP_SECONDS=8
+RETENTION_CLEANUP_ENABLED=true
+RETENTION_CLEANUP_INTERVAL_SECONDS=3600
+RETENTION_CLEANUP_BATCH_SIZE=100
+```
+
+Use the CA file supplied by the database provider; configure its trusted system
+CA instead if the provider uses a publicly trusted chain. Never disable identity
+verification to mask a certificate error. PyMySQL connects using `utf8mb4`.
+Choose application permissions needed for queries; perform schema preparation
+with a separately authorized maintenance account. Keep schema changes and
+backups separate from API startup; existing columns require reviewed migrations.
+
+Render backend root directory: `backend`. Build command:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Prepare/verify the dedicated schema as a maintenance step using the configured
+DB environment: `python -m app.db.bootstrap`. Back up existing DB/files before
+schema changes; keep `DB_DROP_EXTRA_TABLES=false`. Coordinate source seeding and
+path validation with the data owner; do not run local fixture seeding against
+an existing production database blindly.
+
+Start command (one instance and one worker):
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --workers 1 --no-access-log --log-config logging.json
+```
+
+Render supplies `PORT`. Configure Uvicorn’s `--proxy-headers` and
+`--forwarded-allow-ips <trusted-edge-addresses>` using verified platform proxy
+addresses; never trust arbitrary forwarded HTTPS headers. The TLS edge must
+replace client-supplied forwarded headers. Verify Secure/HttpOnly/SameSite=Lax
+cookies through the frontend URL. See [proxy/session verification](deploy-frontend-render.md).
+
+Mount storage at the actual persistent-disk path before setting `STORAGE_DIR`.
+Store originals, `.reader` PDFs and analysis caches together; a writable ephemeral
+container path is insufficient. Backups also need encrypted off-host copies;
+a backup on the same disk alone is not disaster recovery. See
+[operations](operations.md) for backup/restore, retention and monitoring.
+Stop the old backend process tree before replacement; do not run overlapping
+workers. Allow more than the combined 18-second default queue shutdown budgets
+plus database/scheduler cleanup. Startup fails interrupted work visibly rather
+than resuming it automatically. See [restart handling](processing-restart.md).
+
+### Frontend environment and startup
+
+Render frontend root directory: `frontend`. Use the committed [Blueprint](../render.yaml)
+or the [frontend deployment guide](deploy-frontend-render.md).
+
+```dotenv
+NODE_ENV=production
+NODE_VERSION=24
+BACKEND_ORIGIN=https://<backend-service>.onrender.com
+```
+
+```bash
+npm ci && npm run build
+npm start
+```
+
+`npm start` binds `0.0.0.0` and uses platform `PORT`. `BACKEND_ORIGIN` is
+server-only and must be present at **build and runtime**, with identical values.
+Use the backend origin, without path/query/credentials; never localhost or the
+frontend origin. A change requires a rebuild because API rewrites are compiled
+into the build. Production rejects missing/local origins and runtime/build drift.
+The browser uses same-origin `/auth`, `/jobs`, `/api/upload`, `/api/search`,
+`/api/folders`, `/api/documents` and `/health` proxies; no browser-visible key or
+cross-origin workaround is needed. Keep credentialed CORS disabled unless an
+explicit allowed-origin flow requires it.
+
+The Next proxy allowance is 30 MiB for five 5 MiB files plus multipart overhead;
+also check host/edge request limits. Polling follows the upload’s 202/job ID.
+Backend processing occurs outside that HTTP request.
+
+### Secrets, readiness and checks
+
+Personal Gemini keys are entered in the account upload UI and encrypted by the
+backend. Keep the JWT/encryption `SECRET_KEY` stable across deploys and restores;
+changing it invalidates sessions and makes saved keys unreadable. Keep optional
+server provider keys in platform secrets, never `NEXT_PUBLIC_*`, README, Git or
+logs. A committed real key must be revoked and replaced.
+
+Set the platform health path to `/health`: API plus bounded DB query returns
+200 with `status=ok,database=ready`; unavailable DB returns 503 without secrets.
+AI availability is checked separately by a real analysis job. Preserve no-store
+responses. Configure deploy-after-green for the main branch and review through
+PRs. Do not replace section 7’s isolated checks with production calls.
+
+From the public landing, test demo login/logout, F5 session/data persistence,
+large uploads, Table/Bullet/Concept, ≥20-document search, source citations and
+cross-account denial. Read logs on each Render service and verify storage after
+restart. The [release record](release-acceptance.md) contains observed results;
+[CI evidence](ci-release-checks.md) and [operations](operations.md) describe release
+and recovery. Live Render settings must be checked against this configuration;
+the frontend-only Blueprint does not configure the separately managed backend.
