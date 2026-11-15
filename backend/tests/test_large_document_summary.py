@@ -143,3 +143,21 @@ def test_provider_timeout_keeps_its_identity_after_job_retries(client, session_f
     file = saved['job_files'][0]
     assert file['attempt_count'] == 3
     assert file['error_message'] == 'gemini_request_timeout: Gemini request exceeded 45 seconds.'
+
+
+def test_content_quality_does_not_reject_or_rewrite_provider_output(monkeypatch):
+    import app.services.summary_quality as quality
+    def forbidden(*args):
+        pytest.fail('Content quality must not gate provider output')
+    monkeypatch.setattr(quality, 'quality_issues', forbidden)
+    calls = []
+    async def generate(body):
+        calls.append(body)
+        return {'label': None, 'confidence': None, 'bullets': [
+            {'t': 'The source briefly describes the subject.', 's': [0]}], 'actions': []}, {}
+    monkeypatch.setattr(gemini, 'generate', generate)
+    wire = [[0, 'GAN\nA generative adversarial network learns from a discriminator.'],
+            [1, 'CNN\nA convolutional network applies convolutional filters.']]
+    raw, _ = asyncio.run(gemini.generate_validated(gemini.request_body('bullet', wire, 'en'), wire, 'bullet'))
+    assert len(calls) == 1
+    assert raw.bullets[0].t == 'The source briefly describes the subject.'

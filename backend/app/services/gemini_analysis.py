@@ -25,14 +25,14 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from app.core.config import settings
 from app.services.bullet_output import finalize_bullet_actions
-from app.services.summary_quality import coverage_instructions, quality_issues
+from app.services.summary_quality import coverage_instructions
 from app.services.analysis_credentials import user_gemini_key
 from copy import deepcopy
 from app.schemas.result import (AnalysisMetadata, AnalysisResult, BulletOutput, Claim,
                                 Concept, ConceptOutput, Evidence, LabelSuggestion, TableOutput)
 
 logger = logging.getLogger(__name__)
-PROMPT_VERSION = 'documind-11-bounded-hierarchical-summary'
+PROMPT_VERSION = 'documind-12-no-content-quality-gate'
 ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models'
 _provider = ContextVar('analysis_provider', default='gemini')
 MAX_REQUEST_ATTEMPTS = 3
@@ -605,7 +605,7 @@ def reconstruct_concept_output(document, raw, selected, warnings, language):
 
 
 async def generate_validated(body, wire, mode, *, intermediate=False):
-    """One targeted correction for malformed, oversized or incomplete output."""
+    """Repair structural/length failures; do not judge content coverage or terms."""
     usage_total = {}
     for attempt in range(2):
         over_budget = False
@@ -639,11 +639,10 @@ async def generate_validated(body, wire, mode, *, intermediate=False):
                 '.'.join(str(part) for part in item['loc']) + ' (' + item['type'] + ')'
                 for item in error.errors()[:8])]
         else:
-            issues = quality_issues(raw, wire, mode)
-            if intermediate:
-                # A map/inner-reduce is a compact finding set, not a final
-                # overview with one separate bullet for every source heading.
-                issues = [issue for issue in issues if not issue.startswith('Missing substantive coverage:')]
+            # Content quality is advisory in the prompt, not a release gate.
+            # Show structurally valid provider output without a coverage or
+            # terminology review/correction round.
+            issues = []
             if mode == 'bullet':
                 text = ' '.join((item.t or '') for item in raw.bullets + raw.actions)
             elif mode == 'concept':
@@ -655,28 +654,18 @@ async def generate_validated(body, wire, mode, *, intermediate=False):
                 issues.append('Shorten to fewer than 900 words, retaining supported facts and source IDs')
         if not issues:
             return raw, usage_total
-        categories = sorted({
-            'coverage' if issue.startswith('Missing substantive coverage:') else
-            'abbreviation' if issue.startswith('Check unsupported or misspelled abbreviations:') else
-            'word_limit' if issue.startswith('Shorten to fewer') else 'schema'
-            for issue in issues})
-        logger.warning('Analysis review required provider=%s mode=%s review_attempt=%s/2 issue_types=%s',
-                       _provider.get(), mode, attempt + 1, ','.join(categories))
+        logger.warning('Analysis structure repair provider=%s mode=%s repair_attempt=%s/2',
+                       _provider.get(), mode, attempt + 1)
         if attempt:
-            if raw is None or over_budget:
-                raise GeminiAnalysisError(_provider.get() + '_invalid_response',
-                                          'AI output still does not match the analysis schema after correction.') from None
-            raise GeminiAnalysisError(_provider.get() + '_incomplete_response',
-                                      'The analysis still omits major source topics or changes technical names after review.')
-        logger.info('Reviewing incomplete analysis provider=%s issue_count=%s', _provider.get(), len(issues))
+            raise GeminiAnalysisError(_provider.get() + '_invalid_response',
+                                      'AI output still does not match the analysis schema after correction.') from None
         body = deepcopy(body)
         body['contents'].extend([
             {'role': 'model', 'parts': [{'text': raw.model_dump_json() if raw is not None else json.dumps(data, ensure_ascii=False)}]},
             {'role': 'user', 'parts': [{'text':
                 'Correct the preceding draft using the original excerpts. ' + '; '.join(issues) + '. '
                 'Return the COMPLETE JSON, retaining all correct findings and exact source IDs. '
-                'Keep exact source names, proofread spelling and Vietnamese technical terminology, '
-                'and give every missing topic a substantive item. Do not invent details or abbreviations.'}]},
+                'Do not invent details or source IDs.'}]},
         ])
 
 

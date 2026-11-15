@@ -11,9 +11,9 @@ concise synthesis, not a verbatim copy of every page.
 
 The output contract remains at most 16 bullet items / five concepts and 1,000
 words. For sources with more than 15 required heading topics, coverage priorities
-are distributed from the beginning through the end rather than demanding more
-separate detail items than that contract permits. Compact inner stages do not
-have to provide an executive overview or independently cover the whole source.
+are distributed from the beginning through the end in the prompt. Content coverage
+and terminology are no longer checked after generation or used to reject/repair
+a summary. Structurally valid provider output is displayed as returned.
 Malformed/partial JSON, provider blocking and invalid source evidence are not
 accepted as successful analysis. A truncated Gemini response receives one
 bounded correction with a larger output-token ceiling (at most 16,384).
