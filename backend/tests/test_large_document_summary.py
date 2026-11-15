@@ -161,3 +161,25 @@ def test_content_quality_does_not_reject_or_rewrite_provider_output(monkeypatch)
     raw, _ = asyncio.run(gemini.generate_validated(gemini.request_body('bullet', wire, 'en'), wire, 'bullet'))
     assert len(calls) == 1
     assert raw.bullets[0].t == 'The source briefly describes the subject.'
+
+
+@pytest.mark.parametrize('language', ['en', 'vi'])
+@pytest.mark.parametrize('mode', ['bullet', 'concept', 'table'])
+@pytest.mark.parametrize('compact', [False, True])
+def test_selected_language_is_unambiguous_for_every_generation_stage(language, mode, compact):
+    wire = [[0, 'Nguồn tiếng Việt. An English source sentence.']]
+    bodies = [gemini.request_body(mode, wire, language, compact=compact)]
+    if mode != 'table':
+        bodies.append(gemini.request_body_reduce([], language, mode, wire, compact=compact))
+    for body in bodies:
+        prompt = body['systemInstruction']['parts'][0]['text']
+        selected = 'English' if language == 'en' else 'Vietnamese'
+        assert f'OUTPUT LANGUAGE: {selected}.' in prompt
+        assert f'ALL generated prose exclusively in {selected}' in prompt
+        assert 'regardless of the source language' in prompt
+        assert 'Do not add bilingual versions' in prompt
+        if language == 'en':
+            assert 'Vietnamese' not in prompt and 'tiếng Việt' not in prompt
+        else:
+            assert 'English' not in prompt
+        assert 'unchanged where necessary' in prompt
