@@ -183,3 +183,16 @@ def test_selected_language_is_unambiguous_for_every_generation_stage(language, m
         else:
             assert 'English' not in prompt
         assert 'unchanged where necessary' in prompt
+
+
+@pytest.mark.parametrize('compact', [False, True])
+def test_vietnamese_accents_required_in_map_and_reduce_without_content_gate(compact):
+    wire = [[0, 'Mo hinh hoc cach tao du lieu moi.']]
+    for body in (gemini.request_body('bullet', wire, 'vi', compact=compact),
+                 gemini.request_body_reduce([], 'vi', 'bullet', wire, compact=compact)):
+        prompt = body['systemInstruction']['parts'][0]['text']
+        assert 'tiếng Việt có dấu đầy đủ' in prompt
+        assert 'kể cả một câu hoặc một mục xen giữa các mục có dấu' in prompt
+        assert 'nguồn hoặc kết quả trung gian viết không dấu' in prompt
+        assert 'Mô hình học cách tạo dữ liệu mới' in prompt
+        assert 'không chuyển chữ tiếng Việt sang ký tự ASCII' in prompt

@@ -32,7 +32,7 @@ from app.schemas.result import (AnalysisMetadata, AnalysisResult, BulletOutput, 
                                 Concept, ConceptOutput, Evidence, LabelSuggestion, TableOutput)
 
 logger = logging.getLogger(__name__)
-PROMPT_VERSION = 'documind-13-single-summary-language'
+PROMPT_VERSION = 'documind-14-accented-vietnamese'
 ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models'
 _provider = ContextVar('analysis_provider', default='gemini')
 MAX_REQUEST_ATTEMPTS = 3
@@ -366,7 +366,16 @@ def output_language_instruction(language):
         'Do not add bilingual versions, parallel translations or explanations in another language. '
         'Keep only proper names, canonical technical identifiers, acronyms, code and exact evidence quotations '
         'unchanged where necessary; explain their meaning only in the selected language. '
-        + ('Use standard Vietnamese with full, correct diacritics. ' if language == 'vi' else '')
+        + (
+            'BẮT BUỘC: Viết toàn bộ phần diễn giải bằng tiếng Việt có dấu đầy đủ, đúng chính tả. '
+            'Không viết tiếng Việt không dấu, kể cả một câu hoặc một mục xen giữa các mục có dấu. '
+            'Nếu nguồn hoặc kết quả trung gian viết không dấu, hãy diễn đạt lại bằng tiếng Việt có dấu; '
+            'chỉ giữ nguyên mã, tên riêng và trích dẫn nguyên văn. '
+            'Ví dụ cách viết: “Mô hình học cách tạo dữ liệu mới từ phân phối của dữ liệu huấn luyện.” '
+            'Rà lại dấu thanh và dấu chữ của từng câu trước khi xuất JSON; '
+            'không chuyển chữ tiếng Việt sang ký tự ASCII. '
+            if language == 'vi' else ''
+        )
     )
 
 
