@@ -32,7 +32,7 @@ from app.schemas.result import (AnalysisMetadata, AnalysisResult, BulletOutput, 
                                 Concept, ConceptOutput, Evidence, LabelSuggestion, TableOutput)
 
 logger = logging.getLogger(__name__)
-PROMPT_VERSION = 'documind-10-running-header-coverage'
+PROMPT_VERSION = 'documind-11-bounded-hierarchical-summary'
 ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models'
 _provider = ContextVar('analysis_provider', default='gemini')
 MAX_REQUEST_ATTEMPTS = 3
@@ -52,7 +52,16 @@ def daily_quota(response):
 def retry_after_seconds(response):
     value = response.headers.get('retry-after')
     if value is None:
-        return None
+        # Gemini commonly supplies RetryInfo in JSON rather than an HTTP header.
+        try:
+            value = next((detail.get('retryDelay') for detail in response.json().get('error', {}).get('details', [])
+                          if isinstance(detail, dict) and str(detail.get('@type', '')).endswith('RetryInfo')), None)
+            if isinstance(value, str) and re.fullmatch(r'\d+(?:\.\d+)?s', value):
+                value = value[:-1]
+            else:
+                return None
+        except (ValueError, TypeError, AttributeError):
+            return None
     try:
         seconds = float(value)
     except ValueError:
@@ -337,7 +346,17 @@ def response_schema(model):
     return clean(model.model_json_schema())
 
 
-def request_body(mode, wire, language="vi"):
+COMPACT_INSTRUCTIONS = (
+    'These excerpts/findings are ONE PART of a larger document. Extract only compact source-grounded findings, '
+    'not an executive overview or full document summary. Merge repeated facts. '
+    'For bullet mode return at most 4 bullets and at most 1 explicitly supported action; '
+    'for concept mode return at most 3 central concepts. Each item is one sentence of at most 30 words. '
+    'Use at most 180 words total. Keep exact numbers, negation, technical names and original source IDs. '
+    'Do not require this part to support every topic of the whole document.'
+)
+
+
+def request_body(mode, wire, language="vi", *, compact=False):
     if language not in ("en", "vi"):
         raise ValueError("Unsupported summary language")
     if language == "en":
@@ -350,6 +369,8 @@ def request_body(mode, wire, language="vi"):
     system += " All generated text, including labels, names, actions and limitations, must use this language in Vietnamese." if language == "vi" else " All generated text, including labels, names, actions and limitations, must use this language. Keep evidence quotations unchanged."
     model = settings.GEMINI_MODEL
     config = {'maxOutputTokens': settings.GEMINI_MAX_OUTPUT_TOKENS, 'candidateCount': 1}
+    if compact:
+        config['maxOutputTokens'] = min(settings.GEMINI_MAX_OUTPUT_TOKENS, 2048)
     schema = response_schema(WIRE_TYPES[mode])
     if model.startswith('gemini-2.5-'):
         # Cho phép thinkingBudget nhỏ (256 tokens) để model tổng hợp ý toàn bài trước khi viết đoạn văn
@@ -359,7 +380,7 @@ def request_body(mode, wire, language="vi"):
         level = 'low' if model.startswith(('gemini-3.8-', 'gemini-4-')) else 'minimal'
         config.update(responseFormat={'text': {'mimeType': 'APPLICATION_JSON', 'schema': schema}},
                       thinkingConfig={'thinkingLevel': level})
-    instructions = MODE_INSTRUCTIONS[mode] + coverage_instructions(wire, mode)
+    instructions = COMPACT_INSTRUCTIONS if compact else MODE_INSTRUCTIONS[mode] + coverage_instructions(wire, mode)
     return {'systemInstruction': {'parts': [{'text': system + ' ' + instructions}]},
             'contents': [{'role': 'user', 'parts': [{'text': json.dumps(wire, ensure_ascii=False, separators=(',', ':'))}]}],
             'generationConfig': config}
@@ -477,7 +498,7 @@ REDUCE_INSTRUCTIONS = (
 )
 
 
-def request_body_reduce(intermediate_claims, language="vi", mode='bullet', wire=None):
+def request_body_reduce(intermediate_claims, language="vi", mode='bullet', wire=None, *, compact=False):
     if language not in ("en", "vi"):
         raise ValueError("Unsupported summary language")
     if language == "en":
@@ -490,6 +511,8 @@ def request_body_reduce(intermediate_claims, language="vi", mode='bullet', wire=
     system += " All generated text, including labels, names, actions and limitations, must use this language in Vietnamese." if language == "vi" else " All generated text, including labels, names, actions and limitations, must use this language. Keep evidence quotations unchanged."
     model = settings.GEMINI_MODEL
     config = {'maxOutputTokens': settings.GEMINI_MAX_OUTPUT_TOKENS, 'candidateCount': 1}
+    if compact:
+        config['maxOutputTokens'] = min(settings.GEMINI_MAX_OUTPUT_TOKENS, 2048)
     schema = response_schema(WIRE_TYPES[mode])
     if model.startswith('gemini-2.5-'):
         config.update(responseMimeType='application/json', responseJsonSchema=schema,
@@ -500,8 +523,9 @@ def request_body_reduce(intermediate_claims, language="vi", mode='bullet', wire=
                       thinkingConfig={'thinkingLevel': level})
     payload = ([[item.n, item.s, item.t] for item in intermediate_claims] if mode == 'concept'
                else [[item.s, item.t] for item in intermediate_claims])
-    instructions = REDUCE_INSTRUCTIONS if mode == 'bullet' else MODE_INSTRUCTIONS['concept']
-    instructions += coverage_instructions(wire or [], mode)
+    instructions = COMPACT_INSTRUCTIONS if compact else (
+        (REDUCE_INSTRUCTIONS if mode == 'bullet' else MODE_INSTRUCTIONS['concept'])
+        + coverage_instructions(wire or [], mode))
     return {'systemInstruction': {'parts': [{'text': system + ' ' + instructions}]},
             'contents': [{'role': 'user', 'parts': [{'text': json.dumps(payload, ensure_ascii=False, separators=(',', ':'))}]}],
             'generationConfig': config}
@@ -562,7 +586,7 @@ def reconstruct_concept_output(document, raw, selected, warnings, language):
     return output, label
 
 
-async def generate_validated(body, wire, mode):
+async def generate_validated(body, wire, mode, *, intermediate=False):
     """One targeted correction for malformed, oversized or incomplete output."""
     usage_total = {}
     for attempt in range(2):
@@ -575,6 +599,9 @@ async def generate_validated(body, wire, mode):
                     'gemini_output_limit', 'groq_output_limit'}:
                 raise
             body = deepcopy(body)
+            if error.code == 'gemini_output_limit':
+                body['generationConfig']['maxOutputTokens'] = min(
+                    16384, body['generationConfig']['maxOutputTokens'] * 2)
             body['contents'].append({'role': 'user', 'parts': [{'text':
                 'The previous response was incomplete or invalid. Return a shorter COMPLETE JSON object '
                 'matching the schema, without markdown. Keep only source-supported findings and exact source IDs. '
@@ -595,6 +622,10 @@ async def generate_validated(body, wire, mode):
                 for item in error.errors()[:8])]
         else:
             issues = quality_issues(raw, wire, mode)
+            if intermediate:
+                # A map/inner-reduce is a compact finding set, not a final
+                # overview with one separate bullet for every source heading.
+                issues = [issue for issue in issues if not issue.startswith('Missing substantive coverage:')]
             if mode == 'bullet':
                 text = ' '.join((item.t or '') for item in raw.bullets + raw.actions)
             elif mode == 'concept':
@@ -669,6 +700,64 @@ async def analyze_document_single_flight(document, mode, selected, wire, truncat
                           warnings=warnings, analysis_metadata=metadata)
 
 
+async def generate_for_document(document, body, wire, mode, *, intermediate=False):
+    memo = getattr(document, 'analysis_cache', None)
+    key = (_provider.get(), active_model(), json.dumps(body, sort_keys=True, ensure_ascii=False))
+    if isinstance(memo, dict) and key in memo:
+        return memo[key]
+    result = await generate_validated(body, wire, mode, intermediate=intermediate)
+    if isinstance(memo, dict):
+        memo[key] = result
+    return result
+
+
+def finding_payload(item, mode):
+    return [item.n, item.s, item.t] if mode == 'concept' else [item.s, item.t]
+
+
+def pack_findings(findings, mode, budget):
+    groups, group, used = [], [], 2
+    for item in findings:
+        size = len(json.dumps(finding_payload(item, mode), ensure_ascii=False, separators=(',', ':')))
+        if size + 2 > budget:
+            raise GeminiAnalysisError('gemini_input_limit', 'An intermediate finding exceeds the configured input budget.')
+        if group and used + size + 1 > budget:
+            groups.append(group)
+            group, used = [], 2
+        used += size + (1 if group else 0)
+        group.append(item)
+    if group:
+        groups.append(group)
+    return groups
+
+
+async def reduce_findings(document, findings, wire, language, mode, budget):
+    usage_total = {'promptTokenCount': 0, 'candidatesTokenCount': 0, 'totalTokenCount': 0}
+    for _ in range(12):
+        groups = pack_findings(findings, mode, budget)
+        if len(groups) == 1:
+            body = request_body_reduce(groups[0], language, mode, wire)
+            raw, usage = await generate_for_document(document, body, wire, mode)
+            for key in usage_total:
+                usage_total[key] += usage.get(key, 0)
+            return raw, usage_total
+        next_findings = []
+        for group in groups:
+            ids = {source for item in group for source in (item.s or [])}
+            sources = [entry for entry in wire if entry[0] in ids]
+            body = request_body_reduce(group, language, mode, sources, compact=True)
+            raw, usage = await generate_for_document(document, body, sources, mode, intermediate=True)
+            for key in usage_total:
+                usage_total[key] += usage.get(key, 0)
+            next_findings.extend(raw.concepts if mode == 'concept' else raw.bullets + raw.actions)
+        before = sum(len(json.dumps(finding_payload(item, mode), ensure_ascii=False)) for item in findings)
+        after = sum(len(json.dumps(finding_payload(item, mode), ensure_ascii=False)) for item in next_findings)
+        if not next_findings or after >= before:
+            raise GeminiAnalysisError('gemini_reduce_limit', 'Intermediate findings could not be condensed safely. Please retry.')
+        findings = next_findings
+    raise GeminiAnalysisError('gemini_reduce_limit', 'The document needs more reduction stages than the processing limit.')
+
+
 async def analyze_document_map_reduce(document, mode, language):
     pages_list = document.extracted_text
     budget = input_budget()
@@ -678,7 +767,8 @@ async def analyze_document_map_reduce(document, mode, language):
                       for p in pages_list) + 2
     global_selected, full_wire, any_truncated = select_excerpts(
         pages_list, mode.value, full_budget,
-        chunk_chars=min(CHUNK_TARGET_CHARS, budget - 64))
+        # JSON escapes can expand a source character by up to six characters.
+        chunk_chars=min(CHUNK_TARGET_CHARS, max(1, (budget - 64) // 6)))
     global_wire_clusters, cluster, used = [], [], 2
     for entry in full_wire:
         size = len(json.dumps(entry, ensure_ascii=False, separators=(',', ':')))
@@ -697,7 +787,7 @@ async def analyze_document_map_reduce(document, mode, language):
         return AnalysisResult(output=output, warnings=warnings)
 
     wire_type = WIRE_TYPES[mode.value]
-    map_bodies = [request_body(mode.value, wire, language) for wire in global_wire_clusters]
+    map_bodies = [request_body(mode.value, wire, language, compact=True) for wire in global_wire_clusters]
     cache_key = {'pipeline': 'map_reduce', 'maps': map_bodies,
                  'reduce': request_body_reduce([], language, mode.value, full_wire)}
     path = cache_file(document, cache_key)
@@ -720,7 +810,8 @@ async def analyze_document_map_reduce(document, mode, language):
                 if cached is not None:
                     return cached, {}
                 try:
-                    result, usage = await generate_validated(body, cluster_wire, mode.value)
+                    result, usage = await generate_for_document(
+                        document, body, cluster_wire, mode.value, intermediate=True)
                 except BaseException:
                     # Mark failure before releasing the slot, so queued work
                     # cannot start another paid call ahead of cancellation.
@@ -758,9 +849,10 @@ async def analyze_document_map_reduce(document, mode, language):
             raw = wire_type(label=None, confidence=None, **fields,
                             limitation='Nội dung nguồn không đủ để trích xuất tóm tắt.' if language == 'vi' else 'Source content is insufficient for summary.')
         else:
-            # Reduce Phase: Synthesize all intermediate findings into final WireBullet
-            reduce_body = request_body_reduce(intermediate_claims, language, mode.value, full_wire)
-            raw, reduce_usage = await generate_validated(reduce_body, full_wire, mode.value)
+            # Every reduction request is bounded too; never dump an arbitrary
+            # number of map findings into a single final provider request.
+            raw, reduce_usage = await reduce_findings(
+                document, intermediate_claims, full_wire, language, mode.value, budget)
             for k in ('promptTokenCount', 'candidatesTokenCount', 'totalTokenCount'):
                 val = reduce_usage.get(k)
                 if isinstance(val, int):

@@ -51,10 +51,20 @@ def source_topics(wire):
     return list(topics.values())
 
 
+def coverage_targets(wire, mode):
+    topics = source_topics(wire)
+    # A 16-item summary reserves its first item for the overview. Do not make
+    # a long document impossible to summarize by demanding >15 detail bullets.
+    # Spread priorities over the entire document, including its ending.
+    if mode == 'bullet' and len(topics) > 15:
+        return [topics[round(i * (len(topics) - 1) / 14)] for i in range(15)]
+    return topics
+
+
 def coverage_instructions(wire, mode):
     if mode not in ('bullet', 'concept'):
         return ''
-    topics = source_topics(wire)
+    topics = coverage_targets(wire, mode)
     if not topics:
         return ''
     names = ', '.join(topic['name'] for topic in topics)
@@ -75,7 +85,7 @@ def coverage_instructions(wire, mode):
 def quality_issues(raw, wire, mode):
     if mode not in ('bullet', 'concept'):
         return []
-    topics = source_topics(wire)
+    topics = coverage_targets(wire, mode)
     if mode == 'bullet':
         # The overview may enumerate names without explaining any of them.
         details = [(item.t or '', item.s or []) for item in raw.bullets[1:]]

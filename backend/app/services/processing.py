@@ -3,7 +3,7 @@ import asyncio
 import logging
 import threading
 from copy import deepcopy
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 
 from app.models import FileFormat, Job, JobMode, JobStatus
@@ -63,6 +63,8 @@ class DocumentInput:
     extracted_text: list | None = None
     owner_id: int | None = None
     language: str = "vi"
+    # Job-local memo only: no shared personal-key response cache.
+    analysis_cache: dict = field(default_factory=dict, compare=False, repr=False)
 
 
 async def process_document(document, mode):
