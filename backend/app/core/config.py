@@ -79,7 +79,6 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = Field(default=10, ge=0, le=100)
     DB_POOL_TIMEOUT_SECONDS: int = Field(default=30, ge=1, le=300)
     DB_DROP_EXTRA_TABLES: bool = False
-    SOFFICE_BINARY: str = ""
 
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

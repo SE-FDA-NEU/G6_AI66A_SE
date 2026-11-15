@@ -126,7 +126,7 @@ API calls:
 - `GET /documents/:id/file` - Download the original file.
 - `POST /documents/:id/reader` - Prepare a missing reader representation.
 
-PDF uses physical source pages. DOCX uses generated text-reader pages rather than original Word pagination. PPTX uses one LibreOffice-rendered PDF page per slide, preserving layout and images. When exact highlighting is unavailable, the reader explains the limitation; no OCR is provided.
+PDF uses physical source pages. DOCX uses generated text-reader pages rather than original Word pagination. PPTX opens a browser-rendered slide preview; its separate text reader uses one generated page per slide for citation highlighting. When exact highlighting is unavailable, the reader explains the limitation; no OCR is provided.
 
 The capture shows a citation from job #30 opened in document 50, with the source passage highlighted on reader page 1.
 
@@ -160,7 +160,7 @@ For the BR01 demonstration, sign in, open Upload and select an unsupported file.
 | Upload and jobs | Walking skeleton and initial API contract. | Validated batch selection, three analysis modes, saved jobs and per-file progress/failure states. |
 | Analysis | Initial data structures and sample results. | Persisted financial comparisons, bullet summaries/actions and concept overviews; Gemini configuration remains server-side. |
 | Sources | Document list and basic source references. | Validated evidence, page-specific citations, reader highlighting and return-to-job navigation. |
-| Reader | Initial original-file access. | Native PDF extraction, Python-generated DOCX text-reader PDFs, and LibreOffice-rendered PPTX PDFs with slide layout. |
+| Reader | Initial original-file access. | Native PDF extraction and Python-generated DOCX/PPTX text-reader PDFs; no LibreOffice requirement. |
 | Workspace | Authenticated document-list skeleton. | Indexed content search, source excerpts, confidence display and in-document lookup. |
 | Language and layout | Initial screen designs. | Vietnamese/English controls, saved analysis language and responsive result layouts. |
 

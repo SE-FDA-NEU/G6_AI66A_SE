@@ -23,7 +23,7 @@ bcrypt==3.2.2
 # Gemini HTTP client
 httpx==0.28.1
 
-# Python extraction/PDF export. PPTX preview also requires system LibreOffice Impress.
+# Native PDF/DOCX/PPTX reading and PDF export; no LibreOffice.
 pdfplumber==0.11.9
 pypdf==6.19.0
 reportlab==4.5.1

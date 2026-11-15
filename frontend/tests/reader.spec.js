@@ -31,6 +31,7 @@ test.beforeEach(async ({ page }) => {
 test('reader displays the pinned backend PDF and navigates real source pages', async ({ page }) => {
   const source = pdfFixture();
   const upload = await page.request.post('http://127.0.0.1:18001/upload', {
+    headers: { 'X-Gemini-Api-Key': 'isolated-reader-test-key' },
     multipart: { files: { name: 'reader.pdf', mimeType: 'application/pdf', buffer: source } },
   });
   expect(upload.status()).toBe(202);

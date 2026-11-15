@@ -304,7 +304,7 @@ def test_native_office_pages_match_displayed_reader(client, session_factory, sou
         doc = db.get(Document, document_id)
         result = {'page_count': doc.page_count, 'extracted_text': doc.extracted_text}
     metadata, _ = assert_reader_matches_api(client, document_id, result, tmp_path)
-    assert metadata['reader_layout'] == ('original' if fmt == FileFormat.PPTX else 'text')
+    assert metadata['reader_layout'] == 'text'
     assert metadata['file_format'] == fmt.value
     texts = [page['text'] for page in metadata['pages']]
     if fmt == FileFormat.DOCX:
@@ -350,61 +350,29 @@ def test_native_docx_flows_long_content_without_dropping_paragraphs(tmp_path):
     assert all(text.count(f'SOURCE-{i:03d}:') == 1 for i in range(150))
 
 
-def test_pptx_preserves_grouped_text_and_slide_geometry(tmp_path):
+def test_native_pptx_preserves_grouped_text_and_dense_slide_on_one_page(tmp_path):
     source = tmp_path / 'grouped.pptx'
     deck = Presentation()
     slide = deck.slides.add_slide(deck.slide_layouts[6])
     group = slide.shapes.add_group_shape()
     group.shapes.add_textbox(Inches(1), Inches(1), Inches(3), Inches(1)).text = 'Điều khoản & nghĩa vụ <gốc>'
     text_frame = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(7), Inches(3)).text_frame
-    for i in range(3):
+    for i in range(80):
         text_frame.add_paragraph().text = f'ROW-{i:03d}: Original slide text with payment details.'
     deck.save(source)
     result = extract_pdf(reader.convert_office(source, FileFormat.PPTX, tmp_path))
     assert result['page_count'] == 1
     text = result['extracted_text'][0]['text']
-    assert 'Điều khoản & nghĩa vụ <gốc>' in ' '.join(text.split())
-    assert all(text.count(f'ROW-{i:03d}:') == 1 for i in range(3))
+    assert 'Điều khoản & nghĩa vụ <gốc>' in text
+    assert all(text.count(f'ROW-{i:03d}:') == 1 for i in range(80))
 
 
-def test_pptx_pdf_keeps_background_image_and_text_position(tmp_path):
-    from io import BytesIO
-    from PIL import Image
-    from pptx.dml.color import RGBColor
-    from pptx.util import Pt
-    import pdfplumber
-    deck = Presentation()
-    deck.slide_width, deck.slide_height = Inches(10), Inches(6)
-    slide = deck.slides.add_slide(deck.slide_layouts[6])
-    slide.background.fill.solid()
-    slide.background.fill.fore_color.rgb = RGBColor(20, 60, 120)
-    image = BytesIO()
-    Image.new('RGB', (120, 80), (255, 40, 30)).save(image, format='PNG')
-    image.seek(0)
-    slide.shapes.add_picture(image, Inches(1), Inches(1), Inches(2), Inches(1))
-    box = slide.shapes.add_textbox(Inches(6), Inches(4), Inches(3), Inches(1))
-    box.text = 'POSITIONED TITLE'
-    box.text_frame.paragraphs[0].runs[0].font.size = Pt(16)
-    source = tmp_path / 'visual.pptx'
-    deck.save(source)
-    output = reader.convert_office(source, FileFormat.PPTX, tmp_path)
-    with pdfplumber.open(output) as pdf:
-        assert len(pdf.pages) == 1
-        page = pdf.pages[0]
-        assert page.width == pytest.approx(720, abs=1)
-        assert page.height == pytest.approx(432, abs=1)
-        assert page.images, 'The preview must preserve slide images'
-        title = next(word for word in page.extract_words() if word['text'] == 'POSITIONED')
-        assert title['x0'] > 400 and title['top'] > 280
-        assert any(rect.get('non_stroking_color') == pytest.approx((20/255, 60/255, 120/255), abs=.01)
-                   for rect in page.rects), 'The slide background must survive'
-
-
-def test_missing_pptx_renderer_is_an_explicit_error(tmp_path, monkeypatch):
-    from app.services import office_reader
-    def missing():
-        raise FileNotFoundError('not installed')
-    monkeypatch.setattr(office_reader, 'soffice_binary', missing)
-    with pytest.raises(reader.ReaderConversionError) as error:
-        reader.convert_office(tmp_path / 'source.pptx', FileFormat.PPTX, tmp_path)
-    assert error.value.code == 'renderer_unavailable'
+def test_pptx_analysis_and_text_reader_need_no_external_process(sources, tmp_path, monkeypatch):
+    import subprocess
+    def forbidden(*args, **kwargs):
+        pytest.fail('PPTX extraction must not invoke a system application')
+    monkeypatch.setattr(subprocess, 'Popen', forbidden)
+    result = extract_pdf(reader.convert_office(sources[FileFormat.PPTX], FileFormat.PPTX, tmp_path))
+    assert result['page_count'] == 3
+    assert 'PPTX slide 1' in result['extracted_text'][0]['text']
+    assert 'PPTX slide 2' in result['extracted_text'][1]['text']

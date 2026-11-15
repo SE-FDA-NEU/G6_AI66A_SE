@@ -12,7 +12,7 @@ DocuMind uses Next.js on port **8000**, FastAPI on port **8001** and MySQL on po
 | MySQL Server | 8.0 or newer; start the local MySQL service. |
 | Gemini API key | Enter a personal key in the signed-in upload form for AI analysis; the app stores it encrypted to that account. An optional server key supports semantic search/internal tools. |
 
-PDF, DOCX and PPTX reading uses the Python packages in `backend/requirements.txt`. **Install LibreOffice for PPTX preview** (`brew install --cask libreoffice` on macOS, `sudo apt-get install libreoffice-impress fonts-dejavu-core fonts-liberation` on Debian/Ubuntu, or the LibreOffice Windows installer). The backend detects `soffice`; optionally set `SOFFICE_BINARY` in `backend/.env` to its full executable path. PPTX is exported to PDF with slide layout, images and charts; each slide, including hidden/blank slides, remains one page. DOCX still uses generated text-reader pages. Fonts unavailable on the backend can be substituted. Existing saved text-reader PDFs stay pinned to their original citations; reupload a PPTX to use the new preview.
+PDF, DOCX and PPTX reading uses the Python packages in `backend/requirements.txt`. **LibreOffice and Docker are not required.** PPTX visual preview is rendered from the original file in the browser; `npm ci` builds its local renderer bundle automatically. DOCX and PPTX also have generated text-reader PDFs for analysis/search/citations, with one text page per slide for PPTX. See [PPTX preview](pptx-preview.md).
 
 ## 2. Clone and configure
 

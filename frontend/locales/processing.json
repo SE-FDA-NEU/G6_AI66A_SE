@@ -1,3 +1,42 @@
 [
-  ["Quá trình xử lý bị gián đoạn do máy chủ khởi động lại hoặc triển khai phiên bản mới. Vui lòng tải lại các tệp chưa hoàn tất.", "Processing was interrupted by a server restart or deployment. Please upload the unfinished files again."]
+  [
+    "Quá trình xử lý bị gián đoạn do máy chủ khởi động lại hoặc triển khai phiên bản mới. Vui lòng tải lại các tệp chưa hoàn tất.",
+    "Processing was interrupted by a server restart or deployment. Please upload the unfinished files again."
+  ],
+  [
+    "Xem trước PowerPoint",
+    "PowerPoint preview"
+  ],
+  [
+    "Đang tải preview trang chiếu…",
+    "Loading slide preview…"
+  ],
+  [
+    "Không thể hiển thị trang chiếu này. Bạn có thể mở bản đọc văn bản hoặc tải PowerPoint gốc.",
+    "This slide could not be previewed. You can open the text reader or download the original PowerPoint."
+  ],
+  [
+    "Mở bản đọc văn bản",
+    "Open text reader"
+  ],
+  [
+    "Tải PowerPoint gốc",
+    "Download original PowerPoint"
+  ],
+  [
+    "Trang chiếu PowerPoint {0}",
+    "PowerPoint slide {0}"
+  ],
+  [
+    "Xem preview trang chiếu",
+    "Show slide preview"
+  ],
+  [
+    "Mở PDF văn bản",
+    "Open text PDF"
+  ],
+  [
+    "Để xem đoạn được tô sáng, hãy mở bản đọc văn bản. Preview trang chiếu giữ bố cục gốc.",
+    "To see the highlighted passage, open the text reader. The slide preview keeps the original layout."
+  ]
 ]
