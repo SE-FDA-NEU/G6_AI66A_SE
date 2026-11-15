@@ -122,5 +122,9 @@
   [
     "Đã vượt {0} giây xử lý mỗi lượt. Các lượt thử xử lý đã hết; chia nhỏ tài liệu hoặc thử lại.",
     "Document processing exceeded {0} seconds per attempt. Processing retries were exhausted; split the document or retry."
+  ],
+  [
+    "Preview PowerPoint cần LibreOffice trên backend. Nhờ người quản lý server cài đặt rồi thử lại.",
+    "PowerPoint preview requires LibreOffice on the backend. Ask the service owner to install it, then retry."
   ]
 ]

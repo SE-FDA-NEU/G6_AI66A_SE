@@ -35,6 +35,9 @@ jobs:
             backend/requirements.txt
             backend/requirements-dev.txt
 
+      - name: Install PowerPoint PDF renderer
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-impress fonts-dejavu-core fonts-liberation
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -79,6 +82,9 @@ jobs:
           cache-dependency-path: |
             backend/requirements.txt
             backend/requirements-dev.txt
+
+      - name: Install PowerPoint PDF renderer
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-impress fonts-dejavu-core fonts-liberation
 
       - name: Install API test server dependencies
         run: python -m pip install -r ../backend/requirements-dev.txt
