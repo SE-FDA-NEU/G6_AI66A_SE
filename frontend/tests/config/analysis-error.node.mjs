@@ -20,3 +20,11 @@ test('provider, document and BR deadlines are distinct', () => {
   assert.match(analysisErrorText('Contract batch processing exceeded the 300-second target.', t), /BR processing deadline of 300/);
   assert.equal(analysisErrorText('unknown: private provider text', t), null);
 });
+
+test('an individual attempt timeout does not claim retry exhaustion', () => {
+  const text = analysisErrorText('Processing exceeded 75 seconds (attempt 1/3).', t);
+  assert.match(text, /75 seconds \(attempt 1\/3\)/);
+  assert.match(text, /remaining retries/);
+  assert.doesNotMatch(text, /exhausted/);
+  assert.match(analysisErrorText('Processing timed out after 3 attempts (75 seconds per attempt).', t), /after 3 attempts \(75 seconds per attempt\)/);
+});

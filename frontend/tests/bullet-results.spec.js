@@ -132,7 +132,7 @@ for (const terminal of ['completed', 'failed', 'timed_out']) {
       await expect(actions.getByRole('listitem')).toHaveCount(2);
     } else {
       await expect(actions).toHaveCount(0);
-      await expect(page.getByText('Tóm tắt vượt quá giới hạn 180 giây.', { exact: true })).toBeVisible();
+      await expect(page.getByText('Đã vượt deadline BR 180 giây, tính cả thời gian chờ và thử lại. Tác vụ đã bị hủy; chia nhỏ tài liệu hoặc thử lại.', { exact: true })).toBeVisible();
     }
     const terminalPolls = polls;
     await page.clock.fastForward(15000);

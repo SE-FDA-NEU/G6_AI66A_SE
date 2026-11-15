@@ -112,15 +112,19 @@
     "AI output or citations failed the application structure/evidence checks. The invalid summary was not saved; upload again."
   ],
   [
-    "Gemini không phản hồi trong {0} giây mỗi request. Đã hết lượt thử lại dịch vụ; tải lại tài liệu. Deadline BR giữ nguyên.",
-    "Gemini did not respond within {0} seconds per request. Provider retries were exhausted; upload again. The BR deadline is unchanged."
-  ],
-  [
     "Đã vượt deadline BR {0} giây, tính cả thời gian chờ và thử lại. Tác vụ đã bị hủy; chia nhỏ tài liệu hoặc thử lại.",
     "The BR processing deadline of {0} seconds was exceeded, including queue time and retries. The task was cancelled; split the document or retry."
   ],
   [
-    "Đã vượt {0} giây xử lý mỗi lượt. Các lượt thử xử lý đã hết; chia nhỏ tài liệu hoặc thử lại.",
-    "Document processing exceeded {0} seconds per attempt. Processing retries were exhausted; split the document or retry."
+    "Gemini không phản hồi trong {0} giây mỗi request. Kiểm tra dịch vụ và thử lại nếu tác vụ thất bại. Deadline BR giữ nguyên.",
+    "Gemini did not respond within {0} seconds per request. Check service availability and retry if the task fails. The BR deadline is unchanged."
+  ],
+  [
+    "Xử lý vượt quá {0} giây (lần thử {1}/{2}). Lượt này đã bị hủy; các lượt còn lại vẫn tuân theo deadline BR.",
+    "Document processing exceeded {0} seconds (attempt {1}/{2}). This attempt was cancelled; remaining retries stay within the BR deadline."
+  ],
+  [
+    "Xử lý hết thời gian sau {0} lần thử ({1} giây mỗi lượt). Tải lại hoặc chia nhỏ tài liệu.",
+    "Document processing timed out after {0} attempts ({1} seconds per attempt). Upload again or split the document."
   ]
 ]
