@@ -18,10 +18,12 @@ export function analysisErrorText(message, t) {
   if (messages[code]) return t(messages[code]);
   let match;
   if ((match = message.match(/^gemini_request_timeout: Gemini request exceeded (\d+) seconds\./)))
-    return t('Gemini did not respond within {0} seconds per request. Provider retries were exhausted; upload again. The BR deadline is unchanged.', match[1]);
+    return t('Gemini did not respond within {0} seconds per request. Check service availability and retry if the task fails. The BR deadline is unchanged.', match[1]);
   if ((match = message.match(/^(Bullet|Contract batch) processing exceeded the ([\d.]+)-second target\./)))
     return t('The BR processing deadline of {0} seconds was exceeded, including queue time and retries. The task was cancelled; split the document or retry.', match[2]);
-  if ((match = message.match(/^Processing (?:exceeded (\d+) seconds|timed out after \d+ attempts \((\d+) seconds per attempt\))/)))
-    return t('Document processing exceeded {0} seconds per attempt. Processing retries were exhausted; split the document or retry.', match[1] || match[2]);
+  if ((match = message.match(/^Processing exceeded (\d+) seconds \(attempt (\d+)\/(\d+)\)\./)))
+    return t('Document processing exceeded {0} seconds (attempt {1}/{2}). This attempt was cancelled; remaining retries stay within the BR deadline.', match[1], match[2], match[3]);
+  if ((match = message.match(/^Processing timed out after (\d+) attempts \((\d+) seconds per attempt\)\./)))
+    return t('Document processing timed out after {0} attempts ({1} seconds per attempt). Upload again or split the document.', match[1], match[2]);
   return null;
 }
