@@ -52,7 +52,7 @@ def test_production_sample_seed_prepares_two_accounts_p0_formats_real_results_an
         pages_resp = client.get(f"/documents/{doc_id}/pages", headers=headers_a)
         assert pages_resp.status_code == 200
         pages_payload = pages_resp.json()
-        assert pages_payload["reader_layout"] == "text"
+        assert pages_payload["reader_layout"] == ("original" if office_name.endswith(".pptx") else "text")
         assert pages_payload["page_count"] >= 2
         pdf_resp = client.get(pages_payload["reader_url"], headers=headers_a)
         assert pdf_resp.status_code == 200
