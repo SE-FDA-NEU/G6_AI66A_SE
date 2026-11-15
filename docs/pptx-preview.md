@@ -17,13 +17,15 @@ The backend detects `soffice`/`libreoffice` on PATH, the default macOS location,
 and the default Windows Program Files location. `SOFFICE_BINARY` overrides it.
 Installing Python requirements alone does not install LibreOffice.
 
-For a container backend, use the included `backend/Dockerfile` with `backend`
-as build context (`docker build -t documind-backend backend`). Keep existing
-DB/SECRET_KEY settings and mount existing persistent storage. The image starts
-Uvicorn on `$PORT` (8001 by default). An existing Render Python service needs a
-runtime with LibreOffice installed, such as this Docker image; a code push to a
-Python-only runtime does not supply the binary. Deployment remains with the
-service owner. CI installs Impress before backend/frontend integration tests.
+Run the existing Python/Uvicorn backend normally after installing LibreOffice
+on that host. Keep the current database, storage and environment configuration.
+CI installs Impress before backend/frontend integration tests.
+
+For an existing Render Python service, the service owner must verify that
+`soffice` is available in its runtime or provision LibreOffice there. A Python
+code push alone does not install this system application. If it is unavailable,
+PPTX preview reports `renderer_unavailable`; local installation does not install
+it on the production server.
 
 ## Versioning and limits
 
