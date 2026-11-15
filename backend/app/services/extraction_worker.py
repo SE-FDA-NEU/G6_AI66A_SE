@@ -11,7 +11,7 @@ from app.services.reader_extraction import ReaderConversionError, prepare_reader
 def main():
     work = Path(sys.argv[1])
     request = json.loads((work / 'request.json').read_text(encoding='utf-8'))
-    # Cancellation interrupts the Python renderer; the parent owns publication.
+    # Cancellation interrupts conversion; the parent owns publication and process-tree cleanup.
     def terminate(*_):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, terminate)

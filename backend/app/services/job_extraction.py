@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import signal
 import sys
 import tempfile
 
@@ -32,11 +33,17 @@ async def stop_worker(process):
             creationflags=subprocess.CREATE_NO_WINDOW)
         await killer.wait()
     else:
-        process.terminate()
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
         try:
             await asyncio.wait_for(process.wait(), timeout=5)
         except TimeoutError:
-            process.kill()
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
     await process.wait()
 
 
@@ -62,7 +69,7 @@ async def prepare_document(document, on_page_count=None):
     try:
         started = asyncio.get_running_loop().time()
         (work_path / 'request.json').write_text(json.dumps(request), encoding='utf-8')
-        options = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
+        options = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {'start_new_session': True}
         process = await asyncio.create_subprocess_exec(
             sys.executable, '-m', 'app.services.extraction_worker', str(work_path.resolve()),
             cwd=str(Path(__file__).resolve().parents[2]), stdout=subprocess.DEVNULL,

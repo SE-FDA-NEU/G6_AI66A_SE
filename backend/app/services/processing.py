@@ -3,7 +3,7 @@ import asyncio
 import logging
 import threading
 from copy import deepcopy
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 
 from app.models import FileFormat, Job, JobMode, JobStatus
@@ -12,7 +12,7 @@ from app.services.job_extraction import prepare_document
 from app.services.reader_extraction import ReaderConversionError
 from app.services.result_persistence import InvalidAnalysisResult, publish_reader, save_analysis, sync_citations
 from app.core.config import settings
-from app.services.gemini_analysis import GeminiAnalysisError, analyze_document
+from app.services.gemini_analysis import GeminiAnalysisError, GeminiRequestTimeout, analyze_document
 from app.services.document_retention import is_expired_source
 from app.services.analysis_credentials import user_gemini_key
 from pydantic import ValidationError
@@ -63,6 +63,8 @@ class DocumentInput:
     extracted_text: list | None = None
     owner_id: int | None = None
     language: str = "vi"
+    # Job-local memo only: no shared personal-key response cache.
+    analysis_cache: dict = field(default_factory=dict, compare=False, repr=False)
 
 
 async def process_document(document, mode):
@@ -186,7 +188,7 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                             _save_success(db, job, file, source.id, result, versioned=True)
                     else:
                         _save_success(db, job, file, source.id, result)
-                except TimeoutError:
+                except TimeoutError as error:
                     db.rollback()
                     if deadline is not None and loop.time() >= deadline:
                         file.status = JobStatus.FAILED
@@ -194,7 +196,8 @@ async def _process_job(job_id, session_factory, processor, analyzer):
                         db.commit()
                         break
                     file.status = JobStatus.TIMED_OUT
-                    file.error_message = f"Processing exceeded {timeout} seconds (attempt {attempt}/{MAX_ATTEMPTS})."
+                    file.error_message = (f"gemini_request_timeout: {error}" if isinstance(error, GeminiRequestTimeout) else
+                                          f"Processing exceeded {timeout} seconds (attempt {attempt}/{MAX_ATTEMPTS}).")
                     db.commit()
                     logger.warning("job=%s document=%s attempt=%s/%s timed_out timeout=%ss",
                                    job_id, source.id, attempt, MAX_ATTEMPTS, timeout)
@@ -242,7 +245,8 @@ async def _process_job(job_id, session_factory, processor, analyzer):
 
             if file.status not in (JobStatus.COMPLETED, JobStatus.FAILED):
                 file.status = JobStatus.FAILED
-                file.error_message = f"Processing timed out after {MAX_ATTEMPTS} attempts ({timeout} seconds per attempt)."
+                if not (file.error_message or "").startswith("gemini_request_timeout:"):
+                    file.error_message = f"Processing timed out after {MAX_ATTEMPTS} attempts ({timeout} seconds per attempt)."
                 db.commit()
                 logger.error("job=%s document=%s failed after %s attempts",
                              job_id, source.id, file.attempt_count)

@@ -1,3 +1,4 @@
+import { analysisErrorText } from './analysis-error.mjs';
 import { ui } from './ui';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LOCALE_COOKIE, readLocale, translate, isLocalizedMessage } from './i18n-core';
@@ -20,13 +21,12 @@ export function useI18n() {
   const errorText = (message) => {
     if (typeof message !== 'string') return context.t('Không thể hoàn tất thao tác. Vui lòng thử lại.');
     if (/incorrect|invalid credentials|wrong password/i.test(message)) return context.t('Sai email hoặc mật khẩu.');
+    const analysisError = analysisErrorText(message, context.t);
+    if (analysisError) return analysisError;
     const localized = context.t(message);
     if (isLocalizedMessage(message)) return localized;
     if (/source_expired/i.test(message)) return context.t('Nguồn đã hết hạn và không còn khả dụng.');
     if (/gemini_configuration_error/.test(message)) return context.t('Your Gemini API key is invalid or cannot access the configured model. Check the key and upload again.');
-    if (/gemini_daily_quota_exceeded|gemini_quota_exceeded/.test(message)) return context.t('Your Gemini key has reached its quota or rate limit. Check your Google AI Studio quota and retry later.');
-    if (/gemini_unavailable|gemini_connection_failed/.test(message)) return context.t('Gemini is temporarily unavailable. Please upload again later.');
-    if (/gemini_incomplete_response|gemini_invalid_response|gemini_output_limit/.test(message)) return context.t('Gemini did not return a complete, valid summary. Please try uploading again.');
     // Unknown server details may contain provider English; show a complete localized error.
     return context.t('Không thể hoàn tất thao tác. Vui lòng thử lại.');
   };
