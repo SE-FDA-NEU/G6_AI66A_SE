@@ -123,3 +123,23 @@ def test_large_sources_still_obey_BR_workflow_deadlines(client, session_factory,
     assert saved['status'] == 'failed' and saved['completed_count'] == 0
     assert saved['result_data']['documents'] == {} and cancelled
     assert all('0.02-second target' in f['error_message'] for f in saved['job_files'])
+
+
+def test_provider_timeout_keeps_its_identity_after_job_retries(client, session_factory):
+    from app.models import Job
+    response = client.post('/upload', data={'mode': 'bullet'}, files=[
+        ('files', ('source.pdf', b'sample', 'application/pdf'))])
+    job_id = int(response.json()['jobId'])
+    with session_factory() as db:
+        document = db.get(Job, job_id).job_files[0].document
+        document.page_count = 1
+        document.extracted_text = [{'page': 1, 'text': 'Source content.'}]
+        db.commit()
+    async def timeout(document, mode):
+        raise gemini.GeminiRequestTimeout('Gemini request exceeded 45 seconds.')
+    processing.process_job(job_id, session_factory, timeout)
+    saved = client.get(f'/jobs/{job_id}').json()
+    assert saved['status'] == 'failed'
+    file = saved['job_files'][0]
+    assert file['attempt_count'] == 3
+    assert file['error_message'] == 'gemini_request_timeout: Gemini request exceeded 45 seconds.'

@@ -67,9 +67,9 @@ test('save, replace and remove a key across reloads without revealing it', async
 
 for (const [code, expected] of [
   ['gemini_configuration_error', 'Gemini API key của bạn không hợp lệ'],
-  ['gemini_quota_exceeded', 'Gemini key của bạn đã chạm hạn mức'],
+  ['gemini_quota_exceeded', 'Gemini trả HTTP 429'],
   ['gemini_unavailable', 'Gemini tạm thời không khả dụng'],
-  ['gemini_incomplete_response', 'Gemini chưa trả về bản tóm tắt đầy đủ'],
+  ['gemini_incomplete_response', 'Gemini đã trả kết quả nhưng vẫn thiếu chủ đề'],
 ]) {
   test(`explains ${code} without exposing raw provider details`, async ({ page }) => {
     await page.route('**/jobs/778', route => route.fulfill({ json: {

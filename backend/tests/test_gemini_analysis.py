@@ -460,3 +460,18 @@ def test_selected_language_controls_prompt_fallback_and_cache(document, api, lan
     assert len(calls) == 1
     asyncio.run(processing.process_document(replace(source, language='vi' if language == 'en' else 'en'), JobMode.BULLET))
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize('status, message', [
+    (400, 'The input token count exceeds the maximum number of tokens allowed'),
+    (400, 'context window exceeded private source text'),
+    (413, 'Request payload size exceeds the limit private-key'),
+])
+def test_context_rejection_is_distinct_and_sanitized(document, api, status, message):
+    state, calls = api
+    state.update(status=status, response={'error': {'message': message}})
+    with pytest.raises(gemini.GeminiAnalysisError) as error:
+        asyncio.run(gemini.analyze_document(document, JobMode.BULLET))
+    assert error.value.code == 'gemini_context_limit'
+    assert 'private' not in str(error.value)
+    assert len(calls) == 1

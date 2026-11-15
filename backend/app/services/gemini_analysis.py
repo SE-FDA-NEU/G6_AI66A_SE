@@ -429,6 +429,22 @@ def write_cache(path, result):
             staged.unlink(missing_ok=True)
 
 
+class GeminiRequestTimeout(TimeoutError):
+    """Provider deadline, distinct from a document or BR deadline."""
+
+
+def context_limit_response(response):
+    if response.status_code not in (400, 413):
+        return False
+    try:
+        message = str(response.json().get('error', {}).get('message', '')).lower()
+    except (ValueError, TypeError, AttributeError):
+        return False
+    return any(term in message for term in (
+        'exceeds the maximum number of tokens', 'input token count',
+        'context length', 'context window', 'too many tokens', 'request payload size exceeds'))
+
+
 async def generate(body):
     """Provider transport; bounded output correction is handled by the caller."""
     if _provider.get() == 'groq':
@@ -440,9 +456,11 @@ async def generate(body):
             async with httpx.AsyncClient(timeout=settings.GEMINI_REQUEST_TIMEOUT_SECONDS) as client:
                 response = await post_with_retry(client, body, deadline)
     except (httpx.TimeoutException, TimeoutError):
-        raise TimeoutError('Gemini request timed out.') from None
+        raise GeminiRequestTimeout(f'Gemini request exceeded {settings.GEMINI_REQUEST_TIMEOUT_SECONDS} seconds.') from None
     except httpx.RequestError:
         raise GeminiAnalysisError('gemini_connection_failed', 'Cannot connect to Gemini. Please retry later.') from None
+    if context_limit_response(response):
+        raise GeminiAnalysisError('gemini_context_limit', 'Gemini rejected input exceeding its context or request-size limit. Split the source and upload again.')
     if response.status_code in (400, 401, 402, 403, 404):
         if user_gemini_key.get() is not None:
             raise GeminiAnalysisError('gemini_configuration_error',
