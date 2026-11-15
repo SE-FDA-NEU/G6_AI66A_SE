@@ -2,7 +2,6 @@
 export function analysisErrorText(message, t) {
   const code = message.split(':', 1)[0];
   const messages = {
-  "renderer_unavailable": "PowerPoint preview requires LibreOffice on the backend. Ask the service owner to install it, then retry.",
   "gemini_daily_quota_exceeded": "Gemini daily project/API-key quota is exhausted. Wait for reset or use a project with available quota and upload again.",
   "gemini_quota_exceeded": "Gemini returned HTTP 429: quota or request/token rate limit reached. Check Usage in Google AI Studio, wait and upload again; daily exhaustion was not confirmed.",
   "gemini_output_limit": "Gemini stopped with MAX_TOKENS: the output token ceiling was reached and the summary remained truncated after repair. This does not mean quota exhaustion. Split the document and upload again.",

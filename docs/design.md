@@ -522,7 +522,7 @@ M1's BR05 required every verified fact to link to a source document and page, bu
 
 ### Native Office reader (local)
 
-DOCX reader artifacts use python-docx and ReportLab with generated pagination. PPTX uses LibreOffice Impress PDF export to preserve slide geometry, images, charts and styling, with hidden/blank slides included and notes excluded. It requires LibreOffice on the backend (see [PPTX preview](pptx-preview.md)). DOCX is marked `reader_layout: text`; newly converted PPTX uses `reader_layout: original` and renderer `libreoffice-impress-v1`. Missing fonts may be substituted. Existing immutable reader artifacts retain their original representation and citation hashes; reupload to use the new renderer. Glyph offsets are always computed from the exact displayed reader PDF.
+DOCX/PPTX reader artifacts are generated in Python with python-docx/python-pptx and ReportLab. No external Office application is invoked. DOCX pagination belongs to the generated text-reader PDF, not Word's print layout. PPTX preserves one page per slide, including hidden/blank slides; speaker notes are excluded. Text/tables are available for evidence; source images/styles/layout are not reproduced in that text PDF. The default PPTX preview instead renders the original file in a sandboxed browser iframe; its page navigation follows slide order, and users switch to the text PDF for exact citation highlights. See [PPTX preview](pptx-preview.md). The pages API marks these artifacts with `reader_layout: text`; native PDFs and existing immutable reader artifacts retain their original representation. Glyph offsets are always computed from the exact displayed reader PDF.
 
 ### Local document library
 

@@ -1,26 +1,22 @@
-"""Render PPTX with its slide layout; build DOCX text-reader pages in Python.
+"""Build a text reader PDF directly from Office XML, entirely in Python.
 
 DOCX pages are generated reader pages, not a reconstruction of Word's layout.
-PPTX uses LibreOffice PDF export, including blank/hidden slides, without notes.
+PPTX keeps one reader page per slide, including blank/hidden slides, without notes.
 Evidence is subsequently extracted from these exact PDF bytes.
 """
 from pathlib import Path
 import threading
-import json
-import shutil
-import subprocess
-
 from xml.sax.saxutils import escape
-
-from app.core.config import settings
 
 from docx import Document as WordDocument
 from docx.oxml.ns import qn
 from docx.table import Table as WordTable
+from pptx import Presentation
 from reportlab import rl_config
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import LongTable, PageBreak, Paragraph, SimpleDocTemplate, Spacer
 
 from app.models import FileFormat
@@ -114,57 +110,51 @@ def _render_docx(source, output):
                       rightMargin=right, topMargin=top, bottomMargin=bottom).build(story)
 
 
-def soffice_binary():
-    if settings.SOFFICE_BINARY:
-        configured = Path(settings.SOFFICE_BINARY).expanduser()
-        if configured.is_file():
-            return str(configured)
-        found = shutil.which(settings.SOFFICE_BINARY)
-        if found:
-            return found
-        raise FileNotFoundError('Configured LibreOffice executable is missing.')
-    found = shutil.which('soffice') or shutil.which('libreoffice')
-    if found:
-        return found
-    candidates = [Path('/Applications/LibreOffice.app/Contents/MacOS/soffice'),
-                  Path('C:/Program Files/LibreOffice/program/soffice.exe')]
-    for candidate in candidates:
-        if candidate.is_file():
-            return str(candidate)
-    raise FileNotFoundError('Install LibreOffice on the backend or set SOFFICE_BINARY.')
+def _shape_texts(shapes):
+    for shape in shapes:
+        if hasattr(shape, 'shapes'):
+            yield from _shape_texts(shape.shapes)
+        if shape.has_text_frame:
+            for paragraph in shape.text_frame.paragraphs:
+                if paragraph.text:
+                    yield paragraph.text
+        if shape.has_table:
+            for row in shape.table.rows:
+                yield '    '.join(cell.text for cell in row.cells if not cell.is_spanned)
+        if getattr(shape, 'has_chart', False) and shape.chart.has_title:
+            title = shape.chart.chart_title
+            if title.has_text_frame and title.text_frame.text:
+                yield title.text_frame.text
 
 
 def _render_pptx(source, output):
-    # A separate profile prevents concurrent conversions from connecting to an
-    # existing GUI process. The caller supplies a private temporary directory.
-    output = Path(output).resolve()
-    source = Path(source).resolve()
-    profile = output.parent / 'libreoffice-profile'
-    options = {name: {'type': 'boolean', 'value': value} for name, value in {
-        'ExportHiddenSlides': 'true', 'ExportNotesPages': 'false',
-        'ExportOnlyNotesPages': 'false', 'ExportNotes': 'false',
-    }.items()}
-    command = [soffice_binary(), '-env:UserInstallation=' + profile.as_uri(),
-               '--headless', '--nologo', '--nodefault', '--norestore',
-               '--convert-to', 'pdf:impress_pdf_Export:' + json.dumps(options, separators=(',', ':')),
-               '--outdir', str(output.parent), str(source)]
-    process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    try:
-        # The cancellable job's BR deadline can interrupt this earlier.
-        process.wait(timeout=90)
-        generated = output.parent / (source.stem + '.pdf')
-        if process.returncode or not generated.is_file() or not generated.stat().st_size:
-            raise ValueError('LibreOffice did not produce a slide PDF.')
-        if generated != output:
-            generated.replace(output)
-    finally:
-        if process.poll() is None:
-            process.terminate()
-            try:
-                process.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait()
+    presentation = Presentation(source)
+    width, height = presentation.slide_width.pt, presentation.slide_height.pt
+    font = reader_font()
+    margin = min(30, width/10, height/10)
+    available_width, available_height = width-2*margin, height-2*margin
+    canvas = Canvas(str(output), pagesize=(width,height))
+    for slide in presentation.slides:
+        texts = list(_shape_texts(slide.shapes))
+        size = 14.0
+        for _ in range(30):
+            style = ParagraphStyle('SlideReader', fontName=font, fontSize=size,
+                                   leading=size*1.3, spaceAfter=size*.35, splitLongWords=True)
+            paragraphs = [_paragraph(text, style) for text in texts]
+            heights = [p.wrap(available_width, 1000000)[1] for p in paragraphs]
+            total = sum(heights) + max(0,len(heights)-1)*style.spaceAfter
+            if total <= available_height:
+                break
+            size *= min(.9, available_height/total*.95)
+        else:
+            raise ValueError('The slide text cannot fit in its reader page.')
+        y = height-margin
+        for paragraph, h in zip(paragraphs,heights):
+            y -= h
+            paragraph.drawOn(canvas,margin,y)
+            y -= style.spaceAfter
+        canvas.showPage()  # Even blank/hidden slides retain their number.
+    canvas.save()
 
 
 def render_office_pdf(source, file_format, output_dir):

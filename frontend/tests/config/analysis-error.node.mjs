@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { analysisErrorText } from '../../lib/analysis-error.mjs';
 const t = (text, ...values) => text.replace(/\{(\d+)\}/g, (_, i) => values[i]);
 for (const [code, expected] of [
-  ['renderer_unavailable', 'LibreOffice'], ['gemini_daily_quota_exceeded', 'daily'], ['gemini_quota_exceeded', 'HTTP 429'],
+  ['gemini_daily_quota_exceeded', 'daily'], ['gemini_quota_exceeded', 'HTTP 429'],
   ['gemini_output_limit', 'MAX_TOKENS'], ['gemini_context_limit', 'context'],
   ['gemini_invalid_response', 'JSON'], ['gemini_incomplete_response', 'major topics'],
   ['gemini_unavailable', 'server/overload'], ['gemini_connection_failed', 'network'],

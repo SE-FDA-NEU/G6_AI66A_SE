@@ -33,12 +33,10 @@ def sha256(path):
 
 
 def convert_office(source, file_format, output_dir):
-    """Create a layout-preserving PPTX PDF or generated DOCX reader."""
+    """Create the text reader PDF with Python libraries, no external app."""
     from app.services.office_reader import render_office_pdf
     try:
         output = render_office_pdf(source, file_format, output_dir)
-    except FileNotFoundError as error:
-        raise ReaderConversionError('renderer_unavailable', 'PowerPoint preview requires LibreOffice on the backend. Install it or configure SOFFICE_BINARY.') from error
     except Exception as error:
         raise ReaderConversionError('conversion_failed', 'Could not create a reader from this Office document.') from error
     if not output.is_file() or not output.stat().st_size:
@@ -110,7 +108,7 @@ def prepare_reader(source, file_format, work, converter=None, on_page_count=None
     reference = {'sha256': sha256(rendered), 'source_sha256': source_hash,
                  'page_kind': 'slide' if file_format == FileFormat.PPTX else 'page'}
     if file_format != FileFormat.PDF:
-        reference['renderer'] = 'libreoffice-impress-v1' if file_format == FileFormat.PPTX else 'python-text-v1'
+        reference['renderer'] = 'python-text-v1'
     for page in result['extracted_text']:
         page['reader'] = reference.copy()
     return result, rendered

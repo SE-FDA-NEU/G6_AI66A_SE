@@ -1,3 +1,4 @@
+import PptxPreview from '../../components/PptxPreview';
 import { ui } from '../../lib/ui';
 import BeginnerGuide from '../../components/BeginnerGuide';
 import { useI18n } from '../../lib/i18n';
@@ -101,6 +102,7 @@ export default function Reader({
   const { t, locale, errorText } = useI18n();
   const router = useRouter();
   const [data, setData] = useState(null);
+  const [textPreview, setTextPreview] = useState(false);
   const [page, setPage] = useState(initialPage);
   const [error, setError] = useState('');
   const [errorStatus, setErrorStatus] = useState(null);
@@ -377,7 +379,7 @@ export default function Reader({
 
         <h1>{t("Đọc tài liệu")}</h1>
         <BeginnerGuide context="reader" />
-        {data?.reader_layout === 'text' && (
+        {data?.reader_layout === 'text' && (data.file_format !== 'PPTX' || textPreview) && (
           <p role="note">
             {data.file_format === 'DOCX'
               ? t("Đây là bản đọc văn bản. Số trang theo bản đọc này có thể khác tệp Word gốc.")
@@ -481,7 +483,10 @@ export default function Reader({
                 disabled={page >= data.page_count}
                 onClick={() => changePage(page + 1)}
               >{t("Sau")}</button>
-              <a href={pdfUrl} target="_blank" rel="noreferrer" className={ui('btn')}>{t("Mở bản PDF")}</a>
+              {data.file_format === 'PPTX' && <button className={ui('btn')} onClick={() => setTextPreview(value => !value)}>
+                {t(textPreview ? 'Show slide preview' : 'Open text reader')}
+              </button>}
+              <a href={pdfUrl} target="_blank" rel="noreferrer" className={ui('btn')}>{t(data.file_format === 'PPTX' ? 'Open text PDF' : 'Mở bản PDF')}</a>
             </div>
 
             {/* In-Document Search Bar (US04) */}
@@ -566,15 +571,20 @@ export default function Reader({
               </div>
             )}
 
-            {(span || pdfParams.size > 0) && hasHighlightGeometry && <p className={ui('reader-highlight-note')} role="status">{t("Kết quả được tô sáng trực tiếp trên tài liệu; vị trí đang chọn có màu cam.")}</p>}
+            {(data.file_format !== 'PPTX' || textPreview) && (span || pdfParams.size > 0) && hasHighlightGeometry && <p className={ui('reader-highlight-note')} role="status">{t("Kết quả được tô sáng trực tiếp trên tài liệu; vị trí đang chọn có màu cam.")}</p>}
 
             {(span || pdfParams.size > 0) && !hasHighlightGeometry && <p role="status" className={ui('highlight-fallback-notice')}>{t("Trang này chưa có đủ tọa độ chữ để tô sáng trực tiếp. Bạn vẫn có thể xem tài liệu và bản tóm tắt bên dưới.")}</p>}
 
-            <iframe
+            {data.file_format === 'PPTX' && !textPreview && span && <p role="note">
+              {t('To see the highlighted passage, open the text reader. The slide preview keeps the original layout.')}
+            </p>}
+            {data.file_format === 'PPTX' && !textPreview
+              ? <PptxPreview key={`pptx-${documentId}`} documentId={documentId} page={page} onFallback={() => setTextPreview(true)} />
+              : <iframe
               className={ui('reader-pdf')}
               src={pdfUrl}
               title={t("Bản đọc PDF — {0} {1}", pageName, page)}
-            />
+            />}
 
             <SavedDocumentSummary key={documentId} documentId={documentId} jobId={currentReturnJobId} readerVersion={data.reader_version}/>
 

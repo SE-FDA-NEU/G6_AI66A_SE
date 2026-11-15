@@ -1,46 +1,41 @@
-# PowerPoint preview
+# PowerPoint preview without server applications
 
-New PPTX uploads are exported to PDF by LibreOffice Impress and displayed by the
-same PDF reader as native PDF uploads. This preserves slide position, background,
-images and charts rather than reflowing extracted words into a text-only page.
-Each slide is one PDF page, including hidden/blank slides; speaker notes are not
-included. Unavailable fonts may be substituted, and this is a static preview
-without animations/video playback.
+PPTX visual preview runs in the browser using the pinned `pptx-preview` npm
+package. The frontend downloads the original through the authenticated
+`/api/documents/{id}/file` route, then sends the bytes to an isolated iframe.
+No public file URL, cloud conversion service, LibreOffice, or Docker is needed.
+Existing PPTX files can use this preview immediately; no reupload is needed.
 
-## Install and run
+The original slide order, aspect ratio, images and supported styling are rendered
+in the browser. The reader's Previous/Next and page selector navigate the visual
+slides. Missing fonts or unsupported shapes/charts can differ from PowerPoint;
+animations and full PowerPoint fidelity are not guaranteed. Rendering errors
+show a localized fallback with the text reader and original download.
 
-- macOS: `brew install --cask libreoffice`
-- Debian/Ubuntu: `sudo apt-get update && sudo apt-get install -y libreoffice-impress fonts-dejavu-core fonts-liberation`
-- Windows: install LibreOffice and optionally set `SOFFICE_BINARY=C:/Program Files/LibreOffice/program/soffice.exe` in `backend/.env`.
+## Backend and citations
 
-The backend detects `soffice`/`libreoffice` on PATH, the default macOS location,
-and the default Windows Program Files location. `SOFFICE_BINARY` overrides it.
-Installing Python requirements alone does not install LibreOffice.
+Python extracts PPTX text and creates a generated text-reader PDF for analysis,
+search and citation coordinates, one page per slide including hidden/blank slides.
+This requires only the existing Python dependencies. The visual preview does not
+claim its coordinates match that text PDF. Use **Open text reader** to see exact
+search/citation highlighting; the visual preview opens the same slide number.
+DOCX and native PDF behavior is unchanged. Existing immutable reader PDFs and
+saved citations are retained.
 
-Run the existing Python/Uvicorn backend normally after installing LibreOffice
-on that host. Keep the current database, storage and environment configuration.
-CI installs Impress before backend/frontend integration tests.
+## Build and deploy
 
-For an existing Render Python service, the service owner must verify that
-`soffice` is available in its runtime or provision LibreOffice there. A Python
-code push alone does not install this system application. If it is unavailable,
-PPTX preview reports `renderer_unavailable`; local installation does not install
-it on the production server.
+Run `npm ci` in `frontend`; its postinstall builds `/pptx-renderer.js` locally
+with esbuild. `npm run dev` and `npm run build` rebuild it as well. The generated
+asset is not committed; the pinned sources and package lock are committed.
+Deploy the Python backend normally and rebuild the existing Next.js frontend.
+No new environment variables or system packages are required.
 
-## Versioning and limits
+The renderer uses an iframe with only `allow-scripts`, without same-origin
+permission. Its CSP blocks network connections, external images/fonts and inline
+scripts from document content. Only the locally bundled renderer script and
+embedded image/font data can load. The parent retains authentication and checks
+message sources. Files are not sent to third parties.
 
-Existing readers remain immutable because saved citation coordinates and hashes
-refer to their PDF bytes. They are not silently replaced. Reupload an older PPTX
-to create its new visual preview and matching extraction/citations. Original
-uploads are never overwritten.
-
-Each conversion has its own temporary LibreOffice profile to isolate simultaneous
-jobs. The converter has a 90-second ceiling; existing document/BR deadlines can
-cancel it earlier. Cancellation stops the worker process tree before temporary
-files are removed. Upload stays at most 5 MiB/file and the existing batch and BR
-timeouts stay unchanged. Missing LibreOffice returns `renderer_unavailable`,
-not a successful text-only substitute.
-
-PDF export parameters use the official [LibreOffice PDF CLI options](https://help.libreoffice.org/latest/en-US/text/shared/guide/pdf_params.html):
-`ExportHiddenSlides=true`, `ExportNotesPages=false`, `ExportOnlyNotesPages=false`,
-and `ExportNotes=false`.
+The 5 MiB/file upload boundary and BR processing deadlines are unchanged. The
+preview has a 30-second UI loading fallback, independent of analysis timers.
+The browser-side rendering package is loaded only on the PPTX preview path.

@@ -63,3 +63,7 @@ ehthumbs_vista.db
 *.lnk
 Desktop.ini
 $RECYCLE.BIN/
+
+# Built from the pinned npm renderer during install/build.
+frontend/public/pptx-renderer.js
+frontend/.next-*/

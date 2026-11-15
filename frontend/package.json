@@ -9,15 +9,20 @@
     "test:config": "node --test tests/config/*.node.mjs",
     "test:production": "playwright test --config playwright.production.config.js",
     "test": "playwright test",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "postinstall": "node scripts/build-pptx-renderer.mjs",
+    "prebuild": "node scripts/build-pptx-renderer.mjs",
+    "predev": "node scripts/build-pptx-renderer.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "esbuild": "0.28.2",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
     "postcss": "^8.5.31",
+    "pptx-preview": "1.0.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "tailwindcss": "^4.3.3"
@@ -27,5 +32,11 @@
   },
   "engines": {
     "node": ">=20.9.0"
+  },
+  "overrides": {
+    "pptx-preview": {
+      "echarts": "6.1.0",
+      "uuid": "11.1.1"
+    }
   }
 }
